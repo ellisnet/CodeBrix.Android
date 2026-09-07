@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>33</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <ApplicationId>com.codebrix.simpledebugapp</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <RootNamespace>SimpleDebugApp</RootNamespace>
+    <AssemblyName>SimpleDebugApp</AssemblyName>
+    <!-- Full trimming only applies to Release; Debug builds stay unlinked so every symbol is available to the debugger. -->
+    <TrimMode>full</TrimMode>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <!-- Fast deployment: assemblies are pushed by the Install target, not embedded in the APK.
+         Deploy with:  dotnet build -c Debug -t:Install -p:AdbTarget="-s <serial>"  -->
+    <EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
+  </PropertyGroup>
+</Project>
