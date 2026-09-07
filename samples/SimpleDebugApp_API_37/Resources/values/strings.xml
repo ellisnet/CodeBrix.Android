@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">CodeBrix Test App</string>
+    <string name="status_ready">Ready. Set a breakpoint, then tap a button.</string>
+    <string name="button_count">Count (synchronous click)</string>
+    <string name="button_compute">Compute primes (loop with locals)</string>
+    <string name="button_async">Async delay (continuation)</string>
+    <string name="button_background">Background work (worker thread)</string>
+    <string name="button_throw">Throw and catch (exception)</string>
+</resources>
