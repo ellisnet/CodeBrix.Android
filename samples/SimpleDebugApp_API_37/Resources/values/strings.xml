@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">CodeBrix Test App</string>
+    <string name="app_name">CodeBrix Test App .NET 11</string>
     <string name="status_ready">Ready. Set a breakpoint, then tap a button.</string>
     <string name="button_count">Count (synchronous click)</string>
     <string name="button_compute">Compute primes (loop with locals)</string>

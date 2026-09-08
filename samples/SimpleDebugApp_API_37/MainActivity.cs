@@ -13,7 +13,7 @@ namespace SimpleDebugApp;
 /// and a thrown-and-caught exception. Set breakpoints in the On*Clicked methods here and
 /// in <see cref="Calculator"/>.
 /// </summary>
-[Activity(Label = "@string/app_name", MainLauncher = true, Exported = true, Name = "com.codebrix.simpledebugapp.MainActivity")]
+[Activity(Label = "@string/app_name", MainLauncher = true, Exported = true, Name = "com.codebrix.simpledebugapp_net11.MainActivity")]
 public class MainActivity : Activity
 {
 	private const string Tag = "SimpleDebugApp";

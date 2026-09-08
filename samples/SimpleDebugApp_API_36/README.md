@@ -18,7 +18,7 @@ Five buttons, each a different debugger scenario, with the handler named after i
 | Background work | `OnBackgroundClicked` | Pause inside `Calculator.SumOfSquares` on a worker thread; then the marshalled update. |
 | Throw and catch | `OnThrowClicked` | First-chance exception stop in `Calculator.ThrowForDemo`, then the catch block. |
 
-The activity has a fixed Java name, `com.codebrix.simpledebugapp.MainActivity`, so it can be
+The activity has a fixed Java name, `com.codebrix.simpledebugapp_net10.MainActivity`, so it can be
 launched from a shell without looking up a generated class name.
 
 ## Prerequisites
@@ -35,7 +35,7 @@ startup. Use the Install target:
 
 ```
 dotnet build -c Debug -t:Install -p:AdbTarget="-s <device serial>"
-adb -s <device serial> shell am start -W -n com.codebrix.simpledebugapp/.MainActivity
+adb -s <device serial> shell am start -W -n com.codebrix.simpledebugapp_net10/.MainActivity
 ```
 
 Find the serial with `adb devices -l`. Release builds embed the assemblies and can be installed
