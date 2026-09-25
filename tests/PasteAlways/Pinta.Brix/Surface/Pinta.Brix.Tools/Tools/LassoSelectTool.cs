@@ -1,0 +1,228 @@
+//
+// LassoSelectTool.cs
+//
+// Author:
+//       Jonathan Pobst <monkey@jpobst.com>
+//
+// Copyright (c) 2010 Jonathan Pobst
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+using CodeBrix.PolygonTools.Models;
+using Pinta.Brix.Engine;
+using System;
+using System.Collections.Generic;
+
+//was previously: namespace Pinta.Tools;
+namespace Pinta.Brix.Tools;
+
+public sealed class LassoSelectTool : BaseTool
+{
+	private readonly IWorkspaceService workspace;
+
+	private bool is_dragging = false;
+	private CombineMode combine_mode;
+	private SelectionHistoryItem? hist;
+
+	private readonly List<IntPoint> lasso_polygon = [];
+
+	private ToolBarSeparator? mode_sep;
+	private ToolBarLabel? lasso_mode_label;
+	private ToolBarDropDownButton? lasso_mode_buttom;
+
+	public LassoSelectTool (IServiceProvider services) : base (services)
+	{
+		workspace = services.GetService<IWorkspaceService> ();
+	}
+
+	public override string Name => Translations.GetString ("Lasso Select");
+	public override string Icon => Icons.ToolSelectLasso;
+	public override string StatusBarText => Translations.GetString ("In Freeform mode, click and drag to draw the outline for a selection area." +
+									"\n\nIn Polygon mode, click and drag to add a new point to the selection." +
+									"\nPress Enter to finish the selection." +
+									"\nPress Backspace to delete the last point.");
+	public override Key ShortcutKey => new (KeyConstants.KEY_S);
+	public override ToolCursor DefaultCursor => ToolCursor.FromIcon ("Cursor.LassoSelect.png", 9, 18);
+	public override int Priority => 17;
+	public override bool IsSelectionTool => true;
+
+	private bool IsPolygonMode => LassoModeButtom.SelectedItem.GetTagOrDefault (false);
+	private bool IsFreeformMode => !IsPolygonMode;
+
+	protected override void OnBuildToolBar (ToolBar tb)
+	{
+		base.OnBuildToolBar (tb);
+		workspace.SelectionHandler.BuildToolbar (tb, Settings);
+
+		tb.Append (Separator);
+		tb.Append (LassoModeLabel);
+		tb.Append (LassoModeButtom);
+	}
+
+	protected override void OnMouseDown (Document document, ToolMouseEventArgs e)
+	{
+		if (is_dragging)
+			return;
+
+		is_dragging = true;
+
+		if (lasso_polygon.Count == 0) {
+			hist = new SelectionHistoryItem (workspace, Icon, Name);
+			hist.TakeSnapshot ();
+
+			combine_mode = workspace.SelectionHandler.DetermineCombineMode (e);
+
+			document.PreviousSelection = document.Selection.Clone ();
+		}
+
+		if (IsPolygonMode) {
+			PointD p = document.ClampToImageSize (e.PointDouble);
+
+			lasso_polygon.Add (new IntPoint ((long) p.X, (long) p.Y));
+
+			ApplySelection (document);
+		}
+
+	}
+
+	private void ApplySelection (Document document)
+	{
+		document.Selection.SelectionPolygons.Clear ();
+		document.Selection.SelectionPolygons.Add ([.. lasso_polygon]);
+
+		SelectionModeHandler.PerformSelectionMode (
+			document,
+			combine_mode,
+			document.Selection.SelectionPolygons);
+	}
+
+	protected override void OnMouseMove (Document document, ToolMouseEventArgs e)
+	{
+		if (!is_dragging)
+			return;
+
+		PointD p = document.ClampToImageSize (e.PointDouble);
+
+		if (IsFreeformMode) {
+			lasso_polygon.Add (new IntPoint ((long) p.X, (long) p.Y));
+
+			ApplySelection (document);
+			return;
+		}
+
+		if (lasso_polygon.Count == 0)
+			return;
+
+		lasso_polygon[lasso_polygon.Count - 1] = new IntPoint (p.X, p.Y);
+
+		ApplySelection (document);
+	}
+
+	protected override void OnMouseUp (Document document, ToolMouseEventArgs e)
+	{
+		if (IsFreeformMode) {
+			ApplySelection (document);
+
+			FinalizeShape (document);
+		}
+		is_dragging = false;
+	}
+
+	private void FinalizeShape (Document document)
+	{
+		if (hist != null) {
+			if (lasso_polygon.Count > 1)
+				document.History.PushNewItem (hist);
+			hist = null;
+		}
+		lasso_polygon.Clear ();
+	}
+
+	protected override void OnDeactivated (Document? document, BaseTool? newTool)
+	{
+		if (document != null)
+			FinalizeShape (document);
+	}
+
+	protected override bool OnKeyDown (Document document, ToolKeyEventArgs e)
+	{
+		if (IsPolygonMode) {
+			switch (e.Key.Value) {
+				case KeyConstants.KEY_Return:
+					FinalizeShape (document);
+					return true;
+				case KeyConstants.KEY_BackSpace:
+					Backtrack (document);
+					return true;
+			}
+		}
+
+		return base.OnKeyDown (document, e);
+	}
+
+	private void Backtrack (Document document)
+	{
+		if (lasso_polygon.Count == 0) {
+			return;
+		}
+
+		ArgumentNullException.ThrowIfNull (hist);
+
+		lasso_polygon.RemoveAt (lasso_polygon.Count - 1);
+
+		if (lasso_polygon.Count == 0) {
+			hist.Undo ();
+			return;
+		}
+
+		ApplySelection (document);
+	}
+
+	protected override void OnCommit (Document? document)
+	{
+		if (document != null)
+			FinalizeShape (document);
+	}
+
+	protected override void OnSaveSettings (ISettingsService settings)
+	{
+		base.OnSaveSettings (settings);
+
+		if (lasso_mode_buttom is not null)
+			settings.PutSetting (SettingNames.LASSO_MODE, lasso_mode_buttom.SelectedIndex);
+	}
+
+	private ToolBarSeparator Separator => mode_sep ??= new ToolBarSeparator ();
+	private ToolBarLabel LassoModeLabel => lasso_mode_label ??= new ToolBarLabel (string.Format (" {0}: ", Translations.GetString ("Lasso Mode")));
+
+	private ToolBarDropDownButton LassoModeButtom {
+		get {
+			if (lasso_mode_buttom is null) {
+				lasso_mode_buttom = ToolBarDropDownButton.New ();
+
+				lasso_mode_buttom.AddItem (Translations.GetString ("Freeform"), Icons.LassoFreeform, false);
+				lasso_mode_buttom.AddItem (Translations.GetString ("Polygon"), Icons.LassoPolygon, true);
+
+				lasso_mode_buttom.SelectedIndex = Settings.GetSetting (SettingNames.LASSO_MODE, 0);
+			}
+
+			return lasso_mode_buttom;
+		}
+	}
+}

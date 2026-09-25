@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: PdfSideBySide (CodeBrix.Samples PdfSideBySide/src/PdfSideBySide.UI).
+    Not one of the eight corpus pages: it paste-tests the second HelloPaste page's App.xaml(.cs)
+    verbatim. Pasted/ = the shared UI project's files, verbatim. The view models and libraries come
+    from samples/HelloPaste (PdfSideBySide.Core multi-targeted; PdfSideBySide.PdfRender, itself
+    verbatim except its PDFium-backed PageRenderer, which is a stub).
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.pdfsidebyside</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>PdfSideBySide.PasteAlways</RootNamespace>
+    <AssemblyName>PdfSideBySide.PasteAlways</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)samples/HelloPaste/PdfSideBySide.Core/PdfSideBySide.Core.csproj" />
+  </ItemGroup>
+
+</Project>

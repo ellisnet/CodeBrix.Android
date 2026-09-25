@@ -1,0 +1,203 @@
+using System;
+using System.Collections.Generic;
+
+namespace GitHubIssueFinder.Theming;
+
+/// <summary>
+/// Which colour role each keyed brush in App.xaml carries. Applying a scheme is walking this
+/// table, looking the key up in the resource dictionaries and assigning the role's colour to the
+/// brush that is already there, which repaints every consumer without touching the markup.
+/// Keys whose colour is the same in every scheme - the fully transparent faces and the dialog
+/// scrim - are deliberately absent, because nothing needs to be done to them.
+/// </summary>
+public static class SchemeBrushMap
+{
+    /// <summary>Every keyed brush the schemes drive, and the role each one carries.</summary>
+    public static IReadOnlyDictionary<string, ColorRole> Entries { get; } =
+        new Dictionary<string, ColorRole>(StringComparer.Ordinal)
+        {
+            //The application's own role brushes.
+            { "CanvasBrush", ColorRole.Canvas },
+            { "CanvasSubtleBrush", ColorRole.CanvasSubtle },
+            { "CanvasInsetBrush", ColorRole.CanvasInset },
+            { "HairlineBrush", ColorRole.Hairline },
+            { "HairlineMutedBrush", ColorRole.HairlineMuted },
+            { "TextPrimaryBrush", ColorRole.TextPrimary },
+            { "TextSecondaryBrush", ColorRole.TextSecondary },
+            { "TextTertiaryBrush", ColorRole.TextTertiary },
+            { "AccentBrush", ColorRole.Accent },
+            { "AccentEmphasisBrush", ColorRole.AccentEmphasis },
+            { "AccentSubtleBrush", ColorRole.AccentSubtle },
+            { "SuccessBrush", ColorRole.Success },
+            { "SuccessEmphasisBrush", ColorRole.SuccessEmphasis },
+            { "SuccessEmphasisHoverBrush", ColorRole.SuccessEmphasisHover },
+            { "AttentionBrush", ColorRole.Attention },
+            { "AttentionSubtleBrush", ColorRole.AttentionSubtle },
+            { "DangerBrush", ColorRole.Danger },
+            { "DangerSubtleBrush", ColorRole.DangerSubtle },
+            { "DoneBrush", ColorRole.Done },
+            { "NeutralBrush", ColorRole.Neutral },
+            { "ButtonFaceBrush", ColorRole.ButtonFace },
+            { "ButtonFaceHoverBrush", ColorRole.ButtonFaceHover },
+            { "ButtonFacePressedBrush", ColorRole.ButtonFacePressed },
+            { "OnEmphasisBrush", ColorRole.OnEmphasis },
+
+            //Button, which is both the secondary button and every clickable row.
+            { "ButtonBackground", ColorRole.ButtonFace },
+            { "ButtonBackgroundPointerOver", ColorRole.ButtonFaceHover },
+            { "ButtonBackgroundPressed", ColorRole.ButtonFacePressed },
+            { "ButtonBackgroundDisabled", ColorRole.ButtonFace },
+            { "ButtonForeground", ColorRole.TextPrimary },
+            { "ButtonForegroundPointerOver", ColorRole.TextPrimary },
+            { "ButtonForegroundPressed", ColorRole.TextPrimary },
+            { "ButtonForegroundDisabled", ColorRole.TextTertiary },
+            { "ButtonBorderBrush", ColorRole.Hairline },
+            { "ButtonBorderBrushPointerOver", ColorRole.Hairline },
+            { "ButtonBorderBrushPressed", ColorRole.Hairline },
+            { "ButtonBorderBrushDisabled", ColorRole.HairlineMuted },
+
+            //AccentButton, which this application uses for the green primary Search button.
+            { "AccentButtonBackground", ColorRole.SuccessEmphasis },
+            { "AccentButtonBackgroundPointerOver", ColorRole.SuccessEmphasisHover },
+            { "AccentButtonBackgroundPressed", ColorRole.SuccessEmphasisHover },
+            { "AccentButtonBackgroundDisabled", ColorRole.ButtonFace },
+            { "AccentButtonForeground", ColorRole.OnEmphasis },
+            { "AccentButtonForegroundPointerOver", ColorRole.OnEmphasis },
+            { "AccentButtonForegroundPressed", ColorRole.OnEmphasis },
+            { "AccentButtonForegroundDisabled", ColorRole.TextTertiary },
+            { "AccentButtonBorderBrush", ColorRole.SuccessEmphasis },
+            { "AccentButtonBorderBrushPointerOver", ColorRole.SuccessEmphasisHover },
+            { "AccentButtonBorderBrushPressed", ColorRole.SuccessEmphasisHover },
+            { "AccentButtonBorderBrushDisabled", ColorRole.HairlineMuted },
+
+            //TextBox and every other text control.
+            { "TextControlBackground", ColorRole.Canvas },
+            { "TextControlBackgroundPointerOver", ColorRole.Canvas },
+            { "TextControlBackgroundFocused", ColorRole.Canvas },
+            { "TextControlBackgroundDisabled", ColorRole.CanvasSubtle },
+            { "TextControlForeground", ColorRole.TextPrimary },
+            { "TextControlForegroundPointerOver", ColorRole.TextPrimary },
+            { "TextControlForegroundFocused", ColorRole.TextPrimary },
+            { "TextControlForegroundDisabled", ColorRole.TextTertiary },
+            { "TextControlBorderBrush", ColorRole.Hairline },
+            { "TextControlBorderBrushPointerOver", ColorRole.Hairline },
+            { "TextControlBorderBrushFocused", ColorRole.Accent },
+            { "TextControlBorderBrushDisabled", ColorRole.HairlineMuted },
+            { "TextControlPlaceholderForeground", ColorRole.TextTertiary },
+            { "TextControlPlaceholderForegroundPointerOver", ColorRole.TextTertiary },
+            { "TextControlPlaceholderForegroundFocused", ColorRole.TextTertiary },
+            { "TextControlPlaceholderForegroundDisabled", ColorRole.Hairline },
+            { "TextControlButtonForeground", ColorRole.TextTertiary },
+            { "TextControlButtonForegroundPointerOver", ColorRole.TextPrimary },
+            { "TextControlButtonForegroundPressed", ColorRole.OnEmphasis },
+            { "TextControlButtonBackgroundPointerOver", ColorRole.CanvasSubtle },
+            { "TextControlButtonBackgroundPressed", ColorRole.Accent },
+            { "TextControlElevationBorderBrush", ColorRole.Hairline },
+            { "TextControlElevationBorderFocusedBrush", ColorRole.Accent },
+
+            //CheckBox: the tick box, its stroke and the tick itself.
+            { "CheckBoxForegroundUnchecked", ColorRole.TextPrimary },
+            { "CheckBoxForegroundUncheckedPointerOver", ColorRole.TextPrimary },
+            { "CheckBoxForegroundUncheckedPressed", ColorRole.TextPrimary },
+            { "CheckBoxForegroundUncheckedDisabled", ColorRole.TextTertiary },
+            { "CheckBoxForegroundChecked", ColorRole.TextPrimary },
+            { "CheckBoxForegroundCheckedPointerOver", ColorRole.TextPrimary },
+            { "CheckBoxForegroundCheckedPressed", ColorRole.TextPrimary },
+            { "CheckBoxForegroundCheckedDisabled", ColorRole.TextTertiary },
+            { "CheckBoxCheckBackgroundFillUnchecked", ColorRole.Canvas },
+            { "CheckBoxCheckBackgroundFillUncheckedPointerOver", ColorRole.CanvasSubtle },
+            { "CheckBoxCheckBackgroundFillUncheckedPressed", ColorRole.ButtonFaceHover },
+            { "CheckBoxCheckBackgroundFillUncheckedDisabled", ColorRole.CanvasSubtle },
+            { "CheckBoxCheckBackgroundFillChecked", ColorRole.Accent },
+            { "CheckBoxCheckBackgroundFillCheckedPointerOver", ColorRole.Accent },
+            { "CheckBoxCheckBackgroundFillCheckedPressed", ColorRole.Accent },
+            { "CheckBoxCheckBackgroundFillCheckedDisabled", ColorRole.Hairline },
+            { "CheckBoxCheckBackgroundStrokeUnchecked", ColorRole.Hairline },
+            { "CheckBoxCheckBackgroundStrokeUncheckedPointerOver", ColorRole.TextTertiary },
+            { "CheckBoxCheckBackgroundStrokeUncheckedPressed", ColorRole.TextTertiary },
+            { "CheckBoxCheckBackgroundStrokeUncheckedDisabled", ColorRole.HairlineMuted },
+            { "CheckBoxCheckBackgroundStrokeChecked", ColorRole.Accent },
+            { "CheckBoxCheckBackgroundStrokeCheckedPointerOver", ColorRole.Accent },
+            { "CheckBoxCheckBackgroundStrokeCheckedPressed", ColorRole.Accent },
+            { "CheckBoxCheckBackgroundStrokeCheckedDisabled", ColorRole.Hairline },
+            { "CheckBoxCheckGlyphForegroundChecked", ColorRole.OnEmphasis },
+            { "CheckBoxCheckGlyphForegroundCheckedPointerOver", ColorRole.OnEmphasis },
+            { "CheckBoxCheckGlyphForegroundCheckedPressed", ColorRole.OnEmphasis },
+            { "CheckBoxCheckGlyphForegroundCheckedDisabled", ColorRole.OnEmphasis },
+
+            //ComboBox, closed face and dropped list.
+            { "ComboBoxBackground", ColorRole.Canvas },
+            { "ComboBoxBackgroundPointerOver", ColorRole.CanvasSubtle },
+            { "ComboBoxBackgroundPressed", ColorRole.ButtonFaceHover },
+            { "ComboBoxBackgroundDisabled", ColorRole.CanvasSubtle },
+            { "ComboBoxBackgroundFocused", ColorRole.Canvas },
+            { "ComboBoxBackgroundUnfocused", ColorRole.Canvas },
+            { "ComboBoxForeground", ColorRole.TextPrimary },
+            { "ComboBoxForegroundPointerOver", ColorRole.TextPrimary },
+            { "ComboBoxForegroundPressed", ColorRole.TextPrimary },
+            { "ComboBoxForegroundDisabled", ColorRole.TextTertiary },
+            { "ComboBoxForegroundFocused", ColorRole.TextPrimary },
+            { "ComboBoxForegroundFocusedPressed", ColorRole.TextPrimary },
+            { "ComboBoxBorderBrush", ColorRole.Hairline },
+            { "ComboBoxBorderBrushPointerOver", ColorRole.Hairline },
+            { "ComboBoxBorderBrushPressed", ColorRole.Hairline },
+            { "ComboBoxBorderBrushDisabled", ColorRole.HairlineMuted },
+            { "ComboBoxDropDownBackground", ColorRole.Canvas },
+            { "ComboBoxDropDownForeground", ColorRole.TextPrimary },
+            { "ComboBoxDropDownBorderBrush", ColorRole.Hairline },
+            { "ComboBoxDropDownGlyphForeground", ColorRole.TextTertiary },
+            { "ComboBoxDropDownGlyphForegroundDisabled", ColorRole.Hairline },
+            { "ComboBoxDropDownGlyphForegroundFocused", ColorRole.TextPrimary },
+            { "ComboBoxDropDownGlyphForegroundFocusedPressed", ColorRole.TextPrimary },
+            { "ComboBoxItemBackgroundPointerOver", ColorRole.CanvasSubtle },
+            { "ComboBoxItemBackgroundPressed", ColorRole.ButtonFaceHover },
+            { "ComboBoxItemBackgroundSelected", ColorRole.AccentSubtle },
+            { "ComboBoxItemBackgroundSelectedPointerOver", ColorRole.AccentSubtle },
+            { "ComboBoxItemBackgroundSelectedPressed", ColorRole.AccentSubtle },
+            { "ComboBoxItemBackgroundSelectedUnfocused", ColorRole.AccentSubtle },
+            { "ComboBoxItemForeground", ColorRole.TextPrimary },
+            { "ComboBoxItemForegroundPointerOver", ColorRole.TextPrimary },
+            { "ComboBoxItemForegroundPressed", ColorRole.TextPrimary },
+            { "ComboBoxItemForegroundSelected", ColorRole.TextPrimary },
+            { "ComboBoxItemForegroundSelectedPointerOver", ColorRole.TextPrimary },
+            { "ComboBoxItemForegroundSelectedPressed", ColorRole.TextPrimary },
+            { "ComboBoxItemForegroundSelectedUnfocused", ColorRole.TextPrimary },
+            { "ComboBoxItemForegroundDisabled", ColorRole.TextTertiary },
+            { "ComboBoxItemPillFillBrush", ColorRole.Accent },
+            { "ComboBoxPlaceHolderForeground", ColorRole.TextTertiary },
+
+            //ListViewItem: the results list never selects, so only the text colours move.
+            { "ListViewItemForeground", ColorRole.TextPrimary },
+            { "ListViewItemForegroundPointerOver", ColorRole.TextPrimary },
+            { "ListViewItemForegroundPressed", ColorRole.TextPrimary },
+            { "ListViewItemForegroundSelected", ColorRole.TextPrimary },
+            { "ListViewItemForegroundSelectedPointerOver", ColorRole.TextPrimary },
+            { "ListViewItemForegroundSelectedPressed", ColorRole.TextPrimary },
+
+            //ProgressBar.
+            { "ProgressBarForeground", ColorRole.AccentEmphasis },
+            { "ProgressBarBackground", ColorRole.HairlineMuted },
+
+            //ScrollBar.
+            { "ScrollBarBackgroundPointerOver", ColorRole.CanvasSubtle },
+            { "ScrollBarThumbFill", ColorRole.Hairline },
+            { "ScrollBarThumbFillPointerOver", ColorRole.TextTertiary },
+            { "ScrollBarThumbFillPressed", ColorRole.TextSecondary },
+            { "ScrollBarThumbFillDisabled", ColorRole.HairlineMuted },
+            { "ScrollBarTrackFillPointerOver", ColorRole.CanvasSubtle },
+            { "ScrollBarTrackStrokePointerOver", ColorRole.HairlineMuted },
+            { "ScrollBarButtonBackgroundPointerOver", ColorRole.ButtonFaceHover },
+            { "ScrollBarButtonBackgroundPressed", ColorRole.ButtonFacePressed },
+            { "ScrollBarButtonArrowForeground", ColorRole.TextSecondary },
+            { "ScrollBarButtonArrowForegroundPointerOver", ColorRole.TextPrimary },
+            { "ScrollBarButtonArrowForegroundPressed", ColorRole.TextPrimary },
+            { "ScrollBarButtonArrowForegroundDisabled", ColorRole.Hairline },
+
+            //ContentDialog, which the popup layer reads from application resources.
+            { "ContentDialogBackground", ColorRole.Canvas },
+            { "ContentDialogForeground", ColorRole.TextPrimary },
+            { "ContentDialogBorderBrush", ColorRole.Hairline },
+            { "ContentDialogTopOverlay", ColorRole.CanvasSubtle },
+            { "ContentDialogSeparatorBorderBrush", ColorRole.Hairline },
+        };
+}

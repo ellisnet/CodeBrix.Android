@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Host-free tests (net10.0) of the CodeBrix.Android AppSettings add-in: its SQLite storage (Portable/, compiled in
+    from source) driven through the REAL Core settings API (CodeBrix.Platform.AppSettings.Core's AppSettingsStore,
+    whose storage contract a test platform registers), on real SQLite files in a temporary folder - persistence,
+    auto-backups, quarantine and restore, export and import. The Android folders (Context.FilesDir) are exercised on
+    the emulator (the GitHubIssueFinder and KenneyAssetBrowser gates).
+
+    AssemblyName = the name CodeBrix.Platform.AppSettings.Core grants InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>CodeBrix.Android.AppSettings.Tests</AssemblyName>
+    <RootNamespace>CodeBrix.Android.AppSettings.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)build/intake/CodeBrix.Android.Intake.proj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\src\AddIns\CodeBrix.Android.AppSettings\Portable\*.cs" Link="Linked\%(Filename)%(Extension)" />
+    <Compile Include="..\Shared\CoreMetadata.cs" Link="Shared\CoreMetadata.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.AppSettings.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Extensions.Logging.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Foundation.Core.dll" />
+    <!-- Read as metadata only (PEReader), never loaded. -->
+    <AssemblyMetadata Include="CodeBrix.Android.Tests.CoreLib" Value="$(CodeBrixPlatformIntakeLibDir)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CodeBrix.Sqlite.ApacheLicenseForever" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="SilverAssertions.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

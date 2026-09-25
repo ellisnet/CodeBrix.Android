@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: JustBetweenUs (CodeBrix.Samples
+    JustBetweenUs/CodeBrixPlatform/JustBetweenUs.UI). Pasted/ = the shared UI project's files,
+    verbatim. The page's view model, controls and services come from the multi-targeted
+    JustBetweenUs.Core of samples/HelloPaste (itself verbatim); the Lottie add-in type the page
+    names comes from HelloPaste's stub.
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.justbetweenus</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>JustBetweenUs.PasteAlways</RootNamespace>
+    <AssemblyName>JustBetweenUs.PasteAlways</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="$(CodeBrixAndroidRepoRoot)samples/HelloPaste/HelloPaste.Android/Stubs/Lottie/LottieVisualSource.cs" Link="Surface\Stubs\LottieVisualSource.cs" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)samples/HelloPaste/JustBetweenUs.Core/JustBetweenUs.Core.csproj" />
+  </ItemGroup>
+
+</Project>

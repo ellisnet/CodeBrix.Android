@@ -1,0 +1,23 @@
+<Project>
+
+  <!--
+    samples/HelloPaste: the AP1 "first pasted page" app. The repository-wide settings
+    apply, then the in-repository CodeBrix.Android consumer wiring (the package layout
+    simulated from the intake; see build/inrepo/CodeBrix.Android.InRepo.props).
+
+    The app libraries are VERBATIM copies of CodeBrix.Samples code (see README.md for the
+    source of every file); they are compiled with the family settings, but they are not
+    CodeBrix.Android library code: no XML-doc requirement and no packing.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <CodeBrixAndroidInRepoConsumer>true</CodeBrixAndroidInRepoConsumer>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <Import Project="$(CodeBrixAndroidRepoRoot)build/inrepo/CodeBrix.Android.InRepo.props" />
+
+</Project>

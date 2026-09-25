@@ -1,0 +1,39 @@
+<Project>
+
+  <!--
+    CodeBrix.Android consumer build logic (props: evaluated before the project body).
+
+    A CodeBrix.Android app compiles the CodeBrix.Platform XAML it contains ("paste
+    always") with the re-shipped Platform XAML source generator and resource tasks,
+    configured with exactly the dialect a CodeBrix.Platform desktop (Skia) build uses,
+    against the re-shipped Core assemblies. The Platform head, runtime-replace and
+    single-project targets are never imported: nothing here selects or copies a Skia
+    assembly.
+
+    The re-shipped Platform build files live beside this file in the package
+    (buildTransitive/Platform.UI.SourceGenerators.props, Platform.UI.Tasks.targets,
+    platform.ui.tasks.assets.targets, CodeBrix.Platform.UI.Tasks/, Descriptors/).
+    CodeBrixAndroidPlatformBuildPath points elsewhere only for in-repo builds, which
+    read them from artifacts/intake/<version>/buildTransitive/.
+  -->
+
+  <PropertyGroup>
+    <_IsCodeBrixAndroid>true</_IsCodeBrixAndroid>
+    <CodeBrixAndroidPlatformBuildPath Condition="'$(CodeBrixAndroidPlatformBuildPath)' == ''">$(MSBuildThisFileDirectory)</CodeBrixAndroidPlatformBuildPath>
+
+    <!--
+      Fonts: Android loads weight/style variants from the .ttf.manifest files the
+      CodeBrix font packages ship (Typeface.Builder), as the desktop heads do.
+    -->
+    <SupportsFontManifest>true</SupportsFontManifest>
+
+    <!--
+      Assets: ms-appx:///<path> maps 1:1 to the Android asset <path>. The Android SDK's
+      default item "Assets/** -> AndroidAsset" strips the Assets/ prefix and would break
+      that mapping, so it is turned off; the targets file adds every app and library
+      asset as an AndroidAsset whose logical name is its ms-appx path.
+    -->
+    <EnableDefaultAndroidAssetItems Condition="'$(EnableDefaultAndroidAssetItems)' == ''">false</EnableDefaultAndroidAssetItems>
+  </PropertyGroup>
+
+</Project>

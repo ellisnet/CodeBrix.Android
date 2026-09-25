@@ -1,0 +1,23 @@
+<Project>
+  <!--
+    Every CodeBrix.Android assembly under src/ (AP1.9, pin 1.0.268.12): an embedded ILLink.Descriptors.xml that roots
+    the assembly itself behind the feature switch CodeBrix.Android.RootPlatformAssemblies (default true; set by the
+    consumer build logic, build/nuget/buildTransitive). The Cores load these assemblies BY NAME and they register their
+    contracts from module initializers, which a trimmer cannot see - the Cores root their Skia twins the same way.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))"
+          Condition="Exists($([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../')))" />
+
+  <Target Name="_CodeBrixAndroidTrimDescriptor" BeforeTargets="PrepareForBuild" Condition="'$(AssemblyName)' != ''">
+    <PropertyGroup>
+      <_CodeBrixAndroidTrimDescriptorPath>$(IntermediateOutputPath)ILLink.Descriptors.xml</_CodeBrixAndroidTrimDescriptorPath>
+    </PropertyGroup>
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <WriteLinesToFile File="$(_CodeBrixAndroidTrimDescriptorPath)" Overwrite="true" WriteOnlyWhenDifferent="true"
+                      Lines="&lt;linker&gt;;  &lt;assembly fullname=&quot;$(AssemblyName)&quot; preserve=&quot;all&quot; feature=&quot;CodeBrix.Android.RootPlatformAssemblies&quot; featurevalue=&quot;true&quot; featuredefault=&quot;true&quot; /&gt;;&lt;/linker&gt;" />
+    <ItemGroup>
+      <EmbeddedResource Include="$(_CodeBrixAndroidTrimDescriptorPath)" LogicalName="ILLink.Descriptors.xml" />
+      <FileWrites Include="$(_CodeBrixAndroidTrimDescriptorPath)" />
+    </ItemGroup>
+  </Target>
+</Project>

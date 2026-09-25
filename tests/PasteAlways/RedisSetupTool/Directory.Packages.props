@@ -1,0 +1,18 @@
+<Project>
+
+  <!--
+    RedisSetupTool paste-always head: the repository's central pins, plus the packages the
+    verbatim Surface/ copies need that the root file does not pin.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <!-- SKColor in RedisSetupTool.TerminalView's palette (Microsoft; the family's locked SkiaSharp release) -->
+    <!-- SkiaSharp 4.152.0: pinned by the repository's Directory.Packages.props since AP7-A (same version). -->
+    <!-- The Docker Engine client under RedisSetupTool.DockerManagement (self-produced CodeBrix package, the version the sample pins) -->
+    <PackageVersion Include="CodeBrix.Docker.MitLicenseForever" Version="1.0.254.1406" />
+    <!-- The Redis client under RedisSetupTool.RedisManagement (self-produced CodeBrix package, the version the sample pins) -->
+    <PackageVersion Include="CodeBrix.Redis.MitLicenseForever" Version="1.0.254.1168" />
+  </ItemGroup>
+
+</Project>

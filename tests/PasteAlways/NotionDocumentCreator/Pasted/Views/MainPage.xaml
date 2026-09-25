@@ -1,0 +1,334 @@
+<Page
+    x:Class="NotionDocumentCreator.Views.MainPage"
+    xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+    xmlns:c="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+    xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+    xmlns:m="clr-namespace:Microsoft.UI.Xaml.Media;assembly=CodeBrix.Platform.UI"
+    xmlns:ui="clr-namespace:Microsoft.UI.Xaml;assembly=CodeBrix.Platform.UI"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:NotionDocumentCreator.Views"
+    xmlns:vm="clr-namespace:NotionDocumentCreator.ViewModels;assembly=NotionDocumentCreator.Core"
+    xmlns:flex="clr-namespace:CodeBrix.Platform.UI.FlexPanel;assembly=CodeBrix.Platform.UI.FlexPanel"
+    FontFamily="{StaticResource RobotoFont}"
+    Background="#16181D">
+
+    <Page.DataContext>
+        <vm:MainViewModel />
+    </Page.DataContext>
+
+    <Page.Resources>
+        <!-- ═══ The app's dark palette (accent: warm amber-gold — ink and gilt) ═══ -->
+        <m:SolidColorBrush x:Key="WindowBrush" Color="#16181D" />
+        <m:SolidColorBrush x:Key="HeaderBrush" Color="#1B1E25" />
+        <m:SolidColorBrush x:Key="CardBrush" Color="#1F232B" />
+        <m:SolidColorBrush x:Key="CardWellBrush" Color="#171A20" />
+        <m:SolidColorBrush x:Key="HairlineBrush" Color="#2A2F39" />
+        <m:SolidColorBrush x:Key="TextPrimaryBrush" Color="#F2F4F8" />
+        <m:SolidColorBrush x:Key="TextSecondaryBrush" Color="#A8B0BF" />
+        <m:SolidColorBrush x:Key="TextTertiaryBrush" Color="#6E7686" />
+        <m:SolidColorBrush x:Key="AccentBrush" Color="#D9A441" />
+        <m:SolidColorBrush x:Key="AccentDimBrush" Color="#B0822F" />
+
+        <!-- Re-key the theme's standard-button brushes to the dark palette, so every plain
+             Button on this page hovers and presses in-palette -->
+        <m:SolidColorBrush x:Key="ButtonBackground" Color="#262B34" />
+        <m:SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#2E3440" />
+        <m:SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#232830" />
+        <m:SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="#1F232B" />
+        <m:SolidColorBrush x:Key="ButtonForeground" Color="#F2F4F8" />
+        <m:SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#FFFFFF" />
+        <m:SolidColorBrush x:Key="ButtonForegroundPressed" Color="#F2F4F8" />
+        <m:SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#6E7686" />
+        <m:SolidColorBrush x:Key="ButtonBorderBrush" Color="#2A2F39" />
+        <m:SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#3A4150" />
+        <m:SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#2A2F39" />
+        <m:SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="#2A2F39" />
+
+        <!-- Re-key the theme's accent-button brushes to the amber accent, so
+             {ThemeResource AccentButtonStyle} buttons follow the app palette -->
+        <m:SolidColorBrush x:Key="AccentButtonBackground" Color="#D9A441" />
+        <m:SolidColorBrush x:Key="AccentButtonBackgroundPointerOver" Color="#E6B455" />
+        <m:SolidColorBrush x:Key="AccentButtonBackgroundPressed" Color="#C08F32" />
+        <m:SolidColorBrush x:Key="AccentButtonBackgroundDisabled" Color="#3A3F49" />
+        <m:SolidColorBrush x:Key="AccentButtonForeground" Color="#14100A" />
+        <m:SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#14100A" />
+        <m:SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#14100A" />
+        <m:SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#6E7686" />
+
+        <!-- Re-key the theme's checkbox brushes too — the page-selection checkboxes are
+             the app's most-used control, and stock Fluent blue against the amber palette
+             is the single most visible way the page would look unfinished -->
+        <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundFillChecked" Color="#D9A441" />
+        <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver" Color="#E6B455" />
+        <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPressed" Color="#C08F32" />
+        <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeChecked" Color="#D9A441" />
+        <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPointerOver" Color="#E6B455" />
+        <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPressed" Color="#C08F32" />
+        <m:SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundChecked" Color="#14100A" />
+        <m:SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundCheckedPointerOver" Color="#14100A" />
+        <m:SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundCheckedPressed" Color="#14100A" />
+
+        <!-- The primary (accent) button: the theme's accent style plus app shaping -->
+        <ui:Style x:Key="PrimaryButtonStyle" TargetType="c:Button" BasedOn="{StaticResource AccentButtonStyle}">
+            <ui:Setter Property="CornerRadius" Value="8" />
+            <ui:Setter Property="Padding" Value="16,7" />
+            <ui:Setter Property="FontWeight" Value="SemiBold" />
+        </ui:Style>
+
+        <!-- One row of the page tree: explicit checkbox (independent selection — no
+             parent/child propagation), the page icon in a rounded well, and the title.
+             Tapping the title area (not the checkbox) previews the page. -->
+        <ui:DataTemplate x:Key="PageNodeTemplate">
+            <TreeViewItem ItemsSource="{d:Binding Children}"
+                          IsExpanded="{d:Binding IsExpanded, Mode=TwoWay}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <CheckBox IsChecked="{d:Binding IsChecked, Mode=TwoWay}"
+                              MinWidth="0"
+                              Visibility="{d:Binding CheckBoxVisibility}" />
+                    <Button Background="Transparent" BorderThickness="0" Padding="6,3"
+                            CornerRadius="6"
+                            Command="{d:Binding SelectCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="9">
+                            <Border Width="26" Height="26" CornerRadius="6"
+                                    Background="{StaticResource CardWellBrush}"
+                                    VerticalAlignment="Center">
+                                <Grid>
+                                    <FontIcon Glyph="{d:Binding KindGlyph}" FontSize="12"
+                                              Foreground="{StaticResource AccentDimBrush}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Visibility="{d:Binding IconGlyphVisibility}" />
+                                    <Image Source="{d:Binding IconImageSource}" Stretch="UniformToFill"
+                                           Visibility="{d:Binding IconImageVisibility}" />
+                                </Grid>
+                            </Border>
+                            <TextBlock Text="{d:Binding Title}" FontSize="14"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" MaxLines="1" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </TreeViewItem>
+        </ui:DataTemplate>
+    </Page.Resources>
+
+    <Grid x:Name="RootGrid" RequestedTheme="Dark" Background="{StaticResource WindowBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ═══ Header: identity on the left, the connect controls on the right ═══ -->
+        <Border Grid.Row="0" Background="{StaticResource HeaderBrush}"
+                BorderBrush="{StaticResource HairlineBrush}" BorderThickness="0,0,0,1"
+                Padding="24,10,24,10">
+            <flex:FlexPanel Direction="Row" Wrap="Wrap" AlignItems="Center">
+
+                <!-- Grow=1: the identity block soaks up the free main-axis space, keeping
+                     the connect group pinned right while it still shares the row -->
+                <StackPanel Spacing="2" Margin="0,6,16,6" flex:FlexPanel.Grow="1">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE82D;" FontSize="19" Foreground="{StaticResource AccentBrush}"
+                                  VerticalAlignment="Center" />
+                        <TextBlock Text="Notion Document Creator" FontSize="19" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{d:Binding ConnectionStatus}"
+                               FontSize="11.5" Foreground="{StaticResource TextTertiaryBrush}" />
+                </StackPanel>
+
+                <!-- Token + page ID + Connect travel as one unit when the panel wraps -->
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,6,0,6">
+                    <PasswordBox Width="250" VerticalAlignment="Center" CornerRadius="8"
+                                 PlaceholderText="Notion integration token"
+                                 Password="{d:Binding IntegrationToken, Mode=TwoWay}" />
+                    <TextBox Width="230" VerticalAlignment="Center" CornerRadius="8"
+                             PlaceholderText="Page or database ID"
+                             Text="{d:Binding PageOrDatabaseId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <Button Style="{StaticResource PrimaryButtonStyle}"
+                            VerticalAlignment="Center"
+                            Content="Connect"
+                            Command="{d:Binding ConnectCommand}" />
+                </StackPanel>
+            </flex:FlexPanel>
+        </Border>
+
+        <!-- ═══ Main area: the page tree beside the preview pane ═══ -->
+        <Grid Grid.Row="1" Padding="20,16,20,4" ColumnSpacing="14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="360" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Tree card -->
+            <Border Grid.Column="0" Background="{StaticResource CardBrush}"
+                    BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1"
+                    CornerRadius="12">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Padding="18,14,14,8" ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="3" VerticalAlignment="Center">
+                            <TextBlock Text="PAGES" FontSize="11" FontWeight="SemiBold"
+                                       CharacterSpacing="80"
+                                       Foreground="{StaticResource AccentBrush}" />
+                            <TextBlock Text="{d:Binding CheckedCountText}" FontSize="11"
+                                       Foreground="{StaticResource TextTertiaryBrush}" />
+                        </StackPanel>
+                        <Button Grid.Column="1" CornerRadius="6" Padding="12,5" BorderThickness="1"
+                                VerticalAlignment="Center"
+                                Command="{d:Binding LoadWholeTreeCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE8F1;" FontSize="12"
+                                          Foreground="{StaticResource AccentBrush}"
+                                          VerticalAlignment="Center" />
+                                <TextBlock Text="Load whole tree" FontSize="11.5"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <!-- Before Connect: a quiet hint instead of a blank panel -->
+                    <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Spacing="14" MaxWidth="420" Margin="20"
+                                Visibility="{d:Binding TreePlaceholderVisibility}">
+                        <FontIcon Glyph="&#xE8F1;" FontSize="40"
+                                  Foreground="{StaticResource AccentDimBrush}"
+                                  HorizontalAlignment="Center" />
+                        <TextBlock Text="Connect to see your pages"
+                                   FontSize="15.5" FontWeight="SemiBold" TextAlignment="Center"
+                                   Foreground="{StaticResource TextPrimaryBrush}" />
+                        <TextBlock FontSize="12.5" LineHeight="20" TextWrapping="Wrap" TextAlignment="Center"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="Paste your integration token and a page or database ID above. Every checked page becomes a chapter of the book — the first checked page becomes the cover." />
+                    </StackPanel>
+
+                    <TreeView Grid.Row="1" Padding="10,0,10,12"
+                              SelectionMode="None"
+                              Visibility="{d:Binding TreeVisibility}"
+                              ItemsSource="{d:Binding RootNodes}"
+                              ItemTemplate="{StaticResource PageNodeTemplate}" />
+                </Grid>
+            </Border>
+
+            <!-- Preview card (fixed height content — it never scrolls) -->
+            <Border Grid.Column="1" Background="{StaticResource CardBrush}"
+                    BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1"
+                    CornerRadius="12">
+                <Grid Padding="18,14,18,16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="PREVIEW" FontSize="11" FontWeight="SemiBold"
+                               CharacterSpacing="80"
+                               Foreground="{StaticResource AccentBrush}" />
+
+                    <!-- No selection yet: a quiet hint -->
+                    <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Spacing="12" MaxWidth="260"
+                                Visibility="{d:Binding PreviewPlaceholderVisibility}">
+                        <FontIcon Glyph="&#xE8A5;" FontSize="34"
+                                  Foreground="{StaticResource AccentDimBrush}"
+                                  HorizontalAlignment="Center" />
+                        <TextBlock Text="Tap a page title to preview it here"
+                                   FontSize="12.5" TextWrapping="Wrap" TextAlignment="Center"
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Spacing="12" Margin="0,12,0,0"
+                                Visibility="{d:Binding PreviewContentVisibility}">
+                        <!-- Cover / icon thumbnail well -->
+                        <Border Height="130" CornerRadius="8"
+                                Background="{StaticResource CardWellBrush}"
+                                Visibility="{d:Binding PreviewCoverVisibility}">
+                            <Image Source="{d:Binding PreviewCoverSource}" Stretch="UniformToFill" />
+                        </Border>
+
+                        <TextBlock Text="{d:Binding PreviewTitle}" FontSize="15.5" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap" />
+                        <TextBlock Text="{d:Binding PreviewMeta}" FontSize="11"
+                                   Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextTrimming="CharacterEllipsis" MaxLines="1" />
+                        <TextBlock Text="{d:Binding PreviewSnippets}" FontSize="12.5" LineHeight="20"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap"
+                                   TextTrimming="CharacterEllipsis" MaxLines="9" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ═══ Status line ═══ -->
+        <Grid Grid.Row="2" Padding="24,8,24,8" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="180" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <ProgressBar Grid.Column="0" Height="4" VerticalAlignment="Center"
+                         Minimum="0" Maximum="100"
+                         Foreground="{StaticResource AccentBrush}" Background="#262B34"
+                         Value="{d:Binding ProgressValue}" />
+            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="12"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       TextTrimming="CharacterEllipsis" MaxLines="1"
+                       Text="{d:Binding StatusText}" />
+        </Grid>
+
+        <!-- ═══ Bottom action bar: save target, page size, Create! ═══ -->
+        <Border Grid.Row="3" Background="{StaticResource HeaderBrush}"
+                BorderBrush="{StaticResource HairlineBrush}" BorderThickness="0,1,0,0"
+                Padding="24,10,24,12">
+            <flex:FlexPanel Direction="Row" Wrap="Wrap" AlignItems="Center">
+
+                <!-- Save-target group; Grow=1 so the path box stretches into whatever
+                     width its row has, Basis so the wrap point is deterministic -->
+                <Grid Margin="0,4,16,4" ColumnSpacing="10"
+                      flex:FlexPanel.Grow="1" flex:FlexPanel.Basis="420">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Save PDF to:" FontSize="12.5"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               VerticalAlignment="Center" />
+                    <TextBox Grid.Column="1" Height="34" CornerRadius="8"
+                             VerticalAlignment="Center" VerticalContentAlignment="Center"
+                             PlaceholderText="Click Select… (or type a full .pdf path)"
+                             Text="{d:Binding OutputFilePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <Button Grid.Column="2" Height="34" CornerRadius="8" BorderThickness="1"
+                            Content="Select…"
+                            Command="{d:Binding SelectOutputFileCommand}" />
+                </Grid>
+
+                <!-- Page-size + Create! group -->
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,4,0,4">
+                    <TextBlock Text="Page size:" FontSize="12.5"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               VerticalAlignment="Center" />
+                    <ComboBox Width="200" VerticalAlignment="Center" CornerRadius="8"
+                              ItemsSource="{d:Binding PageSizes}"
+                              DisplayMemberPath="DisplayName"
+                              SelectedItem="{d:Binding SelectedPageSize, Mode=TwoWay}" />
+                    <Button MinWidth="110" Style="{StaticResource PrimaryButtonStyle}"
+                            VerticalAlignment="Center"
+                            Content="Create!"
+                            Command="{d:Binding CreateCommand}" />
+                </StackPanel>
+            </flex:FlexPanel>
+        </Border>
+    </Grid>
+</Page>

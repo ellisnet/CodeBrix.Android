@@ -1,0 +1,20 @@
+<Project>
+
+  <!--
+    tests/CodeBrix.Android.UIReqs.Device: the device half of the UIReqs port. The repository-wide
+    settings apply, then the in-repository CodeBrix.Android consumer wiring (as samples/HelloPaste).
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <CodeBrixAndroidInRepoConsumer>true</CodeBrixAndroidInRepoConsumer>
+    <!-- The add-ins whose UIReqs groups the scenario app runs (AP7; their scenario code is under Scenarios/AddIns/). -->
+    <CodeBrixAndroidInRepoAddIns>SkiaSharpViews;Svg;Graphics2DSK;CommandBar;FlexPanel;WebView;MediaPlayer;Graphics3DGL;TextLayout</CodeBrixAndroidInRepoAddIns>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <Import Project="$(CodeBrixAndroidRepoRoot)build/inrepo/CodeBrix.Android.InRepo.props" />
+
+</Project>

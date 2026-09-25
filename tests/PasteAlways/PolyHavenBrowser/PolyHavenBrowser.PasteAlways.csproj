@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: PolyHavenBrowser (CodeBrix.Samples PolyHavenBrowser/src/PolyHavenBrowser.UI).
+    Pasted/ = the shared UI project's files, verbatim. Surface/ = the page's view models, services and
+    helpers (PolyHavenBrowser.Core) compiled here, and its three libraries (Rendering, PolyHavenApiClient,
+    CreateDocument) as their own Surface projects with the source libraries' own settings - verbatim copies,
+    no stubs (see Surface/SOURCES.txt). The Graphics3DGL and FlexPanel add-ins are the real Android add-ins.
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.polyhavenbrowser</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>PolyHavenBrowser.PasteAlways</RootNamespace>
+    <AssemblyName>PolyHavenBrowser.PasteAlways</AssemblyName>
+    <CodeBrixAndroidInRepoAddIns>Graphics3DGL;FlexPanel</CodeBrixAndroidInRepoAddIns>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <!-- The three libraries are their own assemblies, not the head's. -->
+  <ItemGroup>
+    <Compile Remove="Surface\PolyHavenBrowser.Rendering\**;Surface\PolyHavenBrowser.PolyHavenApiClient\**;Surface\PolyHavenBrowser.CreateDocument\**" />
+    <None Remove="Surface\PolyHavenBrowser.Rendering\**;Surface\PolyHavenBrowser.PolyHavenApiClient\**;Surface\PolyHavenBrowser.CreateDocument\**" />
+    <EmbeddedResource Remove="Surface\PolyHavenBrowser.CreateDocument\**" />
+    <!-- The libraries (Android libraries here) keep AndroidX classes.jar imports under their obj/; the head's
+         default **/*.jar glob must not bind them. -->
+    <AndroidLibrary Remove="Surface\**" />
+    <AndroidJavaSource Remove="Surface\**" />
+    <ProjectReference Include="Surface\PolyHavenBrowser.Rendering\PolyHavenBrowser.Rendering.csproj" />
+    <ProjectReference Include="Surface\PolyHavenBrowser.PolyHavenApiClient\PolyHavenBrowser.PolyHavenApiClient.csproj" />
+    <ProjectReference Include="Surface\PolyHavenBrowser.CreateDocument\PolyHavenBrowser.CreateDocument.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="CodeBrix.Platform.Fonts.Roboto.OflLicenseForever" />
+  </ItemGroup>
+
+</Project>

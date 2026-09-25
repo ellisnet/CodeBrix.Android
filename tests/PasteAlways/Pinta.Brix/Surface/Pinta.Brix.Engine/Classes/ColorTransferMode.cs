@@ -1,0 +1,14 @@
+/////////////////////////////////////////////////////////////////////////////////
+// Copyright (C) dotPDN LLC, Rick Brewster, Tom Jackson, and contributors.     //
+// Portions Copyright (C) Microsoft Corporation. All Rights Reserved.          //
+// See license-pdn.txt for full licensing and attribution details.             //
+/////////////////////////////////////////////////////////////////////////////////
+
+//was previously: namespace Pinta.Core;
+namespace Pinta.Brix.Engine;
+
+public enum ColorTransferMode
+{
+	Rgb,
+	Luminosity
+}

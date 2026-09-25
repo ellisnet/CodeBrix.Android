@@ -1,0 +1,17 @@
+<Project>
+
+  <!--
+    PolyHavenBrowser paste-always head: the repository's central pins, plus the packages the verbatim Surface/
+    copies of the sample's libraries need that the root file does not pin (self-produced CodeBrix packages and
+    Microsoft.Extensions.Http, at the versions the sample pins).
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <PackageVersion Include="CodeBrix.Imaging.ApacheLicenseForever" Version="1.0.248.1113" />
+    <PackageVersion Include="CodeBrix.Graphics3D.Gltf2.MitLicenseForever" Version="1.0.261.293" />
+    <PackageVersion Include="CodeBrix.PdfDocuments.MitLicenseForever" Version="1.0.254.196" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
+  </ItemGroup>
+
+</Project>

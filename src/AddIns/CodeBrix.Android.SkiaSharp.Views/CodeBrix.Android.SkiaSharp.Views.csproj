@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.SkiaSharp.Views: the Android side of the CodeBrix.Platform SkiaSharp.Views add-in
+    (AP7.1) - the canvas every Skia-drawing add-in draws through:
+      * ISKXamlCanvasPlatform / ISKSwapChainPanelPlatform (per element, created by the Core's
+        PlatformContract, which loads THIS assembly by name and runs its module initializer);
+      * the Skia canvas-host seam's factory (SKCanvasVisualBaseFactory of CodeBrix.Platform.UI.Core):
+        SKCanvasHostElement (Svg's SvgCanvas, Lottie) and Graphics2DSK's SKCanvasElement paint through it;
+      * the handlers that show them natively: SKXamlCanvas -> a view group that paints the canvas under its
+        XAML children, SKCanvasHostElement -> a leaf Skia view.
+    AssemblyName = the name CodeBrix.Platform.SkiaSharp.Views.Core (and UI.Core) grant InternalsVisibleTo to.
+    Painting is software (an android.graphics.Bitmap shared with an SKSurface); see MAINTAINER-README.txt.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android.SkiaSharp.Views</AssemblyName>
+    <RootNamespace>CodeBrix.Android.SkiaSharp.Views</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <!-- The add-in Core (re-shipped from the pinned Platform build by the intake). -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.SkiaSharp.Views.Core.dll" />
+    <!-- Skia itself and its Android native library (Microsoft; the family's locked SkiaSharp release). -->
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Android" />
+  </ItemGroup>
+
+</Project>

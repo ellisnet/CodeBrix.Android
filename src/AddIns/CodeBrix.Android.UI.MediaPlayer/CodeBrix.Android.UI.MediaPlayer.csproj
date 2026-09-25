@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UI.MediaPlayer: the Android side of the CodeBrix.Platform MediaPlayer add-in (AP7.13; package suffix
+    ApacheLicenseForever per D-O13 - the Platform package is LGPL because of LibVLC, this one uses Media3, Apache 2.0).
+    MediaPlayerElement, MediaPlayerPresenter, the transport controls and Windows.Media.Playback.MediaPlayer are the
+    framework's own (UI.Core / Platform.Core; WPC5: the add-in is "whole", its platform side is the engine). This assembly
+    implements IMediaPlayerExtension over AndroidX Media3 ExoPlayer and IMediaPlayerPresenterExtension (the picture: a
+    TextureView fitted to the presenter by its Stretch, shown by a handler).
+    AssemblyName = the name CodeBrix.Platform.UI.Core / .Core grant InternalsVisibleTo to for the MediaPlayer add-in.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android.UI.MediaPlayer</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.MediaPlayer</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <!-- Microsoft-owned bindings of AndroidX Media3 (Apache 2.0): the playback engine. -->
+    <PackageReference Include="Xamarin.AndroidX.Media3.ExoPlayer" />
+  </ItemGroup>
+
+</Project>

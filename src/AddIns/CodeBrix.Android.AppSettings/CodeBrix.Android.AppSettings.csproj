@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.AppSettings: the Android side of the CodeBrix.Platform AppSettings add-in (AP7.14; D-O6 answered
+    by the brief: CodeBrix.Sqlite runs on Android - SQLitePCLRaw is an accepted exception, reached through it). Its
+    Core (CodeBrix.Platform.AppSettings.Core, re-shipped by the intake) is the whole settings API (AppSettingsStore,
+    AppSettingProperty, the service) and resolves one platform contract, IAppSettingsStoragePlatform, loading this
+    assembly BY NAME: the storage is one SQLite database (settings.sqlite) under Context.FilesDir, with the same
+    lifecycle as every CodeBrix.Platform head (auto-backups and pruning, quarantine of a corrupt file and restore from
+    the newest backup, export, import staged as settings_incoming.sqlite and adopted at the next open).
+    AssemblyName = the name CodeBrix.Platform.AppSettings.Core grants InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android.AppSettings</AssemblyName>
+    <RootNamespace>CodeBrix.Android.AppSettings</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.AppSettings.Core.dll" />
+    <!-- Self-produced; brings Microsoft.Data.Sqlite and SQLitePCLRaw (e_sqlite3 with its Android natives). -->
+    <PackageReference Include="CodeBrix.Sqlite.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

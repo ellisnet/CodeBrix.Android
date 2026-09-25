@@ -1,0 +1,42 @@
+<Application x:Class="CodeBrixVideoTool.App"
+     xmlns="clr-namespace:Microsoft.UI.Xaml;assembly=CodeBrix.Platform.UI"
+     xmlns:m="clr-namespace:Microsoft.UI.Xaml.Media;assembly=CodeBrix.Platform.UI"
+     xmlns:c="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI.FluentTheme"
+     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+     RequestedTheme="Dark">
+
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <!-- Load WinUI resources -->
+        <c:XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+      </ResourceDictionary.MergedDictionaries>
+      <!-- Roboto font - reference the .ttf file directly (the Fonts.xaml
+           merge does not work on Skia targets) -->
+      <m:FontFamily x:Key="RobotoFont">ms-appx:///CodeBrix.Platform.Fonts.Roboto/Fonts/Roboto.ttf</m:FontFamily>
+
+      <!-- The application's palette. A video tool is looked at for a long time beside a moving
+           picture, so it is dark on purpose: the panels sit back and the picture is the only
+           bright thing on the screen. -->
+      <m:SolidColorBrush x:Key="AppWindowBrush" Color="#FF14161A" />
+      <m:SolidColorBrush x:Key="AppPanelBrush" Color="#FF1C1F26" />
+      <m:SolidColorBrush x:Key="AppRaisedPanelBrush" Color="#FF23272F" />
+      <m:SolidColorBrush x:Key="AppDividerBrush" Color="#FF2E333C" />
+      <m:SolidColorBrush x:Key="AppAccentBrush" Color="#FF4C9AFF" />
+      <m:SolidColorBrush x:Key="AppTextBrush" Color="#FFE9ECF1" />
+      <m:SolidColorBrush x:Key="AppMutedTextBrush" Color="#FF98A0AD" />
+      <m:SolidColorBrush x:Key="AppStageBrush" Color="#FF000000" />
+      <m:SolidColorBrush x:Key="AppNoticeBrush" Color="#FF3A2E14" />
+      <m:SolidColorBrush x:Key="AppNoticeTextBrush" Color="#FFFFD98A" />
+
+      <!-- The theme's own selection brushes are a light accent, which the light text in the file
+           rows disappears into. These are the same accent taken down to something the rows read on. -->
+      <m:SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#FF25344D" />
+      <m:SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#FF2C3E5C" />
+      <m:SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#FF1F2C42" />
+      <m:SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="#FF262B34" />
+      <m:SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="#FF20242B" />
+    </ResourceDictionary>
+  </Application.Resources>
+
+</Application>

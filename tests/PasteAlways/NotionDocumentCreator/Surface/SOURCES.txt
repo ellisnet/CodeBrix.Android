@@ -1,0 +1,15 @@
+# Surface/ of the NotionDocumentCreator paste-always head: every file, with its CodeBrix.Samples source.
+# (verbatim) = an unedited copy; (stub) = same namespace, type names and the public members the pasted/copied files use.
+Surface/NotionDocumentCreator.Core/Helpers/BackgroundWork.cs  <- CodeBrix.Samples/NotionDocumentCreator/src/NotionDocumentCreator.Core/Helpers/BackgroundWork.cs  (verbatim)
+Surface/NotionDocumentCreator.Core/Helpers/FileDialogHelper.cs  <- CodeBrix.Samples/NotionDocumentCreator/src/NotionDocumentCreator.Core/Helpers/FileDialogHelper.cs  (verbatim)
+Surface/NotionDocumentCreator.Core/Helpers/HostHelper.cs  <- CodeBrix.Samples/NotionDocumentCreator/src/NotionDocumentCreator.Core/Helpers/HostHelper.cs  (verbatim)
+Surface/NotionDocumentCreator.Core/ViewModels/MainViewModel.cs  <- CodeBrix.Samples/NotionDocumentCreator/src/NotionDocumentCreator.Core/ViewModels/MainViewModel.cs  (verbatim)
+Surface/NotionDocumentCreator.Core/ViewModels/NotionPageNodeViewModel.cs  <- CodeBrix.Samples/NotionDocumentCreator/src/NotionDocumentCreator.Core/ViewModels/NotionPageNodeViewModel.cs  (verbatim)
+Surface/NotionDocumentCreator.CreateDocument/Models/DocumentModels.cs  <- CodeBrix.Samples/NotionDocumentCreator/src/libs/NotionDocumentCreator.CreateDocument/Models/DocumentModels.cs  (verbatim)
+Surface/NotionDocumentCreator.CreateDocument/Models/NotionTreeModels.cs  <- CodeBrix.Samples/NotionDocumentCreator/src/libs/NotionDocumentCreator.CreateDocument/Models/NotionTreeModels.cs  (verbatim)
+Surface/NotionDocumentCreator.CreateDocument/Models/PageSizeOption.cs  <- CodeBrix.Samples/NotionDocumentCreator/src/libs/NotionDocumentCreator.CreateDocument/Models/PageSizeOption.cs  (verbatim)
+Surface/NotionDocumentCreator.CreateDocument/RegisterServices.cs  <- CodeBrix.Samples/NotionDocumentCreator/src/libs/NotionDocumentCreator.CreateDocument/RegisterServices.cs  (verbatim)
+Surface/NotionDocumentCreator.CreateDocument/SelectionFlattening.cs  <- CodeBrix.Samples/NotionDocumentCreator/src/libs/NotionDocumentCreator.CreateDocument/SelectionFlattening.cs  (verbatim)
+Surface/NotionDocumentCreator.CreateDocument/Services/INotionDocumentService.cs  <- CodeBrix.Samples/NotionDocumentCreator/src/libs/NotionDocumentCreator.CreateDocument/Services/INotionDocumentService.cs  (verbatim)
+Surface/NotionDocumentCreator.CreateDocument/Services/NotionDocumentService.cs  <- CodeBrix.Samples/NotionDocumentCreator/src/libs/NotionDocumentCreator.CreateDocument/Services/NotionDocumentService.cs  (stub)
+# Not copied: InternalsVisibleTo.cs of each library (grants to the libraries' own test projects).

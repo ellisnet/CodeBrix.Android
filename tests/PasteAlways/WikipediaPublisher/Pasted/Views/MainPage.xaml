@@ -1,0 +1,102 @@
+<Page x:Class="WikipediaPublisher.Views.MainPage"
+      xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+      xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:flex="clr-namespace:CodeBrix.Platform.UI.FlexPanel;assembly=CodeBrix.Platform.UI.FlexPanel"
+      xmlns:local="using:WikipediaPublisher.Views"
+      xmlns:vm="clr-namespace:WikipediaPublisher.ViewModels;assembly=WikipediaPublisher.Core"
+      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+      FontFamily="{StaticResource OpenSansFont}">
+
+    <Page.DataContext>
+        <vm:MainViewModel />
+    </Page.DataContext>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Search bar -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" Text="Search Wikipedia:"
+                       VerticalAlignment="Center" Margin="0,0,12,0" />
+            <TextBox Grid.Column="1" Height="36"
+                     VerticalAlignment="Center" VerticalContentAlignment="Center"
+                     PlaceholderText="e.g. cuneiform writing"
+                     KeyDown="SearchBox_KeyDown"
+                     Text="{d:Binding SearchTerms, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <Button Grid.Column="2" Width="110" Height="36" Margin="12,0,0,0"
+                    Content="Search"
+                    Command="{d:Binding SearchCommand}" />
+        </Grid>
+
+        <!-- Center: embedded browser. Every Skia head now has a WebView2 - the Windows,
+             Skia-on-WPF and macOS runtimes have it built in, and the Linux heads get it
+             from the CodeBrix.Platform.WebView.ApacheLicenseForever add-in (WPE WebKit). -->
+        <WebView2 Grid.Row="1" x:Name="Browser" />
+
+        <!-- Status line -->
+        <Grid Grid.Row="2" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="180" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <ProgressBar Grid.Column="0" Height="8" VerticalAlignment="Center"
+                         Minimum="0" Maximum="100"
+                         Value="{d:Binding ProgressValue}" />
+            <TextBlock Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"
+                       Text="{d:Binding StatusText}" />
+        </Grid>
+
+        <!-- Bottom bar: output file path (+ Select dialog), page size, Publish.
+             A wrapping FlexPanel: one row while the window is wide enough; in portrait
+             the save-target group and the page-size/Publish group split onto two rows -->
+        <flex:FlexPanel Grid.Row="3" Margin="0,8,0,0" Direction="Row" Wrap="Wrap"
+                        AlignItems="Center">
+
+            <!-- Save-target group; Grow=1 so the path box stretches into whatever
+                 width its row has, Basis so the wrap point is deterministic -->
+            <Grid Margin="0,4,16,4" flex:FlexPanel.Grow="1" flex:FlexPanel.Basis="420">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Save PDF to:"
+                           VerticalAlignment="Center" Margin="0,0,12,0" />
+                <TextBox Grid.Column="1" Height="36"
+                         VerticalAlignment="Center" VerticalContentAlignment="Center"
+                         PlaceholderText="Click Select… (or type a full .pdf path)"
+                         Text="{d:Binding OutputFilePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Grid.Column="2" Height="36" Margin="8,0,0,0"
+                        Content="Select…"
+                        Command="{d:Binding SelectOutputFileCommand}" />
+            </Grid>
+
+            <!-- Page-size + Publish group -->
+            <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
+                <TextBlock Text="Page size:"
+                           VerticalAlignment="Center" Margin="0,0,12,0" />
+                <ComboBox Width="210" Height="36" VerticalAlignment="Center"
+                          ItemsSource="{d:Binding PageSizes}"
+                          DisplayMemberPath="DisplayName"
+                          SelectedItem="{d:Binding SelectedPageSize, Mode=TwoWay}" />
+                <Button Width="130" Height="40" Margin="16,0,0,0"
+                        Style="{ThemeResource AccentButtonStyle}"
+                        Content="Publish"
+                        Command="{d:Binding PublishCommand}" />
+            </StackPanel>
+        </flex:FlexPanel>
+    </Grid>
+</Page>

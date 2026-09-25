@@ -1,0 +1,49 @@
+<Project>
+
+  <!--
+    Settings shared by every CodeBrix.Android assembly under src/ (imports the
+    repository-wide Directory.Build.props first).
+
+    Every src/ project compiles against the extracted, re-shipped CodeBrix.Platform
+    Core assemblies of the pinned build (artifacts/intake/<version>/lib/) and
+    references the intake project for build order only, so a clean solution build
+    runs the intake first. The AssemblyName of each project is the name a Core
+    assembly grants InternalsVisibleTo to (build/intake/gates/ivt-grants.txt); the
+    intake fails if a src/ project is not listed there.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)build/intake/CodeBrix.Android.Intake.proj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- The framework Core assemblies of the pinned CodeBrix.Platform build (the re-shipped object model). -->
+  <ItemGroup>
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Extensions.Logging.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Foundation.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Foundation.Logging.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Adapter.Microsoft.Extensions.Logging.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Composition.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Dispatching.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Toolkit.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Xaml.dll" />
+  </ItemGroup>
+
+  <!-- The package dependencies of the Core assemblies (none produced by the CodeBrix.Platform repository). -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="CodeBrix.ServiceLocator.MsplLicenseForever" />
+  </ItemGroup>
+
+</Project>

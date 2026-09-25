@@ -1,0 +1,196 @@
+<Project Sdk="Microsoft.Build.NoTargets/3.7.134">
+
+  <!--
+    CodeBrix.Android intake: downloads the pinned CodeBrix.Platform build, extracts the
+    parts CodeBrix.Android re-ships, writes a manifest and runs the five intake gates.
+
+      dotnet build build/intake/CodeBrix.Android.Intake.proj
+
+    (It is also part of CodeBrix.Android.slnx, and every project that consumes the
+    extracted assemblies references it for build order, so a solution build runs it
+    first.)
+
+    Pin:        build/PlatformPin.props (CodeBrixPlatformVersion) - the only place.
+    Sources:    nuget.org, plus the local folder feed named by the CODEBRIX_PLATFORM_FEED
+                environment variable (default ~/ClaudeHome/android-feed/<version>/) while the
+                pinned build is not on nuget.org. The feed is a folder of .nupkg files; this
+                build never reads the CodeBrix.Platform repository.
+    Download:   <PackageDownload> only, into an isolated packages folder
+                (artifacts/intake/.packages/), so the intake records NO package dependency and
+                never picks up a same-version copy from the global NuGet cache.
+    Output:     artifacts/intake/<version>/
+                  lib/                          every *.Core.dll (+xml, +pdb) and CodeBrix.Platform.Xaml.dll
+                  analyzers/dotnet/cs/          the XAML source generator, analyzers, parser
+                  buildTransitive/              Platform.UI.SourceGenerators.props, Platform.UI.Tasks.targets,
+                                                platform.ui.tasks.assets.targets, CodeBrix.Platform.UI.Tasks/,
+                                                Descriptors/
+                  notices/<package-id>/         the THIRD-PARTY-NOTICES.txt of each contributing package
+                  intake-manifest.tsv           path, package, sha256, bytes, assembly version, trimmable
+                  intake-gates.txt              the gate report
+    Gates:      1 expected file set, 2 no SkiaSharp/HarfBuzzSharp in Core, 3 InternalsVisibleTo
+                grants, 4 references resolve, 5 handler-seam fingerprint (ON since the pin moved to the
+                seam build at AP1.8; -p:CodeBrixIntakeSeamGate=false reports it only). Inputs: build/intake/gates/*.txt.
+                Any gate error fails the build.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <RestorePackagesPath>$(CodeBrixAndroidRepoRoot)artifacts/intake/.packages/</RestorePackagesPath>
+
+    <CodeBrixPlatformFeed Condition="'$(CodeBrixPlatformFeed)' == ''">$(CODEBRIX_PLATFORM_FEED)</CodeBrixPlatformFeed>
+    <CodeBrixPlatformFeed Condition="'$(CodeBrixPlatformFeed)' == ''">$(HOME)/ClaudeHome/android-feed/$(CodeBrixPlatformVersion)/</CodeBrixPlatformFeed>
+    <RestoreAdditionalProjectSources Condition="Exists('$(CodeBrixPlatformFeed)')">$(CodeBrixPlatformFeed)</RestoreAdditionalProjectSources>
+
+    <CodeBrixIntakeSeamGate Condition="'$(CodeBrixIntakeSeamGate)' == ''">true</CodeBrixIntakeSeamGate>
+    <_CodeBrixIntakeGatesDir>$(MSBuildThisFileDirectory)gates/</_CodeBrixIntakeGatesDir>
+    <_CodeBrixIntakeBclDir>$(NetCoreTargetingPackRoot)/Microsoft.NETCore.App.Ref/$(BundledNETCoreAppPackageVersion)/ref/net10.0/</_CodeBrixIntakeBclDir>
+  </PropertyGroup>
+
+  <!-- The framework package and every add-in package of the pinned build (heads are not taken). -->
+  <ItemGroup>
+    <PackageDownload Include="CodeBrix.Platform.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" CodeBrixFramework="true" />
+    <PackageDownload Include="CodeBrix.Platform.AdvancedTextEdit.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.AppSettings.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.AudioPlayer.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.CommandBar.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.FlexPanel.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.Graphics2DSK.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.Graphics3DGL.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.Lottie.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.MediaPlayer.LgplLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.PlotterView.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.SkiaSharp.Views.MitLicenseForever" Version="[$(CodeBrixPlatformSkiaSharpViewsVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.Svg.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.TerminalView.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.TextLayout.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.VideoPlayer.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.WebView.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+  </ItemGroup>
+
+  <!-- The gate tool: built before the intake runs (build order only). -->
+  <ItemGroup>
+    <ProjectReference Include="CodeBrix.Android.IntakeGate/CodeBrix.Android.IntakeGate.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <Target Name="_CodeBrixIntakeCollect">
+    <ItemGroup>
+      <_CodeBrixIntakePackage Include="@(PackageDownload)">
+        <PackageVersion>$([System.String]::Copy('%(PackageDownload.Version)').Replace('[', '').Replace(']', ''))</PackageVersion>
+        <PackageRoot>$(RestorePackagesPath)$([System.String]::Copy('%(PackageDownload.Identity)').ToLowerInvariant())/$([System.String]::Copy('%(PackageDownload.Version)').Replace('[', '').Replace(']', ''))/</PackageRoot>
+        <NupkgPath>$(RestorePackagesPath)$([System.String]::Copy('%(PackageDownload.Identity)').ToLowerInvariant())/$([System.String]::Copy('%(PackageDownload.Version)').Replace('[', '').Replace(']', ''))/$([System.String]::Copy('%(PackageDownload.Identity)').ToLowerInvariant()).$([System.String]::Copy('%(PackageDownload.Version)').Replace('[', '').Replace(']', '')).nupkg</NupkgPath>
+      </_CodeBrixIntakePackage>
+    </ItemGroup>
+
+    <Error Condition="!Exists('%(_CodeBrixIntakePackage.PackageRoot)')"
+           Code="CBAI0010"
+           Text="The pinned package %(_CodeBrixIntakePackage.Identity) %(_CodeBrixIntakePackage.PackageVersion) was not downloaded to %(_CodeBrixIntakePackage.PackageRoot). Is the feed ($(CodeBrixPlatformFeed)) present, and was the project restored?" />
+
+    <!-- A downloaded package must be the feed's copy (AP1.9). A version can be re-packed with different content
+         (SkiaSharp.Views keeps its literal version across Platform builds), and NuGet never downloads a version
+         that is already in the packages folder: an old copy would be extracted silently. -->
+    <ItemGroup>
+      <_CodeBrixIntakeCachedCopy Include="%(_CodeBrixIntakePackage.NupkgPath)"
+                                 Condition="'$(CodeBrixPlatformFeed)' != '' and Exists('$(CodeBrixPlatformFeed)%(_CodeBrixIntakePackage.Identity).%(_CodeBrixIntakePackage.PackageVersion).nupkg') and Exists('%(_CodeBrixIntakePackage.NupkgPath)')"
+                                 FeedCopy="$(CodeBrixPlatformFeed)%(_CodeBrixIntakePackage.Identity).%(_CodeBrixIntakePackage.PackageVersion).nupkg" />
+    </ItemGroup>
+    <GetFileHash Files="@(_CodeBrixIntakeCachedCopy)" Algorithm="SHA256" Condition="'@(_CodeBrixIntakeCachedCopy)' != ''">
+      <Output TaskParameter="Items" ItemName="_CodeBrixIntakeCachedHash" />
+    </GetFileHash>
+    <ItemGroup>
+      <_CodeBrixIntakeFeedCopy Include="@(_CodeBrixIntakeCachedHash->'%(FeedCopy)')" CachedCopy="%(Identity)" CachedHash="%(FileHash)" />
+    </ItemGroup>
+    <GetFileHash Files="@(_CodeBrixIntakeFeedCopy)" Algorithm="SHA256" Condition="'@(_CodeBrixIntakeFeedCopy)' != ''">
+      <Output TaskParameter="Items" ItemName="_CodeBrixIntakeFeedHash" />
+    </GetFileHash>
+    <ItemGroup>
+      <_CodeBrixIntakeHashMismatch Include="@(_CodeBrixIntakeFeedHash)" Condition="'%(FileHash)' != '%(CachedHash)'" />
+    </ItemGroup>
+    <Error Condition="'@(_CodeBrixIntakeHashMismatch)' != ''"
+           Code="CBAI0011"
+           Text="The downloaded package %(_CodeBrixIntakeHashMismatch.CachedCopy) is not the feed's copy (%(_CodeBrixIntakeHashMismatch.Identity)): the same version was re-packed with different content. Delete its folder under $(RestorePackagesPath) and build again." />
+
+    <ItemGroup>
+      <!-- Every package: its Core assemblies (+ IntelliSense xml and pdb). -->
+      <_CodeBrixIntakeFile Include="%(_CodeBrixIntakePackage.PackageRoot)lib/net10.0/*.Core.dll;%(_CodeBrixIntakePackage.PackageRoot)lib/net10.0/*.Core.xml;%(_CodeBrixIntakePackage.PackageRoot)lib/net10.0/*.Core.pdb"
+                           PackageId="%(_CodeBrixIntakePackage.Identity)" PackageVersion="%(_CodeBrixIntakePackage.PackageVersion)" />
+    </ItemGroup>
+    <ItemGroup>
+      <_CodeBrixIntakeFile>
+        <DestinationSubPath>lib/%(Filename)%(Extension)</DestinationSubPath>
+      </_CodeBrixIntakeFile>
+    </ItemGroup>
+
+    <!-- Every package that contributes files: its notices (the re-shipped binaries carry them). -->
+    <ItemGroup>
+      <_CodeBrixIntakeContributorId Include="@(_CodeBrixIntakeFile->'%(PackageId)')" />
+      <_CodeBrixIntakeContributorId Include="@(_CodeBrixIntakePackage->WithMetadataValue('CodeBrixFramework', 'true'))" />
+      <_CodeBrixIntakeNonContributor Include="@(_CodeBrixIntakePackage)" />
+      <_CodeBrixIntakeNonContributor Remove="@(_CodeBrixIntakeContributorId)" />
+      <_CodeBrixIntakeContributor Include="@(_CodeBrixIntakePackage)" />
+      <_CodeBrixIntakeContributor Remove="@(_CodeBrixIntakeNonContributor)" />
+      <_CodeBrixIntakeFile Include="%(_CodeBrixIntakeContributor.PackageRoot)THIRD-PARTY-NOTICES.txt"
+                           Condition="Exists('%(_CodeBrixIntakeContributor.PackageRoot)THIRD-PARTY-NOTICES.txt')"
+                           PackageId="%(_CodeBrixIntakeContributor.Identity)" PackageVersion="%(_CodeBrixIntakeContributor.PackageVersion)"
+                           DestinationSubPath="notices/%(_CodeBrixIntakeContributor.Identity)/THIRD-PARTY-NOTICES.txt" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <_CodeBrixIntakeFrameworkRoot>@(_CodeBrixIntakePackage->WithMetadataValue('CodeBrixFramework', 'true')->'%(PackageRoot)')</_CodeBrixIntakeFrameworkRoot>
+      <_CodeBrixIntakeFrameworkId>@(_CodeBrixIntakePackage->WithMetadataValue('CodeBrixFramework', 'true')->'%(Identity)')</_CodeBrixIntakeFrameworkId>
+      <_CodeBrixIntakeFrameworkVersion>@(_CodeBrixIntakePackage->WithMetadataValue('CodeBrixFramework', 'true')->'%(PackageVersion)')</_CodeBrixIntakeFrameworkVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <!-- Framework package only: the XAML parser, the tooling, and the three generator/tasks entry files. -->
+      <_CodeBrixIntakeFramework Include="$(_CodeBrixIntakeFrameworkRoot)lib/net10.0/CodeBrix.Platform.Xaml.dll;$(_CodeBrixIntakeFrameworkRoot)lib/net10.0/CodeBrix.Platform.Xaml.pdb" DestinationFolder="lib/" />
+      <_CodeBrixIntakeFramework Include="$(_CodeBrixIntakeFrameworkRoot)analyzers/dotnet/cs/*" DestinationFolder="analyzers/dotnet/cs/" />
+      <_CodeBrixIntakeFramework Include="$(_CodeBrixIntakeFrameworkRoot)buildTransitive/CodeBrix.Platform.UI.Tasks/*" DestinationFolder="buildTransitive/CodeBrix.Platform.UI.Tasks/" />
+      <_CodeBrixIntakeFramework Include="$(_CodeBrixIntakeFrameworkRoot)buildTransitive/Descriptors/*" DestinationFolder="buildTransitive/Descriptors/" />
+      <_CodeBrixIntakeFramework Include="$(_CodeBrixIntakeFrameworkRoot)buildTransitive/Platform.UI.SourceGenerators.props;$(_CodeBrixIntakeFrameworkRoot)buildTransitive/Platform.UI.Tasks.targets;$(_CodeBrixIntakeFrameworkRoot)buildTransitive/platform.ui.tasks.assets.targets" DestinationFolder="buildTransitive/" />
+    </ItemGroup>
+    <ItemGroup>
+      <_CodeBrixIntakeFramework>
+        <DestinationSubPath>%(DestinationFolder)%(Filename)%(Extension)</DestinationSubPath>
+      </_CodeBrixIntakeFramework>
+      <_CodeBrixIntakeFile Include="@(_CodeBrixIntakeFramework)" PackageId="$(_CodeBrixIntakeFrameworkId)" PackageVersion="$(_CodeBrixIntakeFrameworkVersion)" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CodeBrixPlatformIntake" AfterTargets="Build" DependsOnTargets="_CodeBrixIntakeCollect">
+    <PropertyGroup>
+      <_CodeBrixIntakeOut>$(CodeBrixPlatformIntakeDir)</_CodeBrixIntakeOut>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_CodeBrixIntakeDestination Include="@(_CodeBrixIntakeFile->'$(_CodeBrixIntakeOut)%(DestinationSubPath)')" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(_CodeBrixIntakeFile)" DestinationFiles="@(_CodeBrixIntakeDestination)" SkipUnchangedFiles="true" />
+
+    <!-- Remove files left over from an earlier intake of this version that the current set no longer contains. -->
+    <ItemGroup>
+      <_CodeBrixIntakeExisting Include="$(_CodeBrixIntakeOut)**/*"
+                               Exclude="$(_CodeBrixIntakeOut)intake-manifest.tsv;$(_CodeBrixIntakeOut)intake-gates.txt;$(_CodeBrixIntakeOut)intake-sources.txt;$(_CodeBrixIntakeOut)intake-packages.txt" />
+      <_CodeBrixIntakeExistingFull Include="@(_CodeBrixIntakeExisting->'%(FullPath)')" />
+      <_CodeBrixIntakeDestinationFull Include="@(_CodeBrixIntakeDestination->'%(FullPath)')" />
+      <_CodeBrixIntakeOrphan Include="@(_CodeBrixIntakeExistingFull)" Exclude="@(_CodeBrixIntakeDestinationFull)" />
+    </ItemGroup>
+    <Delete Files="@(_CodeBrixIntakeOrphan)" />
+
+    <WriteLinesToFile File="$(_CodeBrixIntakeOut)intake-sources.txt"
+                      Lines="@(_CodeBrixIntakeFile->'%(DestinationSubPath)|%(PackageId)|%(PackageVersion)')"
+                      Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <WriteLinesToFile File="$(_CodeBrixIntakeOut)intake-packages.txt"
+                      Lines="@(_CodeBrixIntakePackage->'%(Identity)|%(PackageVersion)|%(NupkgPath)')"
+                      Overwrite="true" WriteOnlyWhenDifferent="true" />
+
+    <MSBuild Projects="CodeBrix.Android.IntakeGate/CodeBrix.Android.IntakeGate.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" PropertyName="_CodeBrixIntakeGateAssembly" />
+    </MSBuild>
+
+    <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;$(_CodeBrixIntakeGateAssembly)&quot; --intake-dir &quot;$(_CodeBrixIntakeOut)&quot; --gates-dir &quot;$(_CodeBrixIntakeGatesDir)&quot; --bcl-dir &quot;$(_CodeBrixIntakeBclDir)&quot; --src-dir &quot;$(CodeBrixAndroidRepoRoot)src&quot; --platform-version $(CodeBrixPlatformVersion) --sources &quot;$(_CodeBrixIntakeOut)intake-sources.txt&quot; --packages &quot;$(_CodeBrixIntakeOut)intake-packages.txt&quot; --seam-gate $(CodeBrixIntakeSeamGate)" />
+  </Target>
+
+</Project>

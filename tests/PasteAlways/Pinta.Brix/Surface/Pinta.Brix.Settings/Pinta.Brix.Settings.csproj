@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Pinta.Brix.Settings (CodeBrix.Samples Pinta.Brix/src/libs/Pinta.Brix.Settings): the sources are verbatim copies (see ../SOURCES.txt). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+  </ItemGroup>
+
+</Project>

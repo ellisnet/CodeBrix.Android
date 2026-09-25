@@ -1,0 +1,24 @@
+# Gate 4 input: assemblies an extracted assembly may reference that are neither in
+# the intake set nor in the .NET reference pack. Each comes from an allowed package
+# that is NOT produced by the CodeBrix.Platform repository.
+#
+#   <assembly name>   <package id that supplies it>
+Microsoft.Extensions.Logging                        Microsoft.Extensions.Logging
+Microsoft.Extensions.Logging.Abstractions           Microsoft.Extensions.Logging.Abstractions
+Microsoft.Extensions.DependencyInjection.Abstractions  Microsoft.Extensions.DependencyInjection.Abstractions
+Microsoft.Extensions.Hosting.Abstractions           Microsoft.Extensions.Hosting.Abstractions
+CodeBrix.ServiceLocator                             CodeBrix.ServiceLocator.MsplLicenseForever
+
+# Since pin 1.0.266.1160 (Phase D split every add-in into a Core): the add-in Cores'
+# own dependencies. All are nuget.org packages owned by Microsoft (SkiaSharp*) or
+# self-produced CodeBrix packages from repositories other than CodeBrix.Platform.
+# Gate 2 still restricts SkiaSharp* to the Skia-canvas add-ins.
+SkiaSharp                                           SkiaSharp
+SkiaSharp.Skottie                                   SkiaSharp.Skottie
+SkiaSharp.SceneGraph                                SkiaSharp.SceneGraph
+# Since pin 1.0.268.12 (WPE1-2 C5): TextLayout.Core holds the link-compiled text engine (HarfBuzz shaping).
+HarfBuzzSharp                                       HarfBuzzSharp
+CodeBrix.Plotter                                    CodeBrix.Plotter.MitLicenseForever
+CodeBrix.SkiaSvg                                    CodeBrix.SkiaSvg.MitLicenseForever
+CodeBrix.Terminal                                   CodeBrix.Terminal.MitLicenseForever
+CodeBrix.Platform.OpenGL                            CodeBrix.Platform.OpenGL.MitLicenseForever

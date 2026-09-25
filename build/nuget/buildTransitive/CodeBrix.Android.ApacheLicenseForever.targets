@@ -1,0 +1,162 @@
+<Project>
+
+  <!--
+    CodeBrix.Android consumer build logic (targets: evaluated after the project body).
+    See the props file for the overview.
+  -->
+
+  <!-- Head detection, as the CodeBrix.Platform desktop heads do it. -->
+  <PropertyGroup>
+    <IsCodeBrixHead Condition="'$(IsCodeBrixHead)' == '' and ('$(OutputType)' == 'Exe' or '$(OutputType)' == 'WinExe' or '$(AndroidApplication)' == 'true')">true</IsCodeBrixHead>
+    <_IsCodeBrixPlatform>true</_IsCodeBrixPlatform>
+
+    <!--
+      The Skia dialect. A CodeBrix.Platform desktop head is built with
+      CodeBrixRuntimeIdentifier=Skia; a desktop library with neither identifier (and a
+      plain net10.0 target framework). Android heads and libraries get exactly the same
+      settings, so the XAML generator sees the same dialect (d:Binding, the xmlns filters
+      such as not_android / skia, every generator quirk) and a pasted page compiles to
+      the same code it does on the desktop.
+    -->
+    <CodeBrixRuntimeIdentifier Condition="'$(IsCodeBrixHead)' == 'true' and '$(CodeBrixRuntimeIdentifier)' == ''">Skia</CodeBrixRuntimeIdentifier>
+
+    <!-- The re-shipped Platform MSBuild tasks (absolute path: no dependence on the importing file). -->
+    <CodeBrixUIMSBuildTasksPath>$(CodeBrixAndroidPlatformBuildPath)CodeBrix.Platform.UI.Tasks</CodeBrixUIMSBuildTasksPath>
+  </PropertyGroup>
+
+  <Import Project="$(CodeBrixAndroidPlatformBuildPath)Platform.UI.SourceGenerators.props" />
+  <Import Project="$(CodeBrixAndroidPlatformBuildPath)Platform.UI.Tasks.targets" />
+
+  <!--
+    Dialect overrides, placed AFTER the imports so they win. The imported props derive
+    the XAML namespace filters from the target framework (net10.0-android => "android",
+    and "androidskia" once the Skia identifier is set); a desktop build has neither.
+    These are the values a desktop build computes:
+      head:     XamarinProjectType=skia, _IsNetStdRef=true, _IsAndroidSkia=false
+      library:  XamarinProjectType=(empty), _IsNetStdRef=true, _IsAndroidSkia=false
+    The Include/ExcludeXamlNamespaces items are evaluated after all properties, so they
+    see these values.
+  -->
+  <PropertyGroup>
+    <XamarinProjectType Condition="'$(IsCodeBrixHead)' == 'true'">skia</XamarinProjectType>
+    <XamarinProjectType Condition="'$(IsCodeBrixHead)' != 'true'"></XamarinProjectType>
+    <_IsNetStdRef>true</_IsNetStdRef>
+    <_IsAndroidSkia>false</_IsAndroidSkia>
+
+    <!--
+      String resources (.resw) and assets are processed as on the desktop: resw become
+      embedded resources the Core resource loader reads (not Android string resources),
+      and assets are not retargeted to Android drawables. A desktop head uses "skia", a
+      desktop library nothing.
+    -->
+    <_CodeBrixUnderlyingPlatform Condition="'$(IsCodeBrixHead)' == 'true'">skia</_CodeBrixUnderlyingPlatform>
+    <_CodeBrixUnderlyingPlatform Condition="'$(IsCodeBrixHead)' != 'true'"></_CodeBrixUnderlyingPlatform>
+  </PropertyGroup>
+
+  <!--
+    The generator also reads the AndroidApplication property; when it is true it emits
+    an Android drawable-resource resolver against a Platform Android helper that the
+    platform-neutral Core does not have (the desktop build never sets it). Hiding the
+    property from the generator keeps the desktop dialect. (The Android SDK itself still
+    sees AndroidApplication=true.)
+  -->
+  <ItemGroup>
+    <CompilerVisibleProperty Remove="AndroidApplication" />
+  </ItemGroup>
+
+  <!--
+    Implicit usings: the desktop dialect. With ImplicitUsings enabled the Android workload adds
+    global usings of Android.App, Android.Widget and Android.OS.Bundle; a pasted App.xaml.cs
+    (`public partial class App : Application`) then sees two Application types (CS0104). A
+    CodeBrix app gets the implicit usings a desktop build gets; Android code in the head uses
+    explicit usings.
+  -->
+  <ItemGroup>
+    <Using Remove="Android.App" />
+    <Using Remove="Android.Widget" />
+    <Using Remove="Android.OS.Bundle" />
+  </ItemGroup>
+
+  <!-- Feature configuration read by Core through AppContext switches (the desktop defaults). -->
+  <PropertyGroup>
+    <CodeBrixDragDropExternalSupport Condition="'$(CodeBrixDragDropExternalSupport)' == ''">true</CodeBrixDragDropExternalSupport>
+    <CodeBrixEnableDynamicDataTemplateUpdate Condition="'$(CodeBrixEnableDynamicDataTemplateUpdate)' == '' and '$(Optimize)' == 'true'">false</CodeBrixEnableDynamicDataTemplateUpdate>
+    <CodeBrixEnableDynamicDataTemplateUpdate Condition="'$(CodeBrixEnableDynamicDataTemplateUpdate)' == '' and '$(Optimize)' != 'true'">true</CodeBrixEnableDynamicDataTemplateUpdate>
+  </PropertyGroup>
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="Windows.ApplicationModel.DataTransfer.DragDrop.ExternalSupport" Value="$(CodeBrixDragDropExternalSupport)" Trim="true" />
+    <RuntimeHostConfigurationOption Include="CodeBrix.Platform.UI.EnableDynamicDataTemplateUpdate" Value="$(CodeBrixEnableDynamicDataTemplateUpdate)" Trim="true" />
+  </ItemGroup>
+
+  <!--
+    Trimming switches of the re-shipped Cores (pin 1.0.268.12, WPE1-1 C1/C2). Each add-in Core embeds an ILLink
+    descriptor that roots its SKIA twin (CodeBrix.Platform.UI, CodeBrix.Platform.UI.<AddIn>.Skia, ...) behind
+    CodeBrix.Platform.RootSkiaPlatformAssemblies (default true on the Skia heads). An Android app ships no Skia twin,
+    so the switch is off here - with it on, the trimmer reports IL2007 for every twin it cannot find. The Android
+    platform assemblies are rooted by this package instead (_CodeBrixAndroidTrimmerRoots below).
+    XAML resource trimming (CodeBrixXamlResourcesTrimming) stays OFF (decision D10: it crashes at start).
+  -->
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="CodeBrix.Platform.RootSkiaPlatformAssemblies" Value="false" Trim="true" />
+  </ItemGroup>
+
+  <!--
+    Compile constants: the family constants a CodeBrix.Platform head defines, minus the
+    Skia ones (no HAS_CODEBRIX_SKIA, no __CODEBRIX_SKIA__, no __DESKTOP__), plus the
+    Android pair.
+  -->
+  <Target Name="_CodeBrixAndroidFeatureDefines" AfterTargets="PrepareForBuild">
+    <PropertyGroup>
+      <DefineConstants>$(DefineConstants);HAS_CODEBRIX;__CODEBRIX__;HAS_CODEBRIX_WINUI;__CODEBRIX_WINUI__;WINUI_WINDOWING;CODEBRIX_HAS_FRAMEWORKELEMENT_MEASUREOVERRIDE;CODEBRIX_HAS_NO_IDEPENDENCYOBJECT;CODEBRIX_REFERENCE_API</DefineConstants>
+      <DefineConstants>$(DefineConstants);HAS_CODEBRIX_ANDROID;__CODEBRIX_ANDROID__</DefineConstants>
+    </PropertyGroup>
+  </Target>
+
+  <!--
+    Assets: every asset of the app (Content items) and of its libraries (the assets the
+    re-shipped _CodeBrixAddLibraryAssets target expands from each package's .uprimarker,
+    e.g. CodeBrix.Platform.Fonts.Fluent/Fonts/<font>.ttf) becomes an AndroidAsset whose
+    logical name is its ms-appx path. ms-appx:///<path> therefore opens as the Android
+    asset <path>.
+  -->
+  <Target Name="_CodeBrixAndroidAssets"
+          Condition="'$(IsCodeBrixHead)' == 'true'"
+          BeforeTargets="_ComputeAndroidAssetsPaths"
+          DependsOnTargets="GetCopyToOutputDirectoryItems">
+    <ItemGroup>
+      <_CodeBrixAndroidAssetSource Include="@(ContentWithTargetPath)" Condition="'%(ContentWithTargetPath.TargetPath)' != ''" />
+      <_CodeBrixAndroidAssetSource Include="@(_CodeBrixAssetsFilesExpanded)" Condition="'%(_CodeBrixAssetsFilesExpanded.TargetPath)' != ''" />
+      <AndroidAsset Include="@(_CodeBrixAndroidAssetSource)" LogicalName="$([System.String]::Copy('%(_CodeBrixAndroidAssetSource.TargetPath)').Replace('\', '/'))" />
+    </ItemGroup>
+  </Target>
+
+  <!--
+    Trimming (Release): the app's own assembly and its project references hold the
+    view models that XAML bindings reach by reflection; they are roots, so a trimmed
+    build never removes a bound property. The re-shipped Core assemblies are trimmed
+    only as far as their own trimming annotations allow.
+    The CodeBrix.Android platform assemblies (CodeBrix.Android, CodeBrix.Android.UI*, and every add-in's
+    CodeBrix.Android.<AddIn>) are roots as well: the Cores load them BY NAME (PlatformContract, the add-in loader)
+    and they register their contracts from module initializers, so the trimmer would otherwise drop an add-in no app
+    type references. Each also embeds ILLink.Descriptors.xml rooting itself behind the feature switch
+    CodeBrix.Android.RootPlatformAssemblies (the Cores' pattern; the trimmer reads an embedded descriptor only for an
+    assembly it keeps, which this root guarantees). CodeBrixAndroidRootPlatformAssemblies=false drops both roots.
+  -->
+  <PropertyGroup>
+    <CodeBrixAndroidRootPlatformAssemblies Condition="'$(CodeBrixAndroidRootPlatformAssemblies)' == ''">true</CodeBrixAndroidRootPlatformAssemblies>
+  </PropertyGroup>
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="CodeBrix.Android.RootPlatformAssemblies" Value="$(CodeBrixAndroidRootPlatformAssemblies)" Trim="true" />
+  </ItemGroup>
+  <Target Name="_CodeBrixAndroidTrimmerRoots" Condition="'$(IsCodeBrixHead)' == 'true'" BeforeTargets="PrepareForILLink">
+    <ItemGroup>
+      <TrimmerRootAssembly Include="$(AssemblyName)" RootMode="All" />
+      <TrimmerRootAssembly Include="@(_ResolvedProjectReferencePaths->'%(Filename)')" RootMode="All" />
+      <_CodeBrixAndroidPlatformAssembly Include="@(ReferencePath->'%(Filename)')"
+                                        Condition="'$(CodeBrixAndroidRootPlatformAssemblies)' == 'true' and ('%(Filename)' == 'CodeBrix.Android' or $([System.String]::Copy('%(Filename)').StartsWith('CodeBrix.Android.')))" />
+      <_CodeBrixAndroidPlatformAssembly Remove="@(_ResolvedProjectReferencePaths->'%(Filename)')" />
+      <TrimmerRootAssembly Include="@(_CodeBrixAndroidPlatformAssembly)" RootMode="All" />
+    </ItemGroup>
+  </Target>
+
+</Project>

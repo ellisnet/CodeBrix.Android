@@ -1,0 +1,16 @@
+<Project>
+
+  <!--
+    WikipediaPublisher paste-always head: the repository's central pins, plus the packages the verbatim
+    Surface/ copies of the RenderArticle library need that the root file does not pin (self-produced
+    CodeBrix packages, at the versions the sample pins).
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <PackageVersion Include="CodeBrix.MarkupParse.MitLicenseForever" Version="1.0.248.1160" />
+    <PackageVersion Include="CodeBrix.PdfDocCreate.MitLicenseForever" Version="1.0.254.196" />
+    <PackageVersion Include="CodeBrix.Imaging.ApacheLicenseForever" Version="1.0.248.1113" />
+  </ItemGroup>
+
+</Project>

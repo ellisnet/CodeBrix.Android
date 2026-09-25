@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: WikipediaPublisher (CodeBrix.Samples
+    WikipediaPublisher/CodeBrixPlatform/WikipediaPublisher.UI). Pasted/ = the shared UI project's files,
+    verbatim. Surface/ = the page's view model and helpers (the Shared/ files WikipediaPublisher.Core
+    links) and its RenderArticle library as its own Surface project (the library's embedded fonts keep
+    their resource names) - verbatim copies, no stubs (see Surface/SOURCES.txt). The WebView and
+    FlexPanel add-ins are the real Android add-ins.
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.wikipediapublisher</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>WikipediaPublisher.PasteAlways</RootNamespace>
+    <AssemblyName>WikipediaPublisher.PasteAlways</AssemblyName>
+    <CodeBrixAndroidInRepoAddIns>WebView;FlexPanel</CodeBrixAndroidInRepoAddIns>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <!-- The RenderArticle library is its own assembly, not the head's. -->
+  <ItemGroup>
+    <Compile Remove="Surface\WikipediaPublisher.RenderArticle\**" />
+    <None Remove="Surface\WikipediaPublisher.RenderArticle\**" />
+    <EmbeddedResource Remove="Surface\WikipediaPublisher.RenderArticle\**" />
+    <ProjectReference Include="Surface\WikipediaPublisher.RenderArticle\WikipediaPublisher.RenderArticle.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="CodeBrix.Platform.Fonts.OpenSans.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

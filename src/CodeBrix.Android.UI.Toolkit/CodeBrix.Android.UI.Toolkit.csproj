@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The Android implementation of the CodeBrix.Platform.UI.Toolkit Core contracts
+    (IElevationPlatform; the TriPaneView adaptive handler arrives with the add-ins).
+    AssemblyName = the name CodeBrix.Platform.UI.Toolkit.Core grants
+    InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android.UI.Toolkit</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.Toolkit</RootNamespace>
+  </PropertyGroup>
+
+</Project>

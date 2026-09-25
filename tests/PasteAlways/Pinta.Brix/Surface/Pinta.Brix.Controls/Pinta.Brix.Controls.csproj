@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Pinta.Brix.Controls (CodeBrix.Samples Pinta.Brix/src/libs/Pinta.Brix.Controls): the sources are verbatim copies (see ../SOURCES.txt). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Pinta.Brix.Controls</RootNamespace>
+    <!--
+      Targeted: verbatim PlatformServices.cs (lines 64-65, 92-93) assigns Clipboard.GetContent()
+      (annotated DataPackageView?) to a non-nullable local. The desktop build raises the same
+      CS8600/CS8602 warnings (checked against the pinned CodeBrix.Platform package's lib/ assemblies);
+      the source project does not treat warnings as errors, this repository does.
+    -->
+    <NoWarn>$(NoWarn);CS8600;CS8602</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pinta.Brix.Engine\Pinta.Brix.Engine.csproj" />
+    <ProjectReference Include="..\Pinta.Brix.Tools\Pinta.Brix.Tools.csproj" />
+    <PackageReference Include="CodeBrix.SkiaSvg.MitLicenseForever" />
+  </ItemGroup>
+
+</Project>

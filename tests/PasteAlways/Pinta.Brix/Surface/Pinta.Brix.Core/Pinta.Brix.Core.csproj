@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Pinta.Brix.Core (CodeBrix.Samples Pinta.Brix/src/Pinta.Brix.Core): the sources are verbatim copies (see ../SOURCES.txt). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Pinta.Brix</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pinta.Brix.Engine\Pinta.Brix.Engine.csproj" />
+    <ProjectReference Include="..\Pinta.Brix.FileFormats\Pinta.Brix.FileFormats.csproj" />
+    <ProjectReference Include="..\Pinta.Brix.Effects\Pinta.Brix.Effects.csproj" />
+    <ProjectReference Include="..\Pinta.Brix.Tools\Pinta.Brix.Tools.csproj" />
+    <ProjectReference Include="..\Pinta.Brix.Controls\Pinta.Brix.Controls.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+  </ItemGroup>
+
+</Project>

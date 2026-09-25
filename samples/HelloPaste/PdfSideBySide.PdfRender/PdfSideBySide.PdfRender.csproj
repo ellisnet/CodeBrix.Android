@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    VERBATIM copy of CodeBrix.Samples PdfSideBySide/src/libs/PdfSideBySide.PdfRender (a
+    UI-free net10.0 library; an Android app consumes it unchanged). Only the package
+    versions moved to the repository's Directory.Packages.props, and the rasterizer's
+    native assets are excluded (see below).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <CodeBrixAndroidInRepoConsumer>false</CodeBrixAndroidInRepoConsumer>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- PDFium-backed page rasterizer (page counts + page-to-PNG); bundles its own natives -->
+    <!--
+      HelloPaste (Android): the PDFium natives are excluded. The package ships android-arm64
+      only, so an x86_64 APK would pick its linux-x64 (glibc) pdfium.so through the RID
+      fallback (XA0141); HelloPaste never opens a PDF on Android (no file picker yet).
+    -->
+    <PackageReference Include="CodeBrix.PdfRasterizer.MitLicenseForever" ExcludeAssets="native" />
+    <!-- IServiceCollection, for the AddPdfRender() registration extension -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+</Project>

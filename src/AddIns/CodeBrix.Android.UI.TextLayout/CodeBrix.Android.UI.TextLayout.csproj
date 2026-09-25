@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UI.TextLayout: the Android side of the CodeBrix.Platform TextLayout add-in (AP1.9). Since the
+    engine pass (pin 1.0.268.12, WPE1-2 C5) TextLayout is Core-only: CodeBrix.Platform.UI.TextLayout.Core holds the
+    whole text engine (HarfBuzz shaping on SkiaSharp typefaces), and every platform supplies only its FONT SOURCE,
+    the contract IFontSourcePlatform<SKTypeface> of CodeBrix.Platform.Foundation.Core. This assembly registers the
+    Android font source from its module initializer: TextLayout.Core (and PlotterView.Core) load it BY NAME.
+    The font rule is CodeBrix.Android's (never a system font): a family that names a font file loads it from the APK
+    assets (its .ttf.manifest picks the face), a family NAME resolves to the app's DefaultTextFontFamily file.
+    AssemblyName = the name CodeBrix.Platform.Foundation.Core and CodeBrix.Platform.UI.TextLayout.Core grant
+    InternalsVisibleTo to.
+    Two target frameworks: net10.0-android36.1 (everything) and net10.0 (Portable/ only, for host-free tests).
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net10.0-android36.1</TargetFrameworks>
+    <AssemblyName>CodeBrix.Android.UI.TextLayout</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.TextLayout</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-android36.1'">
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <!-- net10.0: the portable parts only. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <Compile Remove="Android/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The add-in Core (re-shipped from the pinned Platform build by the intake): the text engine. -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.TextLayout.Core.dll" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-android36.1'">
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <!-- SkiaSharp typefaces and HarfBuzz shaping (the TextLayout Core's dependencies) with their Android native libraries
+         (Microsoft; the family's locked SkiaSharp / HarfBuzzSharp release pair). -->
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Android" />
+    <PackageReference Include="HarfBuzzSharp.NativeAssets.Android" />
+  </ItemGroup>
+
+</Project>

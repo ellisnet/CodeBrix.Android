@@ -1,0 +1,118 @@
+<Page x:Class="JustBetweenUs.Views.MainPage"
+      xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+      xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="using:JustBetweenUs.Views"
+      xmlns:vm="clr-namespace:JustBetweenUs.ViewModels;assembly=JustBetweenUs.Core"
+      xmlns:controls="clr-namespace:JustBetweenUs.Controls;assembly=JustBetweenUs.Core"
+      xmlns:lottie="clr-namespace:CommunityToolkit.WinUI.Lottie;assembly=CodeBrix.Platform.UI.Lottie"
+      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+      FontFamily="{StaticResource OpenSansFont}">
+
+    <Page.DataContext>
+        <vm:MainViewModel />
+    </Page.DataContext>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="100" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="60" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="100" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+                Orientation="Horizontal" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center">
+
+            <ComboBox HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Width="300"
+                ItemsSource="{d:Binding EncryptionModes}"
+                DisplayMemberPath="Description"
+                SelectedItem="{d:Binding SelectedEncryptionMode, Mode=TwoWay}" />
+            <TextBlock Margin="20, 0, 20, 0" VerticalAlignment="Center">Encryption Key:</TextBlock>
+            <TextBox Height="40" Width="180" 
+                     VerticalAlignment="Center" VerticalContentAlignment="Center"
+                     Text="{d:Binding EncryptionKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+
+            <!--Sample markup for showing a Lottie animation in this view
+                - note that Visual Studio won't like 'embedded:' and the path, but it will still work-->
+            <!--<AnimatedVisualPlayer
+                                  AutoPlay="True"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  Height="60" Width="60">
+                <lottie:LottieVisualSource UriSource="embedded://JustBetweenUs.Core/JustBetweenUs.Assets.star_icon.json" />
+            </AnimatedVisualPlayer>-->
+
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" VerticalScrollBarVisibility="Auto" Padding="4,4,10,4">
+            <TextBox HorizontalContentAlignment="Left" VerticalContentAlignment="Top"
+               TextWrapping="Wrap" AcceptsReturn="True" Margin="2" IsReadOnly="False"
+               Text="{d:Binding EnteredText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                Orientation="Horizontal" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center">
+
+            <controls:EmbeddedImageButton Margin="0,0,20,0" Width="140" Height="90"
+                VerticalAlignment="Center" HorizontalAlignment="Right"
+                Background="#FFB85555"
+                Command="{d:Binding EncryptCommand}"
+                ImageUriSource="embedded://JustBetweenUs.Core/JustBetweenUs.Assets.padlock-icon.svg"
+                Text="Encrypt" ImageWidth="40" ImageHeight="40" Spacing="6" ImagePosition="Top" />
+
+            <controls:EmbeddedImageButton Margin="20,0,0,0" Width="140" Height="90"
+                VerticalAlignment="Center" HorizontalAlignment="Left"
+                Background="#FFB85555"
+                Command="{d:Binding DecryptCommand}"
+                ImageUriSource="embedded://JustBetweenUs.Core/JustBetweenUs.Assets.unlocked-icon.svg"
+                Text="Decrypt" ImageWidth="40" ImageHeight="40" Spacing="6" ImagePosition="Top" />
+
+            <!--Example of using EmbeddedImage standalone (not inside a button)-->
+            <!--<controls:EmbeddedImage Margin="20,0,0,0" Width="60" Height="60"
+                VerticalAlignment="Center"
+                UriSource="embedded://JustBetweenUs.Core/JustBetweenUs.Assets.padlock-icon.svg" />-->
+
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" VerticalScrollBarVisibility="Auto" Padding="4,4,10,4">
+            <TextBox HorizontalContentAlignment="Left" VerticalContentAlignment="Top"
+               TextWrapping="Wrap" AcceptsReturn="True" Margin="2" IsReadOnly="True"
+               Text="{d:Binding ProcessedText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+        </ScrollViewer>
+
+        <controls:EmbeddedImageButton Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Width="220" Height="50"
+            VerticalAlignment="Center" HorizontalAlignment="Center"
+            Background="#FFB85555"
+            Command="{d:Binding CopyToClipboardCommand}"
+            ImageUriSource="embedded://JustBetweenUs.Core/JustBetweenUs.Assets.clipboard.svg"><!--ImagePosition="Right"-->
+            Copy to Clipboard
+        </controls:EmbeddedImageButton>
+
+        <Button Grid.Row="4" Grid.Column="1" Width="80" Height="50"
+                VerticalAlignment="Center" HorizontalAlignment="Left"
+                Command="{d:Binding ShowOsInfoCommand}">
+            <StackPanel Orientation="Horizontal">
+                <AnimatedVisualPlayer AutoPlay="True"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Height="40" Width="50">
+                    <!--NOTE: Visual Studio doesn't recognize 'embedded:' and the path below, but they are correct and will work fine-->
+                    <lottie:LottieVisualSource UriSource="embedded://JustBetweenUs.Core/JustBetweenUs.Assets.star_icon.json" />
+                </AnimatedVisualPlayer>
+            </StackPanel>
+        </Button>
+
+    </Grid>
+</Page>

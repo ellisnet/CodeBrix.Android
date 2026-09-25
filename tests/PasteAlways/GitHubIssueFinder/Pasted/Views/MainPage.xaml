@@ -1,0 +1,465 @@
+<Page
+    x:Class="GitHubIssueFinder.Views.MainPage"
+    xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+    xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+    xmlns:ui="clr-namespace:Microsoft.UI.Xaml;assembly=CodeBrix.Platform.UI"
+    xmlns:c="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+    xmlns:flex="clr-namespace:CodeBrix.Platform.UI.FlexPanel;assembly=CodeBrix.Platform.UI.FlexPanel"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:GitHubIssueFinder.ViewModels;assembly=GitHubIssueFinder.Core"
+    xmlns:local="using:GitHubIssueFinder.Views"
+    FontFamily="{StaticResource RobotoFont}">
+
+    <Page.DataContext>
+        <vm:MainViewModel />
+    </Page.DataContext>
+
+    <Grid x:Name="RootGrid" Background="{StaticResource CanvasBrush}" KeyDown="OnRootKeyDown">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ============================ ROW 0: the header bar ============================ -->
+        <Border Grid.Row="0"
+                Background="{StaticResource CanvasSubtleBrush}"
+                BorderBrush="{StaticResource HairlineBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="24,10">
+            <flex:FlexPanel Direction="Row" Wrap="Wrap" AlignItems="Center">
+                <!-- Grow=1: the identity block takes the free space, so the picker stays right -->
+                <StackPanel Spacing="1" Margin="0,4,16,4" flex:FlexPanel.Grow="1">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xF138;" FontSize="20"
+                                  Foreground="{StaticResource AccentBrush}"
+                                  VerticalAlignment="Center" />
+                        <TextBlock Text="GitHubIssueFinder" FontSize="19" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="Unassigned and assigned issues across a user's public repositories"
+                               FontSize="11.5"
+                               Foreground="{StaticResource TextTertiaryBrush}" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,4"
+                            VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE790;" FontSize="16"
+                              Foreground="{StaticResource TextSecondaryBrush}"
+                              VerticalAlignment="Center" />
+                    <ComboBox Width="210" CornerRadius="6" TabIndex="6"
+                              VerticalAlignment="Center"
+                              ItemsSource="{d:Binding SchemeOptions}"
+                              SelectedItem="{d:Binding SelectedScheme, Mode=TwoWay}"
+                              DisplayMemberPath="DisplayName" />
+                </StackPanel>
+            </flex:FlexPanel>
+        </Border>
+
+        <!-- ============================ ROW 1: the content =============================== -->
+        <Grid Grid.Row="1" Padding="24,16,24,8" MaxWidth="1280" RowSpacing="16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- 1a: the search box -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource CanvasBrush}"
+                    BorderBrush="{StaticResource HairlineBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                <StackPanel>
+                    <Border Background="{StaticResource CanvasSubtleBrush}"
+                            BorderBrush="{StaticResource HairlineBrush}"
+                            BorderThickness="0,0,0,1"
+                            CornerRadius="6,6,0,0"
+                            Padding="16,9">
+                        <TextBlock Text="FIND ISSUES" FontSize="11" FontWeight="SemiBold"
+                                   CharacterSpacing="80"
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                    </Border>
+
+                    <StackPanel Padding="16,12,16,12" Spacing="8">
+                        <flex:FlexPanel Direction="Row" Wrap="Wrap" AlignItems="Center">
+                            <Grid Margin="0,3,10,3">
+                                <!-- PlaceholderForeground is set explicitly on purpose: the
+                                     template otherwise reaches its placeholder colour through a
+                                     binding whose fallback is a theme resource, and that fallback
+                                     is lost when the element theme is switched at run time, which
+                                     takes the placeholder text with it. -->
+                                <TextBox Width="260" CornerRadius="6" TabIndex="1"
+                                         Padding="30,6,8,6" FontSize="13"
+                                         PlaceholderForeground="{StaticResource TextTertiaryBrush}"
+                                         PlaceholderText="GitHub user or organization"
+                                         Text="{d:Binding Owner, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         KeyDown="OnSearchBoxKeyDown" />
+                                <FontIcon Glyph="&#xE77B;" FontSize="14"
+                                          Foreground="{StaticResource TextTertiaryBrush}"
+                                          HorizontalAlignment="Left" VerticalAlignment="Center"
+                                          Margin="10,0,0,0" IsHitTestVisible="False" />
+                            </Grid>
+
+                            <Grid Margin="0,3,14,3">
+                                <TextBox Width="260" CornerRadius="6" TabIndex="2"
+                                         Padding="30,6,8,6" FontSize="13"
+                                         PlaceholderForeground="{StaticResource TextTertiaryBrush}"
+                                         PlaceholderText="Leave empty for unassigned"
+                                         Text="{d:Binding Assignee, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         KeyDown="OnSearchBoxKeyDown" />
+                                <FontIcon Glyph="&#xE77B;" FontSize="14"
+                                          Foreground="{StaticResource TextTertiaryBrush}"
+                                          HorizontalAlignment="Left" VerticalAlignment="Center"
+                                          Margin="10,0,0,0" IsHitTestVisible="False" />
+                            </Grid>
+
+                            <CheckBox Content="Include closed issues" FontSize="13" TabIndex="3"
+                                      Margin="0,3,14,3" VerticalAlignment="Center"
+                                      IsChecked="{d:Binding IncludeClosed, Mode=TwoWay}" />
+
+                            <Button Margin="0,3,8,3" CornerRadius="6" Padding="16,7" TabIndex="4"
+                                    FontWeight="SemiBold" VerticalAlignment="Center"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Command="{d:Binding SearchCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE721;" FontSize="14"
+                                              VerticalAlignment="Center" />
+                                    <TextBlock Text="Search" FontSize="13" FontWeight="SemiBold"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Cancel keeps its place and is disabled when there is nothing to
+                                 cancel, so the row never shifts under the pointer. -->
+                            <Button Margin="0,3,0,3" CornerRadius="6" Padding="16,7" TabIndex="5"
+                                    VerticalAlignment="Center"
+                                    BorderThickness="1"
+                                    Command="{d:Binding CancelCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE711;" FontSize="14"
+                                              VerticalAlignment="Center" />
+                                    <TextBlock Text="Cancel" FontSize="13"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </flex:FlexPanel>
+
+                        <TextBlock Text="{d:Binding HelperText}" FontSize="12.5"
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource TextTertiaryBrush}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 1b: the results box -->
+            <Border Grid.Row="1"
+                    Background="{StaticResource CanvasBrush}"
+                    BorderBrush="{StaticResource HairlineBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0"
+                            Visibility="{d:Binding HeaderVisibility}"
+                            Background="{StaticResource CanvasSubtleBrush}"
+                            BorderBrush="{StaticResource HairlineBrush}"
+                            BorderThickness="0,0,0,1"
+                            CornerRadius="6,6,0,0"
+                            Padding="16,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8"
+                                        VerticalAlignment="Center">
+                                <FontIcon Glyph="&#xF138;" FontSize="15"
+                                          Foreground="{StaticResource SuccessBrush}"
+                                          VerticalAlignment="Center" />
+                                <TextBlock Text="{d:Binding HeaderOpenText}" FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text="{d:Binding HeaderSummary}" FontSize="13"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           TextTrimming="CharacterEllipsis" MaxLines="1"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="{d:Binding IssuePrSplit}" FontSize="12"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center" Margin="12,0,0,0" />
+                        </Grid>
+                    </Border>
+
+                    <Grid Grid.Row="1">
+                        <!-- Before the first search -->
+                        <StackPanel Visibility="{d:Binding WelcomeVisibility}"
+                                    Padding="24,44" Spacing="8"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xF138;" FontSize="32"
+                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                      HorizontalAlignment="Center" />
+                            <TextBlock Text="Find the issues nobody has picked up"
+                                       FontSize="15" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock FontSize="12.5" MaxWidth="540" TextWrapping="Wrap"
+                                       TextAlignment="Center" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       Text="Leave the assignee box empty and every open issue and pull request in that user's or organization's public repositories that nobody has taken on is listed." />
+                            <TextBlock FontSize="12.5" MaxWidth="540" TextWrapping="Wrap"
+                                       TextAlignment="Center" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       Text="Type a login into the assignee box instead and the list becomes everything that one person is carrying." />
+                        </StackPanel>
+
+                        <!-- Searching, nothing back yet -->
+                        <StackPanel Visibility="{d:Binding SearchingVisibility}"
+                                    Padding="24,56" Spacing="14"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <ProgressBar Width="240" IsIndeterminate="True"
+                                         HorizontalAlignment="Center" />
+                            <TextBlock Text="Contacting GitHub..." FontSize="12.5"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                        </StackPanel>
+
+                        <!-- A search that found nothing -->
+                        <StackPanel Visibility="{d:Binding EmptyVisibility}"
+                                    Padding="24,44" Spacing="8"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xF13E;" FontSize="32"
+                                      Foreground="{StaticResource SuccessBrush}"
+                                      HorizontalAlignment="Center" />
+                            <TextBlock Text="{d:Binding EmptyText}" FontSize="15"
+                                       FontWeight="SemiBold" MaxWidth="540" TextWrapping="Wrap"
+                                       TextAlignment="Center" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="Tick Include closed issues to widen the search."
+                                       FontSize="12.5" HorizontalAlignment="Center"
+                                       Visibility="{d:Binding EmptyHintVisibility}"
+                                       Foreground="{StaticResource TextTertiaryBrush}" />
+                        </StackPanel>
+
+                        <!-- The results themselves: a list of repositories, each holding its rows -->
+                        <ListView Visibility="{d:Binding ResultsVisibility}"
+                                  SelectionMode="None"
+                                  ItemsSource="{d:Binding Groups}"
+                                  Padding="0"
+                                  HorizontalContentAlignment="Stretch">
+                            <ListView.ItemContainerStyle>
+                                <ui:Style TargetType="c:ListViewItem"
+                                          BasedOn="{StaticResource DefaultListViewItemStyle}">
+                                    <ui:Setter Property="Padding" Value="0" />
+                                    <ui:Setter Property="MinHeight" Value="0" />
+                                    <ui:Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                </ui:Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.ItemTemplate>
+                                <ui:DataTemplate>
+                                    <StackPanel>
+                                        <!-- The group header is itself a button, so hover and
+                                             press come from the re-keyed Button brushes. -->
+                                        <Button HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Stretch"
+                                                Background="{StaticResource CanvasSubtleBrush}"
+                                                BorderBrush="{StaticResource HairlineMutedBrush}"
+                                                BorderThickness="0,0,0,1"
+                                                CornerRadius="0" Padding="16,8"
+                                                Command="{d:Binding OpenCommand}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <FontIcon Grid.Column="0" Glyph="&#xE8B7;" FontSize="14"
+                                                          Foreground="{StaticResource TextSecondaryBrush}"
+                                                          VerticalAlignment="Center" Margin="0,0,8,0" />
+                                                <TextBlock Grid.Column="1" Text="{d:Binding FullName}"
+                                                           FontSize="13" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource AccentBrush}"
+                                                           VerticalAlignment="Center" />
+                                                <Border Grid.Column="2" Margin="8,0,0,0"
+                                                        Background="{StaticResource CanvasInsetBrush}"
+                                                        BorderBrush="{StaticResource HairlineBrush}"
+                                                        BorderThickness="1" CornerRadius="10"
+                                                        Padding="7,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{d:Binding CountText}" FontSize="11"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{StaticResource TextSecondaryBrush}" />
+                                                </Border>
+                                                <FontIcon Grid.Column="4" Glyph="&#xE8A7;" FontSize="13"
+                                                          Foreground="{StaticResource TextTertiaryBrush}"
+                                                          VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Button>
+
+                                        <ItemsControl ItemsSource="{d:Binding Rows}">
+                                            <ItemsControl.ItemTemplate>
+                                                <ui:DataTemplate>
+                                                    <Button HorizontalAlignment="Stretch"
+                                                            HorizontalContentAlignment="Stretch"
+                                                            Background="{StaticResource TransparentBrush}"
+                                                            BorderBrush="{StaticResource HairlineMutedBrush}"
+                                                            BorderThickness="0,0,0,1"
+                                                            CornerRadius="0" Padding="16,10"
+                                                            ToolTipService.ToolTip="{d:Binding MetaToolTip}"
+                                                            Command="{d:Binding OpenCommand}">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <FontIcon Grid.Column="0"
+                                                                      Glyph="{d:Binding StateGlyph}"
+                                                                      FontSize="16"
+                                                                      Foreground="{d:Binding StateBrush}"
+                                                                      VerticalAlignment="Top"
+                                                                      Margin="0,2,10,0" />
+
+                                                            <StackPanel Grid.Column="1" Spacing="3">
+                                                                <flex:FlexPanel Direction="Row" Wrap="Wrap"
+                                                                                AlignItems="Center">
+                                                                    <TextBlock Text="{d:Binding Title}"
+                                                                               FontSize="14" FontWeight="SemiBold"
+                                                                               Foreground="{StaticResource AccentBrush}"
+                                                                               TextTrimming="CharacterEllipsis"
+                                                                               MaxLines="2"
+                                                                               VerticalAlignment="Center" />
+                                                                    <ItemsControl ItemsSource="{d:Binding Labels}"
+                                                                                  Visibility="{d:Binding LabelsVisibility}"
+                                                                                  VerticalAlignment="Center">
+                                                                        <ItemsControl.ItemsPanel>
+                                                                            <ui:ItemsPanelTemplate>
+                                                                                <StackPanel Orientation="Horizontal" />
+                                                                            </ui:ItemsPanelTemplate>
+                                                                        </ItemsControl.ItemsPanel>
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <ui:DataTemplate>
+                                                                                <Border Margin="6,0,0,0"
+                                                                                        Background="{d:Binding Background}"
+                                                                                        BorderBrush="{d:Binding BorderBrush}"
+                                                                                        BorderThickness="1"
+                                                                                        CornerRadius="10"
+                                                                                        Padding="7,0">
+                                                                                    <TextBlock Text="{d:Binding Name}"
+                                                                                               FontSize="11"
+                                                                                               FontWeight="SemiBold"
+                                                                                               Foreground="{d:Binding Foreground}" />
+                                                                                </Border>
+                                                                            </ui:DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                </flex:FlexPanel>
+
+                                                                <TextBlock Text="{d:Binding MetaText}"
+                                                                           FontSize="12"
+                                                                           Foreground="{StaticResource TextTertiaryBrush}"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           MaxLines="1" />
+                                                            </StackPanel>
+
+                                                            <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                                                        Spacing="10" VerticalAlignment="Top"
+                                                                        Margin="12,1,0,0">
+                                                                <Border Visibility="{d:Binding PullRequestChipVisibility}"
+                                                                        Background="{StaticResource CanvasInsetBrush}"
+                                                                        BorderBrush="{StaticResource HairlineBrush}"
+                                                                        BorderThickness="1" CornerRadius="4"
+                                                                        Padding="6,0" VerticalAlignment="Center">
+                                                                    <TextBlock Text="PR" FontSize="10.5"
+                                                                               FontWeight="SemiBold"
+                                                                               CharacterSpacing="60"
+                                                                               Foreground="{StaticResource TextSecondaryBrush}" />
+                                                                </Border>
+                                                                <StackPanel Orientation="Horizontal" Spacing="4"
+                                                                            VerticalAlignment="Center"
+                                                                            Visibility="{d:Binding CommentVisibility}">
+                                                                    <FontIcon Glyph="&#xE8BD;" FontSize="13"
+                                                                              Foreground="{StaticResource TextTertiaryBrush}"
+                                                                              VerticalAlignment="Center" />
+                                                                    <TextBlock Text="{d:Binding CommentCountText}"
+                                                                               FontSize="12"
+                                                                               Foreground="{StaticResource TextTertiaryBrush}"
+                                                                               VerticalAlignment="Center" />
+                                                                </StackPanel>
+                                                                <FontIcon Glyph="&#xE8A7;" FontSize="13"
+                                                                          Foreground="{StaticResource TextTertiaryBrush}"
+                                                                          VerticalAlignment="Center" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </Button>
+                                                </ui:DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </ui:DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ============================ ROW 2: the status bar ============================ -->
+        <Border Grid.Row="2"
+                Background="{StaticResource CanvasSubtleBrush}"
+                BorderBrush="{StaticResource HairlineBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="24,6">
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <ProgressBar Grid.Column="0" Width="200" Height="6" Minimum="0" Maximum="100"
+                             VerticalAlignment="Center"
+                             Value="{d:Binding ProgressValue}"
+                             IsIndeterminate="{d:Binding IsProgressIndeterminate}"
+                             Visibility="{d:Binding ProgressVisibility}" />
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
+                            VerticalAlignment="Center">
+                    <FontIcon Glyph="{d:Binding StatusGlyph}" FontSize="13"
+                              Foreground="{d:Binding StatusBrush}"
+                              Visibility="{d:Binding StatusGlyphVisibility}"
+                              VerticalAlignment="Center" />
+                    <TextBlock Text="{d:Binding StatusText}" FontSize="12"
+                               Foreground="{d:Binding StatusBrush}"
+                               TextTrimming="CharacterEllipsis" MaxLines="1"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                            VerticalAlignment="Center">
+                    <Border Background="{d:Binding SearchQuotaBackground}"
+                            BorderBrush="{d:Binding SearchQuotaBorderBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="8,1">
+                        <TextBlock Text="{d:Binding SearchQuotaText}" FontSize="11"
+                                   FontWeight="SemiBold"
+                                   Foreground="{d:Binding SearchQuotaForeground}" />
+                    </Border>
+                    <Border Background="{StaticResource CanvasInsetBrush}"
+                            BorderBrush="{StaticResource HairlineBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="8,1">
+                        <TextBlock Text="{d:Binding CoreQuotaText}" FontSize="11"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

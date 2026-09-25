@@ -1,0 +1,101 @@
+<Project>
+
+  <!--
+    Central package pins for CodeBrix.Android (NuGet Central Package Management).
+    Every package version used by a project in this solution is set here and only
+    here; project files carry <PackageReference Include="..." /> without a version.
+
+    Dependency policy: packages owned on nuget.org by Microsoft / Xamarin /
+    dotnetframework, self-produced CodeBrix.* packages, and xUnit / SilverAssertions
+    in test projects are allowed; anything else needs Jeremy's approval (the default
+    answer is to vendor). No package produced by the CodeBrix.Platform repository may
+    appear here (see build/platform-repo-package-ids.txt): its Core assemblies are
+    re-shipped from the pinned build instead (build/PlatformPin.props).
+
+    Not managed here: the MSBuild SDK version of build/intake/CodeBrix.Android.Intake.proj
+    (MSBuild SDKs cannot be pinned centrally; it is written in that file's Sdk
+    attribute) and the Platform packages downloaded by the intake (pinned by
+    build/PlatformPin.props).
+
+    The two standalone debugging samples are excluded (see Directory.Build.props).
+  -->
+  <PropertyGroup Condition="'$(_CodeBrixAndroidStandaloneSample)' != 'true'">
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <!-- Material Components and AndroidX (the native widget layer) -->
+  <ItemGroup>
+    <PackageVersion Include="Xamarin.Google.Android.Material" Version="1.14.0.6" />
+    <PackageVersion Include="Xamarin.AndroidX.Window" Version="1.5.1.3" />
+    <PackageVersion Include="Xamarin.AndroidX.SwipeRefreshLayout" Version="1.2.0.3" />
+    <PackageVersion Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.2.0.3" />
+    <!-- The WebView add-in's page-to-host message channel (WebMessageListener, document-start scripts). -->
+    <PackageVersion Include="Xamarin.AndroidX.WebKit" Version="1.17.0" />
+    <!-- The MediaPlayer add-in's playback engine (AndroidX Media3, Apache 2.0). -->
+    <PackageVersion Include="Xamarin.AndroidX.Media3.ExoPlayer" Version="1.11.1" />
+  </ItemGroup>
+
+  <!--
+    SkiaSharp (and its views) for the Skia-drawing add-ins, at the family's locked SkiaSharp /
+    HarfBuzzSharp release pair. Bump them together, and only when the whole CodeBrix family
+    moves.
+  -->
+  <ItemGroup>
+    <PackageVersion Include="SkiaSharp" Version="4.152.0" />
+    <PackageVersion Include="SkiaSharp.Views" Version="4.152.0" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Android" Version="4.152.0" />
+    <PackageVersion Include="HarfBuzzSharp.NativeAssets.Android" Version="14.2.1.200" />
+  </ItemGroup>
+
+  <!--
+    The non-Platform-repo dependencies of the re-shipped Core assemblies (the same
+    versions the pinned CodeBrix.Platform build declares), and the Fluent symbols font.
+  -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="CodeBrix.ServiceLocator.MsplLicenseForever" Version="1.0.251.1433" />
+    <PackageVersion Include="CodeBrix.Platform.Fonts.Fluent.ApacheLicenseForever" Version="1.0.248.1204" />
+    <!-- The Svg add-in Core draws with CodeBrix.SkiaSvg (self-produced; the version the pinned Platform build declares). -->
+    <PackageVersion Include="CodeBrix.SkiaSvg.MitLicenseForever" Version="1.0.252.363" />
+    <!-- The AppSettings add-in's storage (self-produced; the version the pinned Platform build declares). It brings
+         Microsoft.Data.Sqlite and SQLitePCLRaw (e_sqlite3, Android natives included) - the accepted SQLitePCLRaw exception. -->
+    <PackageVersion Include="CodeBrix.Sqlite.ApacheLicenseForever" Version="1.0.250.22" />
+    <!-- The Graphics3DGL add-in Core renders through this managed OpenGL binding (self-produced, not a CodeBrix.Platform
+         repository package; the version the pinned Platform build declares). -->
+    <PackageVersion Include="CodeBrix.Platform.OpenGL.MitLicenseForever" Version="1.0.252.16" />
+  </ItemGroup>
+
+  <!--
+    Sample-app dependencies (samples/HelloPaste and the paste-always compile heads under
+    tests/PasteAlways): the non-Platform packages the copied CodeBrix.Samples code uses, at
+    the versions those samples pin. Never referenced by a src/ project.
+  -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.12" />
+    <PackageVersion Include="CodeBrix.Cryptography.MitLicenseForever" Version="1.0.249.1433" />
+    <PackageVersion Include="CodeBrix.PdfRasterizer.MitLicenseForever" Version="1.0.254.196" />
+    <PackageVersion Include="CodeBrix.Platform.Fonts.OpenSans.ApacheLicenseForever" Version="1.0.248.1181" />
+    <PackageVersion Include="CodeBrix.Platform.Fonts.Roboto.OflLicenseForever" Version="1.0.248.1219" />
+  </ItemGroup>
+
+  <!-- Build tooling -->
+  <ItemGroup>
+    <PackageVersion Include="CodeBrix.AssemblyTools.MitLicenseForever" Version="1.0.252.4" />
+  </ItemGroup>
+
+  <!-- Tests -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageVersion Include="xunit.v3" Version="4.0.1" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <PackageVersion Include="SilverAssertions.ApacheLicenseForever" Version="1.0.248.1071" />
+    <!-- The UIReqs host runner (tests/CodeBrix.Android.UIReqs): the Gherkin runner the CodeBrix.Platform
+         UIReqs suite uses, same version (named by the AP2 UIReqs-port brief; owner: Reqnroll). -->
+    <PackageVersion Include="Reqnroll.xunit.v3" Version="3.3.4" />
+  </ItemGroup>
+
+</Project>

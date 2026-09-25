@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The CodeBrix FileProvider's paths: the cache folder the WinRT services write shared files to (clipboard
+     bitmaps, share-sheet images). Overlay/SharedFileProvider.cs declares the provider. -->
+<paths>
+  <cache-path name="codebrix_shared" path="codebrix-shared/" />
+</paths>

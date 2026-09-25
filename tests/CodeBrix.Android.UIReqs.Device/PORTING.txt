@@ -1,0 +1,182 @@
+UIReqs PORT - where the scenario code comes from and what was adapted
+====================================================================
+
+SOURCE
+  CodeBrix.Platform (the family's own repository, Apache 2.0), copied ONCE, files only, never built
+  there: commit 8272e48e45ac98c91073bd4ede1428c7af86d639 (2026-09-23; the copied src/UIReqs/Platform.UI.Core
+  files were clean at that commit; src/UIReqs/UIReqs.Common.targets, tools/UIReqsFrameCompare and the
+  two frame-compare script files were copied as found in that working tree). Pristine snapshot of the
+  copy: ~/ClaudeHome/android-buildout-work/uireqs-source/ (SOURCE.txt).
+
+  src/UIReqs/Platform.UI.Core/Features/**      -> Scenarios/Features/**            VERBATIM (the one copy;
+                                                                                    the host project links it)
+  src/UIReqs/Platform.UI.Core/Steps/**          -> Scenarios/Steps/**               verbatim except (1)
+  src/UIReqs/Platform.UI.Core/Support/**        -> Scenarios/Support/**             verbatim except (1)(2)(5)
+  src/UIReqs/Platform.UI.Core/Hooks/**          -> Scenarios/Hooks/**               VERBATIM
+  src/UIReqs/Platform.UI.Core/Hosting/**        -> Scenarios/Hosting/**             verbatim except (1)(3)(4)(8)
+  src/UIReqs/Platform.UI.Core/Canvas/**         -> Scenarios/Canvas/**              verbatim except (1)(2)(6);
+                                                   FrameArchive.cs + FrameReview.cs moved to the HOST project
+                                                   (tests/CodeBrix.Android.UIReqs/Canvas/, verbatim except (1))
+  tools/UIReqsFrameCompare/**                   -> tools/UIReqsFrameCompare/**      verbatim except (7)
+  build/test-scripts/compare-uireqs-frames.sh   -> build/test-scripts/ (verbatim)
+  build/test-scripts/uireqs-frame-compare.informational -> build/test-scripts/ (verbatim)
+  Namespaces are kept (CodeBrix.Platform.UI.Core.UIReqs.*), so a diff against the source stays readable.
+  Nullable is enabled in both UIReqs projects: the copied code is CodeBrix.Platform code (NRT on).
+
+  AP1.9 (pin 1.0.268.12, the engine pass) - the Platform copy changed in three feature files; they were taken from
+  the Platform's own frame archive of the engine-pass gate (~/ClaudeHome/platform-split-work/frames/WPE1-4/*/, which
+  stores each feature file beside its frames), VERBATIM, because the Platform repository is closed to the Android
+  track since the engine pass:
+    Features/Harness/Harness.feature     + "The colour the harness reports for a shade is its most common exact
+                                           colour" (WPE1-5 B7: the Platform copy took this copy's ModeColor fix)
+    Features/Range/ProgressBar.feature   + "A paused ProgressBar that goes away leaves the accent colour as it was"
+                                           (WPE1-1 C0g)
+    Features/ThemeFocus/Theme.feature    the "label" TextBlock of two scenarios is HorizontalAlignment Left /
+                                           VerticalAlignment Top (WPE1-5 B4: a stretched TextBlock's ActualWidth -
+                                           the harness region - is now its slot)
+  The step code of the first two was NOT in any copy outside the Platform repository; it is written here from the
+  scenario text, marked ANDROID PORT (AP1.9): Steps/HarnessColourSteps.cs (the harness's own quantize + ModeColor
+  path, as CanvasAssert.TryInkColor) and the ShowPaused property in Support/RangeElements.cs. A later re-copy from
+  the Platform should replace both with the Platform's own files.
+
+ADAPTATIONS (each marked "ANDROID PORT" in the file)
+  (1) `using CodeBrix.Platform.UI.Runtime.Skia.Linux.FrameBuffer.Emulated.TestTarget;` ->
+      `using CodeBrix.Android.UIReqs.Device.TestTarget;` (host: CodeBrix.Android.UIReqs.TestTarget): the
+      emulated frame-buffer head's session/frame types are replaced by the Android ones (Runtime/TestTarget.cs).
+  (2) `using SkiaSharp;` -> `using SKColor = CodeBrix.Android.UIReqs.Device.Canvas.PixelColor;` (the canvas
+      vocabulary used SKColor only as a colour struct; no Skia in the Android harness - family policy).
+      Support/TestImage.cs writes its two-colour PNG with the managed PngCodec instead of an SKCanvas.
+  (3) Hosting/TestTargetFixture.cs: LaunchAsync attaches to the running app (the runner script launched it;
+      the host declares the orientation) instead of setting up a frame-buffer panel; ShutdownAsync only
+      forgets the session; WaitForLayoutAsync compares in pixels (density per XamlRoot); NextFrameAsync
+      additionally runs the layout-replay GEOMETRY AUDIT (Runtime/GeometryAudit.cs: every named element's
+      native view rectangle = its Core rectangle within 1 px) after each captured frame.
+  (4) Hosting/TextEngineBootstrap.cs: a no-op (no Skia text engine; text is native, via the TextBlock handler).
+  (5) (none beyond (1)/(2) in Support.)
+  (6) FIX: Canvas/ModeColor.cs + CanvasAssert(.ThemeFocus/.Buttons).cs - a colour bucket's representative is
+      its MOST FREQUENT exact colour, not the first pixel met (an anti-aliased glyph edge on Android). The
+      Platform copy took the same rule at the engine pass (WPE1-5 B7).
+  (7) tools/UIReqsFrameCompare: PNG decode/encode through the managed PngCodec (Protocol/PngCodec.cs, linked)
+      instead of SkiaSharp; FrameImage.cs stands in for SKBitmap.
+  (8) Hosting/VirtualApplication.cs SetContentAsync waits (at most ~1 s) until the new content IsLoaded: Core
+      raises Loaded on the next layout tick and an unloaded element is not hit-testable, so a tap sent right
+      after "the application shows ..." could fall through to the panel (the AP3a "first-tap race"; AP2-M).
+
+WHAT IS NEW (Android only)
+  Shims/        the Reqnroll attribute/context surface and xunit's TestContext as the copied code uses them
+                (the device does not run Reqnroll - the host does), and PixelColor.
+  Runtime/      StepServer (the TCP step server the host drives), StepCatalog + CucumberExpression (step
+                matching: {int} {float} {double} {word} {string} {}, optional text, alternatives), BindingScope
+                (context injection + hooks), HostChannel (capture / save-frame requests to the host),
+                TestTarget (session: panel, UI thread, Core's InputInjector for touch, frame handshake),
+                GeometryAudit, InputTrace (logcat tag UIReqs.Input), HostFrames (FrameArchive/FrameReview
+                stubs that forward to the host), AppHost.
+  Protocol/     the wire protocol (one JSON line per message, raw frame bytes after a "bytes" header) and the
+                managed PNG codec - shared with the host project and the frame-compare tool.
+  MainApplication / MainActivity: the scenario app (its XAML application is the copied VirtualApplication;
+                full screen, so a screencap is the app window).
+
+KEYBOARD (AP2.5)
+  Runtime/TestTarget.cs KeyDown/KeyUp/TypeText dispatch REAL Android KeyEvents to the activity (the path a
+  hardware keyboard takes: DispatchKeyEvent -> the window's keyboard input source -> Core). Core's own
+  keyboard injection (InputInjector.InjectKeyboardInput) is a NotImplemented stub in the pinned build.
+
+ANDROID-ONLY GROUPS (not copies; AP2.5/AP2.6)
+  AndroidFeatures/<Group>/*.feature with their steps in AndroidSteps/ (linked by the host project like the
+  copied features): AndroidInput (real MotionEvents and KeyEvents reach Core: pointer events and Tapped on a
+  Grid with a Background, right click, wheel, hover, keys on a page, an Alt accelerator, keyboard arrows) and
+  AndroidNative (native ScrollViewer scrolling with real drags, ChangeView and the wheel; offsets reported).
+  Later lanes (each group's steps in its own AndroidSteps/ file):
+  AndroidControls (AP3a, NativeControlsSteps.cs): the native widget types of the sample controls, real
+      MotionEvents/KeyEvents on them (exactly one Click / Checked / Toggled; a real finger on the Slider; real keys
+      typed into a TextBox), Core values reaching the widgets without echo, PasswordChar masking, the Image showing
+      Core's decoded bitmap, the native ComboBox ("Given native ComboBoxes are used" turns
+      ComboBoxHandler.Enabled on for one scenario; an [AfterScenario] hook turns it off), NumberBox and
+      AutoSuggestBox. Its [BeforeTestRun(Order = -100)] hook turns NativeTemplateParts ON for the whole run: the
+      copied scenarios that measure Fluent template parts (NormalRectangle, SwitchKnob, HorizontalThumb, ...) find
+      stand-ins placed where the native widget draws them (OFF in apps).
+  AndroidItems (AP3b, NativeListsSteps.cs): RecyclerView-backed lists - only the visible rows realised, real-finger
+      drags scroll natively and Core's ScrollViewer follows, containers recycled, real taps select, collection
+      changes, ItemContainerStyle, Header, ItemClick, ItemsRepeater UniformGridLayout, WrapPanel, native tab strips.
+  AndroidOverlays (AP4, OverlaySteps.cs): Material dialogs (slots, texts, results, Closing cancel, live enabled
+      state, XAML content falling back to Core), Material menus and bottom sheets, back and predictive back. The
+      Material forms are OFF for every scenario not tagged @native-overlays (the copied Popups group reads Core's
+      popups), ON for those tagged.
+  AndroidPolicy (AP5, PolicySteps.cs): size classes (real and simulated), the adaptive NavigationView and
+      ContentDialog, the 173-key families on the native widgets and live re-pointing, the Material palette / dynamic
+      colour / Fluent restore, day/night without recreation, sp font scale and type roles, the motion ticker and the
+      indeterminate driver. Its [BeforeTestRun(Order = 50)] hook turns the Material palette OFF and MotionMode to
+      AlwaysAnimate for the whole run. Since AP2-M2 the Compact/Medium scenarios resize the REAL window ("the real
+      window is resized to N dp wide": the host runs `wm density` through the DeviceSession "shell" request and the
+      [AfterScenario] hook puts the density back), one scenario keeps the size-class override, and two scenarios show
+      the system bars (hidden by the harness; hidden again after the scenario) to check that a native NavigationView
+      keeps its chrome's destinations and its page clear of them.
+  AndroidShapes (AP6, ShapesComposedSteps.cs): every Shape kind on the native ShapeView, independent start/end caps,
+      Triangle caps, flat/square dash caps and a dashed line's own start cap, Polygon vs Polyline, a gradient Fill over
+      the Path's own figure, Stretch Fill / None with a non-scaling stroke, hit tests on an Ellipse's fill and box
+      corner and on a Line's stroke, Viewbox scaling, Border per-side thickness and per-corner radius.
+  AndroidComposed (AP6, ShapesComposedSteps.cs): the native Expander (switch on per scenario), ColorPicker (parts,
+      Core colour to the parts, a real finger on the spectrum, hex entry, no-alpha form) and the Material date and time
+      pickers opened by DatePicker / TimePicker.
+  AndroidElements10A (AP10-A, Elements10ASteps.cs + Elements10ASamples.cs - elements built by sample name): the
+      Material app bars of CommandBar (top / bottom by size class, actions, overflow, IsOpen, switch off), stand-alone
+      AppBarButton / AppBarToggleButton, NavigationView item rows, SplitView's adaptive Compact form, TwoPaneView,
+      Pivot / SelectorBar / FlipView, native PipsPager / PagerControl / BreadcrumbBar, RadioButtons, ItemsView and grouped
+      lists on their templates, the native CalendarView / CalendarDatePicker, the Material pickers replacing the flyout
+      presenters, and the Platform's NotImplemented elements (TitleBar, ListBox, ListBoxItem, GroupItem, the picker
+      flyout presenters). Two grouped-header scenarios are PENDING (Core grouping, uireqs-pending.txt).
+  AndroidElements10B (AP10-B, Elements10BSteps.cs + Elements10BSamples.cs - elements built by sample name; the
+      AndroidElements10A generic steps are shared): InfoBar / RatingControl / SplitButton / ToggleSplitButton as Material
+      widgets over their templates (real fingers, Core colours), InfoBadge, PersonPicture, RefreshContainer (real pull,
+      RequestRefresh), ProgressRing, SwipeControl (Core's swipe under a real finger), TeachingTip and Popup /
+      NativePopupBase on the native popup layer, HyperlinkButton, DropDownButton (@native-overlays: its flyout as a
+      Material menu), BitmapIcon / PathIcon / AnimatedIcon, ScrollView (native scrolling both ways), ColorSpectrum,
+      ColorPickerSlider, the shapes, and the Platform's NotImplemented / absent elements. The MidiPlayer scenario is
+      PENDING (AP7-B, uireqs-pending.txt).
+
+ADD-IN GROUPS (AP7-A; copies, like the core groups)
+  Source: the same CodeBrix.Platform commit 8272e48e45ac98c91073bd4ede1428c7af86d639, src/UIReqs/Platform.UI.AddIn.<Group>/
+  (files only; pristine snapshot ~/ClaudeHome/android-buildout-work/uireqs-source-ap7a/, SOURCE.txt). Groups:
+  SkiaSharpViews, Svg, Graphics2DSK, CommandBar, FlexPanel, WebView, MediaPlayer, Graphics3DGL.
+    Features/<Group>/*.feature                 -> Scenarios/Features/<Group>/        VERBATIM
+    Steps/**, Support/**, Registration.cs      -> Scenarios/AddIns/<Group>/          verbatim except (a)-(d)
+    Assets/** (artwork, pages, clips)          -> inlined by (b)
+  The add-in assemblies the scenarios need come in through Directory.Build.props (CodeBrixAndroidInRepoAddIns: each
+  add-in's Core and its CodeBrix.Android add-in project). Runtime/AddInScope.cs scopes an add-in group's steps and
+  hooks to its own feature folder (namespace CodeBrix.Platform.UI.AddIn.<Group>.* <-> Features/<Group>/), as each
+  group is its own test assembly on the Platform: two groups may define the same step text ("... is invalidated").
+  The project allows unsafe code for the Graphics3DGL fixtures (vertex-attribute offsets as raw pointers), as the
+  Platform's Graphics3DGL UIReqs project does.
+  Adaptations (each marked "ANDROID PORT (x)" in the file):
+  (a) warnings-as-errors: a null-forgiving `!` where the device's ScenarioContext shim is NRT-annotated
+      (SkiaSharpViews), a CA2255 pragma around the module initializers of Registration.cs (Svg, CommandBar).
+  (b) an APK has no folder beside its assemblies: the Assets/ files are embedded as text / base64 in the support
+      class that used to read them and written to Path.GetTempPath() on first use (CommandBar DemoIcons, WebView
+      local page, MediaPlayer clips).
+  (c) Registration.cs bodies of WebView and MediaPlayer are empty: the Linux engines they registered (WPE WebKit,
+      LibVLC) do not exist on Android; the Android add-ins register their engines from their own module initializers.
+  (d) prerequisite probes: WebView checks the device's system WebView package instead of three Linux libraries;
+      MediaPlayer has no native library to preload (Media3 is managed + Java); Graphics3DGL probes libEGL.so
+      (the Android system library) instead of Debian's libEGL.so.1.
+
+PENDING SCENARIOS
+  tests/CodeBrix.Android.UIReqs/uireqs-pending.txt lists scenarios that need a control or service a later
+  phase owns (never deleted; reported as skipped "PENDING (<phase>)").
+
+SINGLE-SESSION ISOLATION (AP7-M)
+    Run as ONE app session (android-uireqs-run.sh --group all), two leaks crossed group boundaries; per-group runs
+    (a fresh app per group) never showed them. Two Android-only hooks keep every scenario's start state:
+    - (AP7-M, REMOVED at AP1.9) AndroidSteps/FrameworkBrushGuard.cs put back the colour of the SHARED framework
+      brush AccentFillColorDefaultBrush after Core's ProgressBar Paused / Error ColorAnimation had animated it in
+      place (FIXLIST [AP7-M]). Pin 1.0.268.12 fixes it in Core (WPE1-1 C0g: an animation clones a shared brush in
+      its target path; WPE1-5 I: the Setter twin), fenced by the copied Range/ProgressBar scenario "A paused
+      ProgressBar that goes away leaves the accent colour as it was"; the guard is gone.
+    - AndroidSteps/SoftKeyboardHooks.cs: a scenario that typed through a native field (the AutoSuggestBox real
+      keyboard scenario, a Material picker's keyboard input) left the soft keyboard up; in landscape it covered the
+      bottom of the next WebView scenarios' panel. The hook hides it after every scenario. The Material pickers
+      themselves now hide the keyboard their text input raised when their dialog closes
+      (Handlers/Composed/MaterialPickers.HideKeyboardAfterDialog), fenced by "the soft keyboard is not showing" in
+      the three AndroidComposed picker scenarios.
+    - AndroidSteps/PolicySteps.cs PolicyHooks.Use_the_harness_policy runs at BeforeTestRun Order 5 (was 50): before the
+      copied ThemeColors.RegisterAsync (Order 10) reads "Accent" once per run. At 50, a run whose theme bridge had
+      already written the Material palette at start-up registered the Material primary as "Accent" (a start-up race).

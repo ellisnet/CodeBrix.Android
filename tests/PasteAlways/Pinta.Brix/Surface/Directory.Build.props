@@ -1,0 +1,25 @@
+<Project>
+
+  <!--
+    Pinta.Brix paste-always head, Surface/: the app's own libraries (verbatim sources) and the
+    stub library, each compiled as its own net10.0 assembly under its original assembly name,
+    with the language settings of its CodeBrix.Samples project (nullable, unsafe code) - the
+    head's settings are those of the desktop heads. The repository-wide settings apply, then
+    the in-repository CodeBrix.Android consumer wiring (as samples/HelloPaste's app libraries);
+    the Android head settings of tests/PasteAlways/Directory.Build.props are skipped.
+  -->
+  <Import Project="$(MSBuildThisFileDirectory)../../../../Directory.Build.props" />
+
+  <PropertyGroup>
+    <CodeBrixAndroidInRepoConsumer>true</CodeBrixAndroidInRepoConsumer>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
+    <!-- Pinta.Brix.Settings is a facade over the AppSettings add-in; its Core ships in the intake. -->
+    <CodeBrixAndroidInRepoAddIns>AppSettings</CodeBrixAndroidInRepoAddIns>
+  </PropertyGroup>
+
+  <Import Project="$(CodeBrixAndroidRepoRoot)build/inrepo/CodeBrix.Android.InRepo.props" />
+
+</Project>

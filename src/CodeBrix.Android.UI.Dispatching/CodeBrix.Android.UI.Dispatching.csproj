@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The Android dispatcher pump: the Looper-backed implementation of the
+    CodeBrix.Platform.UI.Dispatching Core contract IDispatcherPumpPlatform.
+    AssemblyName = the name CodeBrix.Platform.UI.Dispatching.Core grants
+    InternalsVisibleTo to.
+
+    Two target frameworks: net10.0-android36.1 (the Looper pump) and net10.0 (HostFree/: a
+    managed pump that host-free tests drain explicitly; nothing ships the net10.0 flavor in
+    an app).
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net10.0-android36.1</TargetFrameworks>
+    <AssemblyName>CodeBrix.Android.UI.Dispatching</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.Dispatching</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-android36.1'">
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <Compile Remove="Android/**" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-android36.1'">
+    <Compile Remove="HostFree/**" />
+  </ItemGroup>
+
+</Project>

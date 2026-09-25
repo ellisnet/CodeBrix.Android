@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: RedisSetupTool (CodeBrix.Samples
+    RedisSetupTool/src/RedisSetupTool.UI). Pasted/ = the shared UI project's files, verbatim
+    (App, MainPage and its MainPage.Consoles partial). Surface/ = the page's view models,
+    bridges and services (RedisSetupTool.Core) and its three libraries
+    (RedisSetupTool.DockerManagement, .RedisManagement, .TerminalView), verbatim, plus a stub
+    of the TerminalView add-in's TerminalControl (Surface/Stubs/TerminalView). See
+    Surface/SOURCES.txt.
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.redissetuptool</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>RedisSetupTool.PasteAlways</RootNamespace>
+    <AssemblyName>RedisSetupTool.PasteAlways</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="CodeBrix.Docker.MitLicenseForever" />
+    <PackageReference Include="CodeBrix.Redis.MitLicenseForever" />
+  </ItemGroup>
+
+</Project>

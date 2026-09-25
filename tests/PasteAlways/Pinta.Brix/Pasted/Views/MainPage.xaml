@@ -1,0 +1,138 @@
+<Page
+    x:Class="Pinta.Brix.Views.MainPage"
+    xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+    xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Pinta.Brix.Views"
+    xmlns:vm="clr-namespace:Pinta.Brix.ViewModels;assembly=Pinta.Brix.Core"
+    FontFamily="{StaticResource OpenSansFont}"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.DataContext>
+        <vm:MainViewModel />
+    </Page.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Menu. Built from the Pinta.Brix.Engine action model at runtime; see
+             MainPage.Menus.cs. Nothing is declared here, so a command declared
+             once in Actions/*.cs gets its label, icon, enabled state and
+             shortcut without a second edit. -->
+        <MenuBar x:Name="MainMenuBar" Grid.Row="0" />
+
+        <!-- In-app icon toolbar row. Deliberately NOT an OS header bar: the
+             Frame Buffer head has no window chrome at all, so anything parked
+             there would be unreachable. -->
+        <Border x:Name="MainToolbarBorder" Grid.Row="1" BorderThickness="0,0,0,1"
+                BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <StackPanel x:Name="MainToolbarPanel" Orientation="Horizontal" Padding="6,3" Spacing="2" />
+            </ScrollViewer>
+        </Border>
+
+        <!-- Tool options toolbar -->
+        <Border x:Name="ToolOptionsBorder" Grid.Row="2" BorderThickness="0,1,0,1" BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <StackPanel x:Name="ToolOptionsPanel" Orientation="Horizontal" MinHeight="48" Padding="6,2" Spacing="2" />
+            </ScrollViewer>
+        </Border>
+
+        <!-- Main content: toolbox | canvas tabs | splitter | pads. The
+             splitter bars are added in code (MainPage_Loaded); the extra
+             column and row here are their homes. -->
+        <Grid x:Name="ContentGrid" Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer x:Name="ToolboxScroll" Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="ToolboxPanel" Padding="4" /><!-- Width flows from the button columns; see RefreshToolbox -->
+            </ScrollViewer>
+
+            <TabView x:Name="DocumentTabs"
+                     Grid.Column="1"
+                     IsAddTabButtonVisible="False"
+                     TabCloseRequested="DocumentTabs_TabCloseRequested"
+                     SelectionChanged="DocumentTabs_SelectionChanged" />
+
+            <Grid x:Name="PadsColumn" Grid.Column="3" Width="230" MinWidth="200">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" MinHeight="120" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" MinHeight="120" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Layers" FontWeight="SemiBold" Margin="8,6,8,2" />
+                    <ListView x:Name="LayersList" Grid.Row="1" SelectionChanged="LayersList_SelectionChanged" />
+                    <!-- Pad toolbar, built from the Layers commands; see BuildPadToolbars -->
+                    <StackPanel x:Name="LayersPadToolbar" Grid.Row="2" Orientation="Horizontal"
+                                Spacing="2" Margin="6,2,6,6" />
+                </Grid>
+
+                <Grid Grid.Row="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="8,6,6,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="History" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <StackPanel x:Name="HistoryPadToolbar" Grid.Column="1" Orientation="Horizontal" Spacing="2" />
+                    </Grid>
+                    <ListView x:Name="HistoryList" Grid.Row="1" SelectionChanged="HistoryList_SelectionChanged" />
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <!-- Status bar. Upstream's order: palette widget (hexpand), status
+             text, cursor position, selection size, then the zoom controls. -->
+        <Grid x:Name="StatusBarGrid" Grid.Row="4" Padding="8,2" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ContentControl x:Name="PaletteWidgetHost" Grid.Column="0" VerticalAlignment="Center" />
+            <!-- MaxLines keeps the bar one line tall: the shape tools carry
+                 many-line StatusBarText and would otherwise grow the bar. -->
+            <TextBlock Grid.Column="1" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxLines="1"
+                       Text="{d:Binding StatusText}" />
+            <TextBlock Grid.Column="2" VerticalAlignment="Center" MinWidth="80"
+                       Text="{d:Binding CursorPositionText}" />
+            <TextBlock Grid.Column="3" VerticalAlignment="Center" MinWidth="80"
+                       Text="{d:Binding SelectionSizeText}" />
+            <!-- The zoom control is the view model's: the two buttons are
+                 commands, the list is its preset list, and the placeholder is
+                 the current zoom because nothing stays selected. -->
+            <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                <Button Content="−" Command="{d:Binding ZoomOutCommand}" />
+                <ComboBox MinWidth="90" IsEditable="True"
+                          ItemsSource="{d:Binding ZoomPresets}"
+                          PlaceholderText="{d:Binding ZoomDisplayText}"
+                          SelectedItem="{d:Binding SelectedZoomPreset, Mode=TwoWay}" />
+                <Button Content="+" Command="{d:Binding ZoomInCommand}" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>

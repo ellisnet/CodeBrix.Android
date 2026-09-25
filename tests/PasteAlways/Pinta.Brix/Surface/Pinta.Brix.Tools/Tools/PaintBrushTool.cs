@@ -1,0 +1,295 @@
+//
+// PaintBrushTool.cs
+//
+// Author:
+//       Jonathan Pobst <monkey@jpobst.com>
+//
+// Copyright (c) 2010 Jonathan Pobst
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+
+using System;
+using System.Linq;
+using Pinta.Brix.Engine.Drawing;
+using Pinta.Brix.Engine;
+
+//was previously: namespace Pinta.Tools;
+namespace Pinta.Brix.Tools;
+
+public sealed class PaintBrushTool : BaseBrushTool
+{
+	private readonly IPaintBrushService brushes;
+	private readonly IWorkspaceService workspace;
+
+	private BasePaintBrush? default_brush;
+	private BasePaintBrush? active_brush;
+	private PointI? last_point = PointI.Zero;
+	private System.IDisposable? open_repeating_draw_id;
+	private ToolBarContainer brush_specific_options_box;
+
+	public PaintBrushTool (IServiceProvider services) : base (services)
+	{
+		brushes = services.GetService<IPaintBrushService> ();
+		foreach (BasePaintBrush brush in brushes) {
+			brush.OnCursorChanged += () => SetCursorFromBrush (brush);
+		}
+
+		default_brush = brushes.FirstOrDefault ();
+		active_brush = default_brush;
+
+		brushes.BrushAdded += (_, a) => {
+			RebuildBrushComboBox ();
+			a.Brush.OnCursorChanged += () => SetCursorFromBrush (a.Brush);
+		};
+		brushes.BrushRemoved += (_, _) => RebuildBrushComboBox ();
+
+		brush_specific_options_box = new ToolBarContainer ();
+
+		workspace = services.GetService<IWorkspaceService> ();
+
+		// Update cursor on zoom
+		workspace.ViewSizeChanged += (_, _) => {
+			if (IsActiveTool ()) {
+				if (active_brush is null) {
+					SetCursor (DefaultCursor);
+				} else {
+					SetCursorFromBrush (active_brush);
+				}
+			}
+		};
+	}
+
+	public override string Name => Translations.GetString ("Paintbrush");
+	public override string Icon => Icons.ToolPaintBrush;
+	public override string StatusBarText => Translations.GetString ("Left click to draw with primary color, right click to draw with secondary color.");
+	public override Key ShortcutKey => new (KeyConstants.KEY_B);
+	public override int Priority => 21;
+
+	public override ToolCursor DefaultCursor {
+		get {
+			double scale = workspace.GetScale ();
+			var icon = CursorHelper.CreateIconWithShape ("Cursor.Paintbrush.png",
+							CursorShape.Ellipse, scale, BrushWidth, 8, 24,
+							out var iconOffsetX, out var iconOffsetY);
+
+			return ToolCursor.FromImage (icon, iconOffsetX, iconOffsetY);
+		}
+	}
+
+
+	protected override void OnBuildToolBar (ToolBar tb)
+	{
+		base.OnBuildToolBar (tb);
+
+		tb.Append (Separator);
+
+		tb.Append (BrushLabel);
+		tb.Append (BrushComboBox);
+
+		RebuildBrushSpecificOptions ();
+		tb.Append (brush_specific_options_box);
+		if (active_brush is not null) {
+			active_brush.UpdateLineWidth (BrushWidth);
+		}
+	}
+
+	protected override void OnMouseDown (Document document, ToolMouseEventArgs e)
+	{
+		document.Layers.ToolLayer.Clear ();
+		document.Layers.ToolLayer.Hidden = false;
+
+		base.OnMouseDown (document, e);
+
+		active_brush?.DoMouseDown ();
+	}
+
+	protected override void OnMouseMove (Document document, ToolMouseEventArgs e)
+	{
+		if (active_brush is null)
+			return;
+
+		if (mouse_button is not (MouseButton.Left or MouseButton.Right)) {
+			last_point = null;
+			return;
+		}
+
+		// TODO: also multiply color by pressure
+		Color strokeColor = mouse_button switch {
+			MouseButton.Right => new (
+				Palette.SecondaryColor.R,
+				Palette.SecondaryColor.G,
+				Palette.SecondaryColor.B,
+				Palette.SecondaryColor.A * active_brush.StrokeAlphaMultiplier
+			),
+			MouseButton.Left or _ => new (
+				Palette.PrimaryColor.R,
+				Palette.PrimaryColor.G,
+				Palette.PrimaryColor.B,
+				Palette.PrimaryColor.A * active_brush.StrokeAlphaMultiplier
+			)
+		};
+
+		if (!last_point.HasValue)
+			last_point = e.Point;
+
+		if (document.Workspace.PointInCanvas (e.PointDouble))
+			surface_modified = true;
+
+		var surf = document.Layers.ToolLayer.Surface;
+		using Context g = document.CreateClippedToolContext ();
+
+		g.Antialias = UseAntialiasing ? Antialias.Subpixel : Antialias.None;
+		g.LineWidth = BrushWidth;
+		g.LineJoin = LineJoin.Round;
+		g.LineCap = LineCap.Round;
+		g.SetSourceColor (strokeColor);
+
+		BrushStrokeArgs strokeArgs = new (strokeColor, e.Point, last_point.Value);
+
+		CancelRepeatingDraw ();
+		var invalidate_rect = active_brush.DoMouseMove (g, surf, strokeArgs);
+
+		// If we draw partially offscreen, Cairo gives us a bogus
+		// dirty rectangle, so redraw everything.
+		if (document.Workspace.IsPartiallyOffscreen (invalidate_rect))
+			document.Workspace.Invalidate ();
+		else
+			document.Workspace.Invalidate (document.ClampToImageSize (invalidate_rect));
+
+		if (active_brush.MillisecondsBeforeReapply != 0) {
+			open_repeating_draw_id = PintaCore.Timer.Start (active_brush.MillisecondsBeforeReapply, () => {
+				OnMouseMove (document, e);
+				return true;
+			});
+		}
+		last_point = e.Point;
+	}
+
+	protected override void OnMouseUp (Document document, ToolMouseEventArgs e)
+	{
+		CancelRepeatingDraw ();
+		using Context g = new (document.Layers.CurrentUserLayer.Surface);
+
+		document.Layers.ToolLayer.Draw (g);
+
+		document.Layers.ToolLayer.Hidden = true;
+
+		base.OnMouseUp (document, e);
+
+		active_brush?.DoMouseUp ();
+	}
+
+	protected override void OnSaveSettings (ISettingsService settings)
+	{
+		base.OnSaveSettings (settings);
+
+		if (brush_combo_box is not null)
+			settings.PutSetting (SettingNames.PAINT_BRUSH_BRUSH, brush_combo_box.ComboBox.Active);
+
+		if (active_brush is not null) {
+			foreach (var option in active_brush.Options) {
+				option.SaveValueToSettings (settings);
+			}
+		}
+	}
+
+	protected override void OnBrushWidthChanged ()
+	{
+		if (active_brush is null) {
+			base.OnBrushWidthChanged ();
+		} else {
+			active_brush.UpdateLineWidth (BrushWidth);
+		}
+	}
+
+	private ToolBarLabel? brush_label;
+	private ToolBarComboBox? brush_combo_box;
+	private ToolBarSeparator? separator;
+
+	private ToolBarSeparator Separator => separator ??= new ToolBarSeparator ();
+	private ToolBarLabel BrushLabel => brush_label ??= new ToolBarLabel (string.Format (" {0}:  ", Translations.GetString ("Type")));
+
+
+	private ToolBarComboBox BrushComboBox {
+		get {
+			if (brush_combo_box is null) {
+				brush_combo_box = ToolBarComboBox.New (100, 0, false);
+				brush_combo_box.ComboBox.OnChanged += (o, e) => {
+					var brush_name = brush_combo_box.ComboBox.GetActiveText ();
+					active_brush = brushes.SingleOrDefault (brush => brush.Name == brush_name) ?? default_brush;
+					if (active_brush is not null) {
+						active_brush.UpdateLineWidth (BrushWidth);
+					}
+				};
+
+				RebuildBrushComboBox ();
+
+				var brush = Settings.GetSetting (SettingNames.PAINT_BRUSH_BRUSH, 0);
+
+				if (brush < brush_combo_box.Items.Count)
+					brush_combo_box.ComboBox.Active = brush;
+			}
+
+			return brush_combo_box;
+		}
+	}
+
+	/// <summary>
+	/// Rebuild the list of brushes.
+	/// </summary>
+	private void RebuildBrushComboBox ()
+	{
+		default_brush = brushes.FirstOrDefault ();
+
+		BrushComboBox.ComboBox.RemoveAll ();
+
+		foreach (var brush in brushes)
+			BrushComboBox.ComboBox.AppendText (brush.Name);
+
+		BrushComboBox.ComboBox.Active = 0;
+		BrushComboBox.ComboBox.OnChanged += (cbx, ev) => RebuildBrushSpecificOptions ();
+	}
+
+	private void CancelRepeatingDraw ()
+	{
+		open_repeating_draw_id?.Dispose ();
+		open_repeating_draw_id = null;
+	}
+
+	private void RebuildBrushSpecificOptions ()
+	{
+		brush_specific_options_box.RemoveAll ();
+		if (active_brush is not null) {
+			foreach (var option in active_brush.Options) {
+				brush_specific_options_box.Append (ToolOptionWidgetService.GetWidgetForOption (option));
+			}
+		}
+	}
+
+	private void SetCursorFromBrush (BasePaintBrush brush)
+	{
+		ToolCursor? brush_cursor = brush.GetCursor ();
+		if (brush_cursor is null) {
+			SetCursor (DefaultCursor);
+		} else {
+			SetCursor (brush_cursor);
+		}
+	}
+}

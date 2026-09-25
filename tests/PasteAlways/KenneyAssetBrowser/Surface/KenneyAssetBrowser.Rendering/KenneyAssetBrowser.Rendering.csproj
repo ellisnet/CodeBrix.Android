@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Surface library for the KenneyAssetBrowser paste-always head: KenneyAssetBrowser.Rendering
+    (CodeBrix.Samples KenneyAssetBrowser/src/libs/KenneyAssetBrowser.Rendering), built as its own
+    assembly with the source library's own settings (nullable, implicit usings, its own root
+    namespace), because the verbatim copies only compile under those settings and the page
+    names the assembly (xmlns render ...;assembly=KenneyAssetBrowser.Rendering). Verbatim copies:
+    see ../SOURCES.txt. ModelSceneGlCanvas derives from the real Graphics3DGL GLCanvasElement (the
+    add-in's Core); the renderer draws with the OpenGL binding the Core renders through.
+  -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>KenneyAssetBrowser.Rendering</RootNamespace>
+    <AssemblyName>KenneyAssetBrowser.Rendering</AssemblyName>
+    <CodeBrixAndroidInRepoAddIns>Graphics3DGL</CodeBrixAndroidInRepoAddIns>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CodeBrix.Imaging.ApacheLicenseForever" />
+    <PackageReference Include="CodeBrix.Graphics3D.Gltf2.MitLicenseForever" />
+    <PackageReference Include="CodeBrix.Platform.OpenGL.MitLicenseForever" />
+    <PackageReference Include="CodeBrix.SkiaSvg.MitLicenseForever" />
+    <PackageReference Include="SkiaSharp" />
+  </ItemGroup>
+
+</Project>

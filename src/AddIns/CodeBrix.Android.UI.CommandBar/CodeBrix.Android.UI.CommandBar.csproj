@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UI.CommandBar: the Android side of the CodeBrix.Platform CommandBar add-in (AP7.3). Its Core
+    (CodeBrix.Platform.UI.CommandBar.Core, re-shipped by the intake) holds the ToolBar family (bars, buttons, toggles,
+    menu buttons, separators, spacers, the overflow chevron and flyout) and resolves ONE platform contract,
+    IIconRasterizationPlatform (loading this assembly BY NAME through its PlatformContract): icons are SvgImageSources
+    rasterized at the icon size and tinted through a stylesheet, drawn by the Svg add-in.
+    AssemblyName = the name CodeBrix.Platform.UI.CommandBar.Core (and UI.Core) grant InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android.UI.CommandBar</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.CommandBar</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.Svg/CodeBrix.Android.UI.Svg.csproj" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.CommandBar.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.SkiaSharp.Views.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Svg.Core.dll" />
+  </ItemGroup>
+
+</Project>

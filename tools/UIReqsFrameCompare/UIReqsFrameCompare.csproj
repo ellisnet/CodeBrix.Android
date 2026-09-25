@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!-- Dev-only console tool: compares two folders of saved UIReqs frames (a baseline and a current
+	     run, both written with CODEBRIX_UIREQS_FRAME_SAVE) pixel by pixel. NOT packed into any NuGet.
+	     Usage (from the repo root):
+	         build/test-scripts/compare-uireqs-frames.sh <baseline-folder> <current-folder> [options]
+	     which runs this project with the default informational groups
+	     (build/test-scripts/uireqs-frame-compare.informational).
+	     ANDROID PORT: copied from CodeBrix.Platform tools/UIReqsFrameCompare (see
+	     tests/CodeBrix.Android.UIReqs.Device/PORTING.txt); PNG decoding and encoding use the UIReqs
+	     port's managed PNG codec instead of SkiaSharp (FrameImage stands in for SKBitmap). -->
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<IsPackable>false</IsPackable>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Include="../../tests/CodeBrix.Android.UIReqs.Device/Protocol/PngCodec.cs" Link="Protocol/PngCodec.cs" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,20 @@
+<Project>
+
+  <!--
+    KenneyAssetBrowser paste-always head: the repository's central pins, plus the
+    packages the verbatim Surface/ copies need that the root file does not pin.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <!-- SKBitmap / SKCanvas in the view model and the Rendering library (Microsoft; the family's locked SkiaSharp release) -->
+    <!-- SkiaSharp 4.152.0: pinned by the repository's Directory.Packages.props since AP7-A (same version). -->
+    <!-- The .zip bundle reader of KenneyAssetBrowser.AssetRead (self-produced CodeBrix package, the version the sample pins) -->
+    <PackageVersion Include="CodeBrix.Compression.MitLicenseForever" Version="1.0.248.1109" />
+    <!-- The Rendering library's real glTF loader and image decoders (AP7-M; self-produced CodeBrix packages, the versions
+         the sample pins). -->
+    <PackageVersion Include="CodeBrix.Graphics3D.Gltf2.MitLicenseForever" Version="1.0.261.293" />
+    <PackageVersion Include="CodeBrix.Imaging.ApacheLicenseForever" Version="1.0.248.1113" />
+  </ItemGroup>
+
+</Project>

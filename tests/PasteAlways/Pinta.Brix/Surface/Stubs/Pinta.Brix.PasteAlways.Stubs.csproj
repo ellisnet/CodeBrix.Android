@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The paste-always stubs for Pinta.Brix: add-in types without an Android flavor yet
+    (SkiaSharp.Views.Windows.SKXamlCanvas from CodeBrix.Platform.SkiaSharp.Views, the
+    CodeBrix.Platform.UI.TextLayout add-in). Every file starts with its STUB header.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" />
+  </ItemGroup>
+
+</Project>

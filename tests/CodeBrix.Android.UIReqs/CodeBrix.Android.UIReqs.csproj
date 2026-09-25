@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UIReqs: the host half of the UIReqs port (AP2). Reqnroll + xunit.v3 on the
+    Microsoft.Testing.Platform runner, over the SAME feature files as CodeBrix.Platform's UIReqs
+    (linked from the device project's Scenarios/Features, the one copy). Every step is forwarded to
+    the scenario app on the emulator (tests/CodeBrix.Android.UIReqs.Device), which runs the copied
+    step definitions in the app; this half takes the screencaps and owns the frame files.
+    Run it through build/test-scripts/android-uireqs-run.sh (it starts the AVD, installs and starts
+    the device app, forwards the port and rotates the emulator). It is also part of a plain
+    `dotnet test` of the solution: there, when no scenario app answers (no device or emulator
+    reachable, or nothing forwarded), every scenario is SKIPPED with that reason; when one does
+    (UIREQS_SERIAL / UIREQS_HOST_PORT name it), the scenarios run. Nullable is enabled (copied
+    CodeBrix.Platform code).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+    <IsPackable>false</IsPackable>
+    <!-- Part of a solution test run; without a reachable scenario app every scenario skips (HostHooks). -->
+    <IsTestProject>true</IsTestProject>
+    <IsTestingPlatformApplication>true</IsTestingPlatformApplication>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <AssemblyName>CodeBrix.Android.UIReqs</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UIReqs</RootNamespace>
+    <ReqnrollUseIntermediateOutputPathForCodeBehind>true</ReqnrollUseIntermediateOutputPathForCodeBehind>
+    <_UIReqsDeviceProjectDir>$(MSBuildThisFileDirectory)../CodeBrix.Android.UIReqs.Device/</_UIReqsDeviceProjectDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Reqnroll.xunit.v3" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The one copy of the feature files is the device project's; Link is the Cucumber resource name. -->
+    <ReqnrollFeatureFile Include="$(_UIReqsDeviceProjectDir)Scenarios/Features/**/*.feature"
+                         Link="Features/%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- Android-only groups (real Android input and native behaviour; not copies of Platform features). -->
+    <ReqnrollFeatureFile Include="$(_UIReqsDeviceProjectDir)AndroidFeatures/**/*.feature"
+                         Link="Features/%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- The wire protocol and PNG codec, shared with the device app. -->
+    <Compile Include="$(_UIReqsDeviceProjectDir)Protocol/*.cs" Link="Protocol/%(Filename)%(Extension)" />
+    <None Update="reqnroll.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="uireqs-pending.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Read at run time by the copied Canvas/FrameReview.cs (a copy of each feature file goes beside its frames). -->
+    <AssemblyMetadata Include="CodeBrix.UIReqs.FeatureRoot" Value="$(_UIReqsDeviceProjectDir)Scenarios/Features" />
+  </ItemGroup>
+
+</Project>

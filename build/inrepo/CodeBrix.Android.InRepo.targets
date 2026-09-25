@@ -1,0 +1,89 @@
+<Project>
+
+  <!--
+    In-repository CodeBrix.Android consumers: targets half (see CodeBrix.Android.InRepo.props).
+    Imported by the Directory.Build.targets of the consumer folders.
+  -->
+
+  <PropertyGroup Condition="'$(CodeBrixAndroidInRepoConsumer)' == 'true'">
+    <_CodeBrixAndroidInRepoIsAndroid Condition="$(TargetFramework.Contains('-android'))">true</_CodeBrixAndroidInRepoIsAndroid>
+    <_CodeBrixAndroidInRepoIsHead Condition="'$(_CodeBrixAndroidInRepoIsAndroid)' == 'true' and ('$(OutputType)' == 'Exe' or '$(AndroidApplication)' == 'true')">true</_CodeBrixAndroidInRepoIsHead>
+  </PropertyGroup>
+
+  <!-- Every flavor: the re-shipped Core assemblies (package lib/) and the intake build order. -->
+  <ItemGroup Condition="'$(CodeBrixAndroidInRepoConsumer)' == 'true'">
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)build/intake/CodeBrix.Android.Intake.proj" ReferenceOutputAssembly="false" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Extensions.Logging.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Foundation.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Foundation.Logging.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Adapter.Microsoft.Extensions.Logging.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Composition.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Dispatching.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.FluentTheme.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.FluentTheme.v1.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.FluentTheme.v2.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Toolkit.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Xaml.dll" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="CodeBrix.ServiceLocator.MsplLicenseForever" />
+  </ItemGroup>
+
+  <!-- Add-in Cores re-shipped by the intake, on request (CodeBrixAndroidInRepoAddIns="FlexPanel;AudioPlayer";
+       names: FlexPanel AudioPlayer CommandBar AppSettings SkiaSharpViews Svg Graphics2DSK Graphics3DGL TextLayout WebView MediaPlayer (the last two: Android assembly only, their Cores are the framework's)). -->
+  <PropertyGroup Condition="'$(CodeBrixAndroidInRepoConsumer)' == 'true'">
+    <_CodeBrixAndroidInRepoAddIns>;$(CodeBrixAndroidInRepoAddIns);</_CodeBrixAndroidInRepoAddIns>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(CodeBrixAndroidInRepoConsumer)' == 'true'">
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.FlexPanel.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';FlexPanel;'))" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.AudioPlayer.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';AudioPlayer;'))" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.CommandBar.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';CommandBar;'))" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.AppSettings.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';AppSettings;'))" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.SkiaSharp.Views.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';SkiaSharpViews;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';Svg;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';CommandBar;'))" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Svg.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';Svg;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';CommandBar;'))" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.WinUI.Graphics2DSK.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';Graphics2DSK;'))" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.WinUI.Graphics3DGL.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';Graphics3DGL;'))" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.TextLayout.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';TextLayout;'))" />
+  </ItemGroup>
+
+  <!--
+    Android heads: the CodeBrix.Android add-in assembly of each requested add-in that has one (AP7), as the
+    add-in's package would bring it (its Core and its Android assembly).
+  -->
+  <ItemGroup Condition="'$(_CodeBrixAndroidInRepoIsHead)' == 'true'">
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.SkiaSharp.Views/CodeBrix.Android.SkiaSharp.Views.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';SkiaSharpViews;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';Svg;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';Graphics2DSK;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';CommandBar;'))" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.Svg/CodeBrix.Android.UI.Svg.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';Svg;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';CommandBar;'))" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.CommandBar/CodeBrix.Android.UI.CommandBar.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';CommandBar;'))" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.FlexPanel/CodeBrix.Android.UI.FlexPanel.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';FlexPanel;'))" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.AppSettings/CodeBrix.Android.AppSettings.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';AppSettings;'))" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.WebView/CodeBrix.Android.UI.WebView.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';WebView;'))" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.MediaPlayer/CodeBrix.Android.UI.MediaPlayer.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';MediaPlayer;'))" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.WinUI.Graphics2DSK/CodeBrix.Android.WinUI.Graphics2DSK.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';Graphics2DSK;'))" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.WinUI.Graphics3DGL/CodeBrix.Android.WinUI.Graphics3DGL.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';Graphics3DGL;'))" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.TextLayout/CodeBrix.Android.UI.TextLayout.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';TextLayout;'))" />
+  </ItemGroup>
+
+  <!-- Android flavors: the XAML source generator and analyzers (package analyzers/). -->
+  <ItemGroup Condition="'$(_CodeBrixAndroidInRepoIsAndroid)' == 'true'">
+    <Analyzer Include="$(CodeBrixPlatformIntakeDir)analyzers/dotnet/cs/*.dll" />
+  </ItemGroup>
+
+  <!-- Android heads: CodeBrix.Android.UI (package lib/) and the Fluent symbols font the package depends on. -->
+  <ItemGroup Condition="'$(_CodeBrixAndroidInRepoIsHead)' == 'true'">
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <PackageReference Include="CodeBrix.Platform.Fonts.Fluent.ApacheLicenseForever" />
+  </ItemGroup>
+
+  <Import Project="$(CodeBrixAndroidRepoRoot)build/nuget/buildTransitive/CodeBrix.Android.ApacheLicenseForever.targets"
+          Condition="'$(_CodeBrixAndroidInRepoIsAndroid)' == 'true' and '$(_CodeBrixAndroidInRepoIntakeReady)' == 'true'" />
+
+  <Target Name="_CodeBrixAndroidInRepoRequireIntake" BeforeTargets="ResolveProjectReferences;CoreCompile"
+          Condition="'$(_CodeBrixAndroidInRepoIsAndroid)' == 'true' and '$(_CodeBrixAndroidInRepoIntakeReady)' != 'true'">
+    <Error Text="The CodeBrix.Platform intake has not run yet ($(CodeBrixAndroidPlatformBuildPath) is missing): build build/intake/CodeBrix.Android.Intake.proj (or the solution) first, then build this project again." />
+  </Target>
+
+</Project>

@@ -1,0 +1,14 @@
+# Gate 2 input: the add-in packages whose Core assembly MAY reference SkiaSharp /
+# HarfBuzzSharp (the Skia-canvas rule R7 of the Core split: anything that draws
+# custom content on a Skia canvas may assume a Skia view is provided on every
+# platform). A framework Core assembly may never reference them; neither may any
+# other add-in's Core.
+CodeBrix.Platform.AdvancedTextEdit.ApacheLicenseForever
+CodeBrix.Platform.Graphics2DSK.ApacheLicenseForever
+CodeBrix.Platform.Graphics3DGL.ApacheLicenseForever
+CodeBrix.Platform.Lottie.ApacheLicenseForever
+CodeBrix.Platform.PlotterView.ApacheLicenseForever
+CodeBrix.Platform.SkiaSharp.Views.MitLicenseForever
+CodeBrix.Platform.Svg.ApacheLicenseForever
+CodeBrix.Platform.TerminalView.ApacheLicenseForever
+CodeBrix.Platform.TextLayout.ApacheLicenseForever

@@ -1,0 +1,66 @@
+<UserControl
+    x:Class="InannaRosette.Controls.CardView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <Storyboard x:Name="FlipOutStory">
+            <DoubleAnimation Storyboard.TargetName="FaceTransform" Storyboard.TargetProperty="ScaleX"
+                             From="1" To="0" Duration="0:0:0.13" />
+        </Storyboard>
+        <Storyboard x:Name="FlipInStory">
+            <DoubleAnimation Storyboard.TargetName="FaceTransform" Storyboard.TargetProperty="ScaleX"
+                             From="0" To="1" Duration="0:0:0.16" />
+        </Storyboard>
+        <Storyboard x:Name="RotateStory">
+            <DoubleAnimation x:Name="RotateStep" Storyboard.TargetName="FaceTransform"
+                             Storyboard.TargetProperty="Rotation"
+                             From="0" To="180" Duration="0:0:0.26" />
+        </Storyboard>
+        <Storyboard x:Name="HoverInStory">
+            <DoubleAnimation Storyboard.TargetName="LiftTransform" Storyboard.TargetProperty="TranslateY"
+                             To="-4" Duration="0:0:0.12" />
+            <DoubleAnimation Storyboard.TargetName="GlowRect" Storyboard.TargetProperty="Opacity"
+                             To="1" Duration="0:0:0.12" />
+        </Storyboard>
+        <Storyboard x:Name="HoverOutStory">
+            <DoubleAnimation Storyboard.TargetName="LiftTransform" Storyboard.TargetProperty="TranslateY"
+                             To="0" Duration="0:0:0.12" />
+            <DoubleAnimation Storyboard.TargetName="GlowRect" Storyboard.TargetProperty="Opacity"
+                             To="0" Duration="0:0:0.12" />
+        </Storyboard>
+        <Storyboard x:Name="AppearStory">
+            <DoubleAnimation Storyboard.TargetName="Shell" Storyboard.TargetProperty="Opacity"
+                             From="0" To="1" Duration="0:0:0.28" />
+            <DoubleAnimation Storyboard.TargetName="LiftTransform" Storyboard.TargetProperty="TranslateY"
+                             From="14" To="0" Duration="0:0:0.28" />
+        </Storyboard>
+    </UserControl.Resources>
+
+    <Grid x:Name="Shell" Width="104" Height="166" RenderTransformOrigin="0.5,0.5">
+        <Grid.RenderTransform>
+            <CompositeTransform x:Name="LiftTransform" TranslateX="0" TranslateY="0" ScaleX="1" ScaleY="1" />
+        </Grid.RenderTransform>
+
+        <Grid x:Name="FaceHost" RenderTransformOrigin="0.5,0.5">
+            <Grid.RenderTransform>
+                <CompositeTransform x:Name="FaceTransform" Rotation="0" ScaleX="1" ScaleY="1" />
+            </Grid.RenderTransform>
+            <Viewbox Stretch="Fill">
+                <Grid Width="250" Height="400">
+                    <Canvas x:Name="BackCanvas" Width="250" Height="400" />
+                    <Canvas x:Name="FaceCanvas" Width="250" Height="400" />
+                </Grid>
+            </Viewbox>
+        </Grid>
+
+        <!-- hover ring -->
+        <Rectangle x:Name="GlowRect" Opacity="0" RadiusX="7" RadiusY="7"
+                   Stroke="#F3DFA2" StrokeThickness="1.6" IsHitTestVisible="False" />
+        <!-- selection / snap-target ring -->
+        <Rectangle x:Name="HighlightRect" Opacity="0" RadiusX="7" RadiusY="7"
+                   Stroke="#4C6FE0" StrokeThickness="2.4" IsHitTestVisible="False" />
+
+        <Canvas x:Name="Overlay" IsHitTestVisible="True" />
+    </Grid>
+</UserControl>

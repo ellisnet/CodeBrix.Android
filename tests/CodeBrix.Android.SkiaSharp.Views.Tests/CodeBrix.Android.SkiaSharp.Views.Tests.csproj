@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Host-free tests (net10.0) of the CodeBrix.Android SkiaSharp.Views add-in: its portable parts
+    (compiled in from source, Linked/) and the Core contract it implements, read from the pinned
+    Core assembly's metadata (the twin-loading names and grants). The Android views, handlers and
+    the canvas painting are exercised on the emulator (the SkiaSharpViews UIReqs group).
+
+    AssemblyName = the name CodeBrix.Platform.SkiaSharp.Views.Core grants InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>CodeBrix.Android.SkiaSharp.Views.Tests</AssemblyName>
+    <RootNamespace>CodeBrix.Android.SkiaSharp.Views.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)build/intake/CodeBrix.Android.Intake.proj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- The portable parts of the add-in, compiled into this test assembly. -->
+  <ItemGroup>
+    <Compile Include="..\..\src\AddIns\CodeBrix.Android.SkiaSharp.Views\Portable\*.cs" Link="Linked\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\CoreMetadata.cs" Link="Shared\CoreMetadata.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Read as metadata only (PEReader), never loaded. -->
+    <AssemblyMetadata Include="CodeBrix.Android.Tests.CoreLib" Value="$(CodeBrixPlatformIntakeLibDir)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="SilverAssertions.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

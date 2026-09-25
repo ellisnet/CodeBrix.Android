@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The Android implementation of the CodeBrix.Platform WinRT-surface Core contracts
+    (application data folders, globalization preferences, graphics imaging) and the
+    WinRT registry extensions (analytics info, system theme, display information).
+    AssemblyName = the name CodeBrix.Platform.Core grants InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android</AssemblyName>
+    <RootNamespace>CodeBrix.Android</RootNamespace>
+  </PropertyGroup>
+
+</Project>

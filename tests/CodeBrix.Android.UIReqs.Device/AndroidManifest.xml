@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- INTERNET: the step server listens on localhost (reached by the host runner through adb forward). -->
+  <uses-permission android:name="android.permission.INTERNET" />
+  <application android:allowBackup="false" android:label="CodeBrix UIReqs" android:supportsRtl="true"></application>
+</manifest>

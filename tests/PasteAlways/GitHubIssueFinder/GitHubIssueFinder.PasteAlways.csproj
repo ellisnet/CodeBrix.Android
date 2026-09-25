@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: GitHubIssueFinder (CodeBrix.Samples
+    GitHubIssueFinder/src/GitHubIssueFinder.UI). Pasted/ = the shared UI project's files,
+    verbatim. Surface/ = the page's view models, theming and helpers (GitHubIssueFinder.Core)
+    and its two libraries (GitHubIssueFinder.GitHub, GitHubIssueFinder.Settings) - verbatim
+    copies (see Surface/SOURCES.txt). The FlexPanel and AppSettings add-in Cores come from the intake.
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.githubissuefinder</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>GitHubIssueFinder.PasteAlways</RootNamespace>
+    <AssemblyName>GitHubIssueFinder.PasteAlways</AssemblyName>
+    <CodeBrixAndroidInRepoAddIns>FlexPanel;AppSettings</CodeBrixAndroidInRepoAddIns>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+  </ItemGroup>
+
+</Project>

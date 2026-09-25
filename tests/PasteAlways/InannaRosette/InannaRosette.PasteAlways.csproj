@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: InannaRosette (CodeBrix.Samples InannaRosette/src/InannaRosette.UI).
+    Pasted/ = the shared UI project's files, verbatim. Surface/ = the app's InannaRosette.Core and
+    InannaRosette.Reading sources (verbatim, except the PDF report builder, a stub); see
+    Surface/SOURCES.txt.
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.inannarosette</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>InannaRosette.PasteAlways</RootNamespace>
+    <AssemblyName>InannaRosette.PasteAlways</AssemblyName>
+    <!-- The same language settings as the app's desktop heads and InannaRosette.Core. -->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Controls\CardView.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <!-- ImplicitUsings as the app's desktop heads have it; the CodeBrix.Android build removes the Android workload's extra global usings. -->
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+  </ItemGroup>
+
+</Project>

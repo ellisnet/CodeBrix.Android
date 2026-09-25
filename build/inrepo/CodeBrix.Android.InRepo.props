@@ -1,0 +1,44 @@
+<Project>
+
+  <!--
+    In-repository CodeBrix.Android consumers (samples/HelloPaste, tests/PasteAlways/*):
+    props half. Imported by the Directory.Build.props of those folders, after the
+    repository-wide Directory.Build.props.
+
+    An app outside this repository references the CodeBrix.Android.ApacheLicenseForever
+    package, whose buildTransitive props/targets and lib/ assemblies do the work. Inside
+    the repository the package does not exist yet, so these two files simulate its layout
+    exactly: the consumer buildTransitive files from build/nuget/buildTransitive/, the
+    re-shipped Platform build files, Core assemblies and generator from the intake
+    (artifacts/intake/<version>/), and CodeBrix.Android.UI as a project reference.
+
+    Only Android target frameworks get the consumer build logic. A multi-targeted app
+    library (the D-O2 app shape: net10.0 for the desktop heads, net10.0-android36.1 for
+    Android) compiles its net10.0 flavor against the same Core assemblies, with no XAML
+    generator (the desktop heads get theirs from the CodeBrix.Platform package).
+
+    Settings (set before this file is imported, or in the project):
+      CodeBrixAndroidInRepoConsumer   true to activate (the importing folder sets it)
+  -->
+
+  <PropertyGroup Condition="'$(CodeBrixAndroidInRepoConsumer)' == 'true'">
+    <!-- In the package the re-shipped Platform build files sit beside the CodeBrix.Android props/targets. -->
+    <CodeBrixAndroidPlatformBuildPath>$(CodeBrixPlatformIntakeDir)buildTransitive/</CodeBrixAndroidPlatformBuildPath>
+    <_CodeBrixAndroidInRepoAndroidTfm Condition="'$(TargetFramework)' == '' or $(TargetFramework.Contains('-android'))">true</_CodeBrixAndroidInRepoAndroidTfm>
+  </PropertyGroup>
+
+  <!--
+    The intake writes the re-shipped build files; on a clean checkout they do not exist while
+    restore evaluates the solution, so the consumer logic is imported only once they do. A
+    solution build orders the intake first (BuildDependency in CodeBrix.Android.slnx), and the
+    build evaluation that follows sees them; a build that still lacks them stops with an
+    explicit error (see the .targets).
+  -->
+  <PropertyGroup Condition="'$(CodeBrixAndroidInRepoConsumer)' == 'true'">
+    <_CodeBrixAndroidInRepoIntakeReady Condition="Exists('$(CodeBrixAndroidPlatformBuildPath)Platform.UI.SourceGenerators.props')">true</_CodeBrixAndroidInRepoIntakeReady>
+  </PropertyGroup>
+
+  <Import Project="$(CodeBrixAndroidRepoRoot)build/nuget/buildTransitive/CodeBrix.Android.ApacheLicenseForever.props"
+          Condition="'$(CodeBrixAndroidInRepoConsumer)' == 'true' and '$(_CodeBrixAndroidInRepoAndroidTfm)' == 'true' and '$(_CodeBrixAndroidInRepoIntakeReady)' == 'true'" />
+
+</Project>

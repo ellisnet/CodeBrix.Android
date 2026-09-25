@@ -1,0 +1,36 @@
+<Project>
+
+  <!--
+    tests/PasteAlways: the paste-always compile test (plan 4.10, AP1.7).
+
+    One throw-away Android head per corpus page (<App>/<App>.PasteAlways.csproj). Each head
+    compiles the page's App.xaml, App.xaml.cs, MainPage.xaml and MainPage.xaml.cs (plus the
+    MainPage partial-class files and the page's own XAML controls) - VERBATIM copies of
+    CodeBrix.Samples files, kept under <App>/Pasted/ and fingerprinted in
+    <App>/pasted-files.sha256 - for net10.0-android36.1 against the CodeBrix.Android build.
+    What the pasted files reference but the Android build does not provide (the app's .Core
+    types, desktop-only services, add-ins without an Android flavor yet) comes from
+    <App>/Surface/: verbatim copies where they compile, otherwise stubs with the same public
+    surface. The pasted files are never edited.
+
+    The heads are not part of CodeBrix.Android.slnx (eight Android application builds);
+    build/test-scripts/paste-always-compile.sh builds them and reports per page.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <CodeBrixAndroidInRepoConsumer>true</CodeBrixAndroidInRepoConsumer>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+  </PropertyGroup>
+
+  <Import Project="$(CodeBrixAndroidRepoRoot)build/inrepo/CodeBrix.Android.InRepo.props" />
+
+</Project>

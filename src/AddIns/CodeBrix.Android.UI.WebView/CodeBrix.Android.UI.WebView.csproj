@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UI.WebView: the Android side of the CodeBrix.Platform WebView add-in (AP7.6). WebView2, CoreWebView2
+    and INativeWebViewProvider are the framework's own (CodeBrix.Platform.UI.Core; WPC5: the add-in is "whole", its
+    platform side is the native web view). This assembly implements INativeWebViewProvider over the system
+    android.webkit.WebView (the MAUI MauiWebView / MauiWebViewClient / MauiWebChromeClient techniques): navigation
+    (announced and refusable, completed with history), NavigateToString, script execution, the page-to-host message
+    channel (window.chrome.webview.postMessage and window.webkit.messageHandlers.codebrixWebView.postMessage, through
+    AndroidX WebKit's WebMessageListener), document title, user agent, downloads (DownloadStarting, then the file is
+    fetched into the result path), and the native view is shown by a handler (Core-injected pointers are forwarded).
+    AssemblyName = the name CodeBrix.Platform.UI.Core grants InternalsVisibleTo to for the WebView add-in.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android.UI.WebView</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.WebView</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <!-- Microsoft-owned: WebMessageListener and document-start scripts (the page-to-host channel). -->
+    <PackageReference Include="Xamarin.AndroidX.WebKit" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UI.FlexPanel: the Android side of the CodeBrix.Platform FlexPanel add-in (AP7.17). Its Core
+    (CodeBrix.Platform.UI.FlexPanel.Core, re-shipped by the intake) is the WHOLE add-in: FlexPanel is a Panel whose
+    Core layout (the flexbox engine) positions its children, and the framework's panel handler shows it (the layout
+    replay places each child's native view at its Core rectangle; Background/border through the border drawable).
+    There is no platform contract to implement; this assembly is the package's Android assembly (the name the Core
+    grants) and states that at start-up.
+    AssemblyName = the name CodeBrix.Platform.UI.FlexPanel.Core (and UI.Core) grant InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android.UI.FlexPanel</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.FlexPanel</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.FlexPanel.Core.dll" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>A local page that talks to its host</title></head>
+<body style="margin:0;background:#800080">
+<script>
+window.addEventListener('load', function () {
+	window.webkit.messageHandlers.codebrixWebView.postMessage('ready');
+});
+</script>
+</body>
+</html>

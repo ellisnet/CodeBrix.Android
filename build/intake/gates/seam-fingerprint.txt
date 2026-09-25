@@ -1,0 +1,132 @@
+# Gate 5 input: the per-control handler seam (work package WPH1) as it must appear in
+# CodeBrix.Platform.UI.Core. "Type" or "Type::Member" per line (type names without
+# namespace; a generic type without its arity). "[Assembly] Type::Member" looks in another
+# intake assembly (since AP1.9: the Foundation, WinRT and Composition Core contracts).
+# Reconciled with the seam AS BUILT (WPH1 report, pin 1.0.266.1160) at AP1.8 and with the
+# engine pass (WPE1, pin 1.0.268.12) at AP1.9; the gate is ON (CodeBrixIntakeSeamGate=true). Everything CodeBrix.Android.UI's handler
+# infrastructure calls is listed, so a Platform build that drops or renames any of it
+# fails the intake instead of the Android build.
+
+# Contracts
+IElementHandlerFactoryPlatform
+IElementHandlerFactoryPlatform::CreateHandler
+ElementHandlerCapabilities
+ElementHandlerCapabilities::None
+ElementHandlerCapabilities::OwnsVisuals
+ElementHandlerCapabilities::OwnsChildren
+ElementHandlerCapabilities::HostsContent
+ElementHandlerCapabilities::MeasuresNatively
+ElementHandlerCapabilities::OwnsScrolling
+ElementHandlerCapabilities::OwnsInput
+IElementHandler
+IElementHandler::Capabilities
+IElementHandler::PlatformView
+IElementHandler::Connect
+IElementHandler::Disconnect
+IElementHandler::UpdateValue
+IElementHandler::Invoke
+IElementHandler::OnChildAdded
+IElementHandler::OnChildRemoved
+IElementHandler::OnChildMoved
+IElementHandler::Measure
+IElementHandler::Arrange
+IElementHandler::HitTest
+IElementHandler::OnTemplateSuppressed
+IOverlayPresenterPlatform
+IOverlayPresenterPlatform::TryShowContentDialog
+IOverlayPresenterPlatform::HideContentDialog
+IOverlayPresenterPlatform::TryShowFlyout
+IOverlayPresenterPlatform::HideFlyout
+ElementHandlerCommands
+ElementHandlerCommands::ChangeView
+ChangeViewRequest
+ChangeViewRequest::HorizontalOffset
+ChangeViewRequest::VerticalOffset
+ChangeViewRequest::ZoomFactor
+ChangeViewRequest::DisableAnimation
+
+# Registration and resolution
+PlatformServices::ResolveElementHandlerServices
+PlatformServices::ElementHandlerFactory
+PlatformServices::OverlayPresenter
+UIElement::AreHandlersActive
+UIElement::RefreshElementHandlerServices
+UIElement::Handler
+UIElement::HandlerCapabilities
+UIElement::TryGetHandlerWith
+UIElement::HasHandlerCapability
+UIElement::NotifyHandlerCapabilitiesChanged
+
+# Raise entry points
+ButtonBase::RaiseClickFromPlatform
+ButtonBase::SetPressedFromPlatform
+ButtonBase::SetPointerOverFromPlatform
+ContentDialog::RaiseButtonFromPlatform
+ContentDialog::RaiseOpenedFromPlatform
+Thumb::RaiseDragStartedFromPlatform
+Thumb::RaiseDragDeltaFromPlatform
+Thumb::RaiseDragCompletedFromPlatform
+AutoSuggestBox::SubmitQueryFromPlatform
+AutoSuggestBox::SetTextFromPlatform
+TreeView::RaiseItemInvokedFromPlatform
+TreeView::RaiseExpandingFromPlatform
+TreeView::RaiseCollapsedFromPlatform
+TabView::RaiseAddTabButtonClickFromPlatform
+TextBox::ApplyTextFromPlatform
+TextBox::RaisePasteFromPlatform
+PasswordBox::ApplyPasswordFromPlatform
+ComboBox::RaiseTextSubmittedFromPlatform
+NumberBox::CommitTextFromPlatform
+NavigationView::RaiseBackRequestedFromPlatform
+NavigationView::RaiseItemInvokedFromPlatform
+NavigationView::RaisePaneOpeningFromPlatform
+NavigationView::RaisePaneOpenedFromPlatform
+NavigationView::RaisePaneClosingFromPlatform
+NavigationView::RaisePaneClosedFromPlatform
+Control::ReleaseTemplateForHandler
+ScrollViewer::OnPresenterScrolled
+
+# AP1.9 (pin 1.0.268.12, the engine pass): WPE1-1 C0/C0b/C0c/C0d, WPE1-2 C5, WPE1-5 addendum + B3 + C6.
+# Hit-test re-check hooks (C0) and hosted content kept on a template change (C0d)
+UIElement::UpdateHitTestForHandler
+Control::IsChildOwnedByHandler
+# Items host, ScrollIntoView, retained handlers, TabView / CalendarDatePicker entry points (WPE1-5)
+ElementHandlerCapabilities::OwnsItemsHost
+ElementHandlerCapabilities::RetainedAcrossLeave
+IItemsHostHandler
+IItemsHostHandler::GetMaterializedContainers
+IItemsHostHandler::OnItemsChanged
+IItemsHostHandler::FirstVisibleIndex
+IItemsHostHandler::LastVisibleIndex
+ElementHandlerCommands::ScrollIntoView
+ScrollIntoViewRequest
+ScrollIntoViewRequest::Item
+ScrollIntoViewRequest::Index
+ScrollIntoViewRequest::Alignment
+ItemsControl::ItemsHostHandler
+ItemsControl::CreateContainerForItemsHost
+ItemsControl::PrepareContainerForItemsHost
+ItemsControl::ReleaseContainerFromItemsHost
+ListViewBase::TryLoadMoreItems
+UIElement::ReleaseRetainedHandler
+UIElement::HasRetainedHandler
+TabView::RaiseSelectionChangedFromPlatform
+CalendarDatePicker::RaiseOpenedFromPlatform
+CalendarDatePicker::RaiseClosedFromPlatform
+# The composition surface rename (WPE1-5 C6)
+[CodeBrix.Platform.UI.Composition.Core] IPlatformCompositionSurfaceProvider
+[CodeBrix.Platform.UI.Composition.Core] IPlatformCompositionSurfaceProvider::PlatformCompositionSurface
+[CodeBrix.Platform.UI.Composition.Core] PlatformCompositionSurface
+# Platform contracts outside UI.Core
+[CodeBrix.Platform.Foundation.Core] IFontSourcePlatform
+[CodeBrix.Platform.Foundation.Core] IFontSourcePlatform::DefaultTextFontFamily
+[CodeBrix.Platform.Foundation.Core] IFontSourcePlatform::SymbolsFont
+[CodeBrix.Platform.Foundation.Core] IFontSourcePlatform::RestrictToEmbeddedFonts
+[CodeBrix.Platform.Foundation.Core] IFontSourcePlatform::FallbackFontFamilies
+[CodeBrix.Platform.Foundation.Core] IFontSourcePlatform::GetTypefaceAsync
+[CodeBrix.Platform.Foundation.Core] IFontSourcePlatform::GetLoadedEmbeddedDefaultTypeface
+[CodeBrix.Platform.Core] IAnimationSettingsPlatform::AnimationsEnabled
+[CodeBrix.Platform.Core] UISettings::RefreshAnimationSettingsPlatform
+[CodeBrix.Platform.Core] IDeviceFamilyPlatform::OperatingSystemFamily
+[CodeBrix.Platform.Core] StorageFile::FromImplementation
+[CodeBrix.Platform.Core] StorageFolder::FromImplementation

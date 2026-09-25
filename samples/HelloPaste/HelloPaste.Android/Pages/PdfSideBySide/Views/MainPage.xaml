@@ -1,0 +1,244 @@
+<Page
+    x:Class="PdfSideBySide.Views.MainPage"
+    xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+    xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:PdfSideBySide.ViewModels;assembly=PdfSideBySide.Core"
+    xmlns:local="using:PdfSideBySide.Views"
+    FontFamily="{StaticResource RobotoFont}"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.DataContext>
+        <vm:MainViewModel />
+    </Page.DataContext>
+
+    <!-- Viewers on the top row; the bottom row carries the two "Page x of y" labels with the
+         "Comparing l:r" note centred between them, so no line is spent on a status bar -->
+    <Grid Padding="12" ColumnSpacing="10" RowSpacing="6">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Document 1 -->
+        <Grid Grid.Column="0" DataContext="{d:Binding LeftPane}" RowSpacing="6">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- The button is the pane's label too, so the path can share its line -->
+            <Grid ColumnSpacing="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button Content="{d:Binding BrowseLabel}" Command="{d:Binding BrowseCommand}" FontWeight="SemiBold"
+                        Height="24" MinHeight="0" Padding="8,0" />
+                <TextBlock Grid.Column="1" Text="{d:Binding FilePath}" TextTrimming="CharacterEllipsis"
+                           TextWrapping="NoWrap" Opacity="0.75" VerticalAlignment="Center" />
+            </Grid>
+
+            <Border Grid.Row="1" Background="#E4E4E4" BorderBrush="#BDBDBD" BorderThickness="1"
+                    CornerRadius="4" Padding="8">
+                <Grid>
+                    <TextBlock Text="{d:Binding FileName}" Visibility="{d:Binding PlaceholderVisibility}"
+                               Opacity="0.55" Foreground="#202020"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <!-- The view model works out the image size and the scroll offset; the code-behind applies them -->
+                    <ScrollViewer x:Name="LeftScroller"
+                                  HorizontalScrollMode="Enabled" VerticalScrollMode="Enabled"
+                                  HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"
+                                  ZoomMode="Disabled">
+                        <Image x:Name="LeftImage" Source="{d:Binding PageImage}" Stretch="Fill"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </ScrollViewer>
+                    <ProgressBar IsIndeterminate="True" Visibility="{d:Binding RenderingVisibility}"
+                                 VerticalAlignment="Top" />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Middle column, centred: Document 1's pan cross above every other button, Document 2's below them -->
+        <StackPanel Grid.Column="1" Width="118" VerticalAlignment="Center" Spacing="4">
+
+            <!-- Pan: Document 1 -->
+            <TextBlock Text="Pan 1" FontSize="12" Opacity="0.7" HorizontalAlignment="Center" />
+            <Grid HorizontalAlignment="Center" RowSpacing="2" ColumnSpacing="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Row="0" Grid.Column="1" Width="24" Height="24" MinWidth="0" MinHeight="0" Padding="0"
+                        Command="{d:Binding PanCommand}" CommandParameter="Left:Up"
+                        ToolTipService.ToolTip="Document 1 - pan up">
+                    <FontIcon Glyph="&#xE70E;" FontSize="12" />
+                </Button>
+                <Button Grid.Row="1" Grid.Column="0" Width="24" Height="24" MinWidth="0" MinHeight="0" Padding="0"
+                        Command="{d:Binding PanCommand}" CommandParameter="Left:Left"
+                        ToolTipService.ToolTip="Document 1 - pan left">
+                    <FontIcon Glyph="&#xE76B;" FontSize="12" />
+                </Button>
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="1" FontSize="13" FontWeight="SemiBold" Opacity="0.7"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Button Grid.Row="1" Grid.Column="2" Width="24" Height="24" MinWidth="0" MinHeight="0" Padding="0"
+                        Command="{d:Binding PanCommand}" CommandParameter="Left:Right"
+                        ToolTipService.ToolTip="Document 1 - pan right">
+                    <FontIcon Glyph="&#xE76C;" FontSize="12" />
+                </Button>
+                <Button Grid.Row="2" Grid.Column="1" Width="24" Height="24" MinWidth="0" MinHeight="0" Padding="0"
+                        Command="{d:Binding PanCommand}" CommandParameter="Left:Down"
+                        ToolTipService.ToolTip="Document 1 - pan down">
+                    <FontIcon Glyph="&#xE70D;" FontSize="12" />
+                </Button>
+            </Grid>
+
+            <Border Height="1" Background="#BDBDBD" Margin="8,6" />
+
+            <!-- Zoom (both panes) and page navigation -->
+            <TextBlock Text="Zoom" FontSize="12" Opacity="0.7" HorizontalAlignment="Center" />
+            <TextBlock Text="{d:Binding ZoomLabel}" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center" />
+            <Grid ColumnSpacing="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Command="{d:Binding ZoomOutCommand}" HorizontalAlignment="Stretch"
+                    Height="24" MinHeight="0" Padding="8,0"
+                        ToolTipService.ToolTip="Zoom out - both documents">
+                    <FontIcon Glyph="&#xE71F;" FontSize="13" />
+                </Button>
+                <Button Grid.Column="1" Command="{d:Binding ZoomInCommand}" HorizontalAlignment="Stretch"
+                    Height="24" MinHeight="0" Padding="8,0"
+                        ToolTipService.ToolTip="Zoom in - both documents">
+                    <FontIcon Glyph="&#xE8A3;" FontSize="13" />
+                </Button>
+            </Grid>
+            <Button Content="100%" FontSize="12" Command="{d:Binding ZoomResetCommand}" HorizontalAlignment="Stretch"
+                    Height="24" MinHeight="0" Padding="8,0"
+                    ToolTipService.ToolTip="Fit the whole page - both documents" />
+
+            <Border Height="1" Background="#BDBDBD" Margin="8,6" />
+
+            <TextBlock Text="Both" FontSize="12" Opacity="0.7" HorizontalAlignment="Center" />
+            <Button Command="{d:Binding PreviousPageCommand}" HorizontalAlignment="Stretch"
+                    Height="24" MinHeight="0" Padding="8,0"
+                    ToolTipService.ToolTip="Previous page - both documents">
+                <FontIcon Glyph="&#xE70E;" FontSize="14" />
+            </Button>
+            <Button Command="{d:Binding NextPageCommand}" HorizontalAlignment="Stretch"
+                    Height="24" MinHeight="0" Padding="8,0"
+                    ToolTipService.ToolTip="Next page - both documents">
+                <FontIcon Glyph="&#xE70D;" FontSize="14" />
+            </Button>
+
+            <Border Height="1" Background="#BDBDBD" Margin="8,6" />
+
+            <TextBlock Text="Adjust right" FontSize="12" Opacity="0.7" HorizontalAlignment="Center" />
+            <Button Command="{d:Binding AdjustPreviousCommand}" HorizontalAlignment="Stretch"
+                    Height="24" MinHeight="0" Padding="8,0"
+                    ToolTipService.ToolTip="Previous page - Document 2 only">
+                <FontIcon Glyph="&#xE70E;" FontSize="12" />
+            </Button>
+            <Button Command="{d:Binding AdjustNextCommand}" HorizontalAlignment="Stretch"
+                    Height="24" MinHeight="0" Padding="8,0"
+                    ToolTipService.ToolTip="Next page - Document 2 only">
+                <FontIcon Glyph="&#xE70D;" FontSize="12" />
+            </Button>
+
+            <Border Height="1" Background="#BDBDBD" Margin="8,6" />
+
+            <!-- Pan: Document 2 -->
+            <TextBlock Text="Pan 2" FontSize="12" Opacity="0.7" HorizontalAlignment="Center" />
+            <Grid HorizontalAlignment="Center" RowSpacing="2" ColumnSpacing="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Row="0" Grid.Column="1" Width="24" Height="24" MinWidth="0" MinHeight="0" Padding="0"
+                        Command="{d:Binding PanCommand}" CommandParameter="Right:Up"
+                        ToolTipService.ToolTip="Document 2 - pan up">
+                    <FontIcon Glyph="&#xE70E;" FontSize="12" />
+                </Button>
+                <Button Grid.Row="1" Grid.Column="0" Width="24" Height="24" MinWidth="0" MinHeight="0" Padding="0"
+                        Command="{d:Binding PanCommand}" CommandParameter="Right:Left"
+                        ToolTipService.ToolTip="Document 2 - pan left">
+                    <FontIcon Glyph="&#xE76B;" FontSize="12" />
+                </Button>
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="2" FontSize="13" FontWeight="SemiBold" Opacity="0.7"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Button Grid.Row="1" Grid.Column="2" Width="24" Height="24" MinWidth="0" MinHeight="0" Padding="0"
+                        Command="{d:Binding PanCommand}" CommandParameter="Right:Right"
+                        ToolTipService.ToolTip="Document 2 - pan right">
+                    <FontIcon Glyph="&#xE76C;" FontSize="12" />
+                </Button>
+                <Button Grid.Row="2" Grid.Column="1" Width="24" Height="24" MinWidth="0" MinHeight="0" Padding="0"
+                        Command="{d:Binding PanCommand}" CommandParameter="Right:Down"
+                        ToolTipService.ToolTip="Document 2 - pan down">
+                    <FontIcon Glyph="&#xE70D;" FontSize="12" />
+                </Button>
+            </Grid>
+        </StackPanel>
+
+        <!-- Document 2 -->
+        <Grid Grid.Column="2" DataContext="{d:Binding RightPane}" RowSpacing="6">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- The button is the pane's label too, so the path can share its line -->
+            <Grid ColumnSpacing="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button Content="{d:Binding BrowseLabel}" Command="{d:Binding BrowseCommand}" FontWeight="SemiBold"
+                        Height="24" MinHeight="0" Padding="8,0" />
+                <TextBlock Grid.Column="1" Text="{d:Binding FilePath}" TextTrimming="CharacterEllipsis"
+                           TextWrapping="NoWrap" Opacity="0.75" VerticalAlignment="Center" />
+            </Grid>
+
+            <Border Grid.Row="1" Background="#E4E4E4" BorderBrush="#BDBDBD" BorderThickness="1"
+                    CornerRadius="4" Padding="8">
+                <Grid>
+                    <TextBlock Text="{d:Binding FileName}" Visibility="{d:Binding PlaceholderVisibility}"
+                               Opacity="0.55" Foreground="#202020"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <ScrollViewer x:Name="RightScroller"
+                                  HorizontalScrollMode="Enabled" VerticalScrollMode="Enabled"
+                                  HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"
+                                  ZoomMode="Disabled">
+                        <Image x:Name="RightImage" Source="{d:Binding PageImage}" Stretch="Fill"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </ScrollViewer>
+                    <ProgressBar IsIndeterminate="True" Visibility="{d:Binding RenderingVisibility}"
+                                 VerticalAlignment="Top" />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Bottom row: page labels and the comparison note -->
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="{d:Binding LeftPane.PageLabel}" HorizontalAlignment="Center" />
+        <TextBlock Grid.Row="1" Grid.Column="1" Text="{d:Binding StatusText}" HorizontalAlignment="Center"
+                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+        <TextBlock Grid.Row="1" Grid.Column="2" Text="{d:Binding RightPane.PageLabel}" HorizontalAlignment="Center" />
+    </Grid>
+</Page>

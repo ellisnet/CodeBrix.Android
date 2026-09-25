@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    HelloPaste.Android: the Android head of the AP1 "first pasted page" app.
+
+    Pages/ holds VERBATIM copies of two CodeBrix.Platform pages (JustBetweenUs and
+    PdfSideBySide MainPage.xaml + .xaml.cs; see ../README.md); their view models come from
+    the apps' own .Core libraries, multi-targeted in the D-O2 shape. App.xaml / App.xaml.cs
+    are this app's (one XAML Application hosts both pages; the start page comes from the
+    launch intent). SelfCheck/ is the on-device check the device smoke script reads
+    (build/test-scripts/device-smoke.sh). The CodeBrix.Android package is simulated from
+    the intake (Directory.Build.props / .targets of this folder).
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <ApplicationId>com.codebrix.hellopaste</ApplicationId>
+    <ApplicationTitle>HelloPaste</ApplicationTitle>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <RootNamespace>HelloPaste</RootNamespace>
+    <AssemblyName>HelloPaste</AssemblyName>
+    <!-- The Svg add-in draws the JustBetweenUs page's SVG icons (SvgImageSource in its image buttons). -->
+    <CodeBrixAndroidInRepoAddIns>Svg</CodeBrixAndroidInRepoAddIns>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <PublishTrimmed>true</PublishTrimmed>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+  </PropertyGroup>
+
+  <!-- The XAML (as a CodeBrix.Platform shared UI project lists it). -->
+  <ItemGroup>
+    <Page Include="App.xaml" />
+    <Page Include="Pages\JustBetweenUs\Views\MainPage.xaml" />
+    <Page Include="Pages\PdfSideBySide\Views\MainPage.xaml" />
+    <None Remove="**\*.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JustBetweenUs.Core\JustBetweenUs.Core.csproj" />
+    <ProjectReference Include="..\PdfSideBySide.Core\PdfSideBySide.Core.csproj" />
+  </ItemGroup>
+
+</Project>

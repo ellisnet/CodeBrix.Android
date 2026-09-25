@@ -1,0 +1,43 @@
+# Gate 3 input: the Core assemblies that must grant InternalsVisibleTo to each
+# CodeBrix.Android.* assembly.
+#
+#   <Android assembly> <- <Core assembly>[, <Core assembly> ...]
+#   <Android assembly> <- (none)          (needs no Core internals)
+#
+# The Android assembly names are fixed by these grants: Core finds its platform
+# twin BY NAME (it loads CodeBrix.Android.{Y} and runs its module initializer), so
+# an Android assembly must carry exactly the name its Core grants. Every
+# CodeBrix.Android.* project under src/ must have a row here.
+
+# Framework (plan 4.2)
+CodeBrix.Android                  <- CodeBrix.Platform.Core
+CodeBrix.Android.UI               <- CodeBrix.Platform.UI.Core, CodeBrix.Platform.UI.Composition.Core, CodeBrix.Platform.Core, CodeBrix.Platform.UI.Dispatching.Core
+CodeBrix.Android.UI.Composition   <- CodeBrix.Platform.UI.Composition.Core, CodeBrix.Platform.Core
+CodeBrix.Android.UI.Dispatching   <- CodeBrix.Platform.UI.Dispatching.Core
+CodeBrix.Android.UI.Toolkit       <- CodeBrix.Platform.UI.Toolkit.Core
+CodeBrix.Android.UI.Tests         <- CodeBrix.Platform.UI.Core
+
+# Add-ins whose Core is in the pinned build (the others join as their Core splits land)
+CodeBrix.Android.UI.FlexPanel     <- CodeBrix.Platform.UI.FlexPanel.Core
+CodeBrix.Android.UI.CommandBar    <- CodeBrix.Platform.UI.CommandBar.Core
+CodeBrix.Android.AppSettings      <- CodeBrix.Platform.AppSettings.Core
+CodeBrix.Android.UI.AudioPlayer   <- CodeBrix.Platform.UI.AudioPlayer.Core
+# Since pin 1.0.266.1160 (Phase D: every add-in has a Core; WPH1: each also grants UI.Core's internals)
+CodeBrix.Android.UI.AdvancedTextEdit <- CodeBrix.Platform.UI.AdvancedTextEdit.Core, CodeBrix.Platform.UI.Core
+CodeBrix.Android.UI.Lottie        <- CodeBrix.Platform.UI.Lottie.Core, CodeBrix.Platform.UI.Core
+CodeBrix.Android.UI.PlotterView   <- CodeBrix.Platform.UI.PlotterView.Core, CodeBrix.Platform.UI.Core
+CodeBrix.Android.UI.Svg           <- CodeBrix.Platform.UI.Svg.Core, CodeBrix.Platform.UI.Core
+CodeBrix.Android.UI.TerminalView  <- CodeBrix.Platform.UI.TerminalView.Core, CodeBrix.Platform.UI.Core
+CodeBrix.Android.UI.TextLayout    <- CodeBrix.Platform.UI.TextLayout.Core, CodeBrix.Platform.UI.Core, CodeBrix.Platform.Foundation.Core
+CodeBrix.Android.UI.VideoPlayer   <- CodeBrix.Platform.UI.VideoPlayer.Core, CodeBrix.Platform.UI.Core
+CodeBrix.Android.SkiaSharp.Views  <- CodeBrix.Platform.SkiaSharp.Views.Core, CodeBrix.Platform.UI.Core
+CodeBrix.Android.WinUI.Graphics2DSK <- CodeBrix.Platform.WinUI.Graphics2DSK.Core, CodeBrix.Platform.UI.Core
+CodeBrix.Android.WinUI.Graphics3DGL <- CodeBrix.Platform.WinUI.Graphics3DGL.Core, CodeBrix.Platform.UI.Core
+# The two add-ins that are whole in the framework (WPC5: WebView2 / CoreWebView2 and MediaPlayerElement are UI.Core,
+# INativeWebView and IMediaPlayerExtension are Platform.Core); UI.Core and Platform.Core grant their Android names.
+CodeBrix.Android.UI.WebView       <- CodeBrix.Platform.UI.Core, CodeBrix.Platform.Core
+CodeBrix.Android.UI.MediaPlayer   <- CodeBrix.Platform.UI.Core, CodeBrix.Platform.Core
+
+# Assemblies that need no Core internals
+CodeBrix.Android.Analyzers        <- (none)
+CodeBrix.Android.Build.Tasks      <- (none)

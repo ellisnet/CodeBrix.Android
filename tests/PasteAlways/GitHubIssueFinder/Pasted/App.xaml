@@ -1,0 +1,257 @@
+<Application x:Class="GitHubIssueFinder.App"
+     xmlns="clr-namespace:Microsoft.UI.Xaml;assembly=CodeBrix.Platform.UI"
+     xmlns:m="clr-namespace:Microsoft.UI.Xaml.Media;assembly=CodeBrix.Platform.UI"
+     xmlns:c="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI.FluentTheme"
+     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <!-- Load WinUI resources -->
+        <c:XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+      </ResourceDictionary.MergedDictionaries>
+      <!-- Roboto font - reference the .ttf file directly (the Fonts.xaml
+           merge does not work on Skia targets) -->
+      <m:FontFamily x:Key="RobotoFont">ms-appx:///CodeBrix.Platform.Fonts.Roboto/Fonts/Roboto.ttf</m:FontFamily>
+
+      <!-- ============================================================================
+           THE COLOUR SCHEME.  Every colour the application draws comes from one of the
+           role brushes below, and every stock control brush underneath them is pointed
+           at the same values.  The Colors written here are the Light scheme; the page
+           re-points them all when the user picks another scheme, which is why they are
+           declared once, at application level, where the popup layer can see them too.
+           They are declared AFTER the merged dictionary, in the same dictionary, which
+           is what makes them win over the theme's own values.
+           ============================================================================ -->
+
+      <!-- Surfaces -->
+      <m:SolidColorBrush x:Key="CanvasBrush" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="CanvasSubtleBrush" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="CanvasInsetBrush" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="HairlineBrush" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="HairlineMutedBrush" Color="#FFD8DEE4" />
+
+      <!-- Text -->
+      <m:SolidColorBrush x:Key="TextPrimaryBrush" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="TextSecondaryBrush" Color="#FF59636E" />
+      <m:SolidColorBrush x:Key="TextTertiaryBrush" Color="#FF6E7781" />
+
+      <!-- Accent -->
+      <m:SolidColorBrush x:Key="AccentBrush" Color="#FF0969DA" />
+      <m:SolidColorBrush x:Key="AccentEmphasisBrush" Color="#FF0969DA" />
+      <m:SolidColorBrush x:Key="AccentSubtleBrush" Color="#FFDDF4FF" />
+
+      <!-- Issue and pull-request states -->
+      <m:SolidColorBrush x:Key="SuccessBrush" Color="#FF1A7F37" />
+      <m:SolidColorBrush x:Key="SuccessEmphasisBrush" Color="#FF1F883D" />
+      <m:SolidColorBrush x:Key="SuccessEmphasisHoverBrush" Color="#FF1A7F37" />
+      <m:SolidColorBrush x:Key="AttentionBrush" Color="#FF9A6700" />
+      <m:SolidColorBrush x:Key="AttentionSubtleBrush" Color="#FFFFF8C5" />
+      <m:SolidColorBrush x:Key="DangerBrush" Color="#FFD1242F" />
+      <m:SolidColorBrush x:Key="DangerSubtleBrush" Color="#FFFFEBE9" />
+      <m:SolidColorBrush x:Key="DoneBrush" Color="#FF8250DF" />
+      <m:SolidColorBrush x:Key="NeutralBrush" Color="#FF59636E" />
+
+      <!-- Secondary button faces -->
+      <m:SolidColorBrush x:Key="ButtonFaceBrush" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="ButtonFaceHoverBrush" Color="#FFEEF1F4" />
+      <m:SolidColorBrush x:Key="ButtonFacePressedBrush" Color="#FFE7EBEF" />
+      <m:SolidColorBrush x:Key="OnEmphasisBrush" Color="#FFFFFFFF" />
+
+      <!-- Two brushes the page needs that are derived rather than named roles:
+           a fully transparent face for the rows that are Buttons, and the tint an
+           enabled row shows while the pointer is over it. -->
+      <m:SolidColorBrush x:Key="TransparentBrush" Color="#00000000" />
+
+      <!-- ============================================================================
+           STOCK CONTROL CHROME, re-keyed onto the role colours above.  Every state has
+           its own key: overriding only the base one leaves a disabled control wearing
+           the theme's own colour, and this application keeps a disabled Cancel button
+           on screen for most of its life.
+           ============================================================================ -->
+
+      <!-- Button (the secondary face, and the transparent rows) -->
+      <m:SolidColorBrush x:Key="ButtonBackground" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#FFEEF1F4" />
+      <m:SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#FFE7EBEF" />
+      <m:SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="ButtonForeground" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ButtonForegroundPressed" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#FF6E7781" />
+      <m:SolidColorBrush x:Key="ButtonBorderBrush" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="#FFD8DEE4" />
+
+      <!-- AccentButton (the primary Search face) -->
+      <m:SolidColorBrush x:Key="AccentButtonBackground" Color="#FF1F883D" />
+      <m:SolidColorBrush x:Key="AccentButtonBackgroundPointerOver" Color="#FF1A7F37" />
+      <m:SolidColorBrush x:Key="AccentButtonBackgroundPressed" Color="#FF1A7F37" />
+      <m:SolidColorBrush x:Key="AccentButtonBackgroundDisabled" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="AccentButtonForeground" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#FF6E7781" />
+      <m:SolidColorBrush x:Key="AccentButtonBorderBrush" Color="#FF1F883D" />
+      <m:SolidColorBrush x:Key="AccentButtonBorderBrushPointerOver" Color="#FF1A7F37" />
+      <m:SolidColorBrush x:Key="AccentButtonBorderBrushPressed" Color="#FF1A7F37" />
+      <m:SolidColorBrush x:Key="AccentButtonBorderBrushDisabled" Color="#FFD8DEE4" />
+
+      <!-- TextBox and every other text control -->
+      <m:SolidColorBrush x:Key="TextControlBackground" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="TextControlForeground" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="TextControlForegroundPointerOver" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="TextControlForegroundFocused" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="TextControlForegroundDisabled" Color="#FF6E7781" />
+      <m:SolidColorBrush x:Key="TextControlBorderBrush" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#FF0969DA" />
+      <m:SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="#FFD8DEE4" />
+      <m:SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#FF6E7781" />
+      <m:SolidColorBrush x:Key="TextControlPlaceholderForegroundPointerOver" Color="#FF6E7781" />
+      <m:SolidColorBrush x:Key="TextControlPlaceholderForegroundFocused" Color="#FF6E7781" />
+      <m:SolidColorBrush x:Key="TextControlPlaceholderForegroundDisabled" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="TextControlButtonForeground" Color="#FF6E7781" />
+      <m:SolidColorBrush x:Key="TextControlButtonForegroundPointerOver" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="TextControlButtonForegroundPressed" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="TextControlButtonBackground" Color="#00000000" />
+      <m:SolidColorBrush x:Key="TextControlButtonBackgroundPointerOver" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="TextControlButtonBackgroundPressed" Color="#FF0969DA" />
+      <m:SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="TextControlElevationBorderFocusedBrush" Color="#FF0969DA" />
+
+      <!-- CheckBox: the box itself, its border and the tick -->
+      <m:SolidColorBrush x:Key="CheckBoxForegroundUnchecked" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="CheckBoxForegroundUncheckedPointerOver" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="CheckBoxForegroundUncheckedPressed" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="CheckBoxForegroundUncheckedDisabled" Color="#FF6E7781" />
+      <m:SolidColorBrush x:Key="CheckBoxForegroundChecked" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="CheckBoxForegroundCheckedPointerOver" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="CheckBoxForegroundCheckedPressed" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="CheckBoxForegroundCheckedDisabled" Color="#FF6E7781" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUnchecked" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUncheckedPointerOver" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUncheckedPressed" Color="#FFEEF1F4" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUncheckedDisabled" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundFillChecked" Color="#FF0969DA" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver" Color="#FF0969DA" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPressed" Color="#FF0969DA" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedDisabled" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUnchecked" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPointerOver" Color="#FF6E7781" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPressed" Color="#FF6E7781" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedDisabled" Color="#FFD8DEE4" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeChecked" Color="#FF0969DA" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPointerOver" Color="#FF0969DA" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPressed" Color="#FF0969DA" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedDisabled" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundChecked" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundCheckedPointerOver" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundCheckedPressed" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundCheckedDisabled" Color="#FFFFFFFF" />
+
+      <!-- ComboBox, closed face and dropped list -->
+      <m:SolidColorBrush x:Key="ComboBoxBackground" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#FFEEF1F4" />
+      <m:SolidColorBrush x:Key="ComboBoxBackgroundDisabled" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="ComboBoxBackgroundFocused" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="ComboBoxBackgroundUnfocused" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="ComboBoxForeground" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ComboBoxForegroundPressed" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ComboBoxForegroundDisabled" Color="#FF6E7781" />
+      <m:SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ComboBoxForegroundFocusedPressed" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="ComboBoxBorderBrushDisabled" Color="#FFD8DEE4" />
+      <m:SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="ComboBoxDropDownForeground" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="ComboBoxDropDownGlyphForeground" Color="#FF6E7781" />
+      <m:SolidColorBrush x:Key="ComboBoxDropDownGlyphForegroundDisabled" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="ComboBoxDropDownGlyphForegroundFocused" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ComboBoxDropDownGlyphForegroundFocusedPressed" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ComboBoxItemBackground" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ComboBoxItemBackgroundPointerOver" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="ComboBoxItemBackgroundPressed" Color="#FFEEF1F4" />
+      <m:SolidColorBrush x:Key="ComboBoxItemBackgroundSelected" Color="#FFDDF4FF" />
+      <m:SolidColorBrush x:Key="ComboBoxItemBackgroundSelectedPointerOver" Color="#FFDDF4FF" />
+      <m:SolidColorBrush x:Key="ComboBoxItemBackgroundSelectedPressed" Color="#FFDDF4FF" />
+      <m:SolidColorBrush x:Key="ComboBoxItemBackgroundSelectedUnfocused" Color="#FFDDF4FF" />
+      <m:SolidColorBrush x:Key="ComboBoxItemBackgroundDisabled" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ComboBoxItemForeground" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ComboBoxItemForegroundPointerOver" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ComboBoxItemForegroundPressed" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ComboBoxItemForegroundSelected" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ComboBoxItemForegroundSelectedPointerOver" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ComboBoxItemForegroundSelectedPressed" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ComboBoxItemForegroundSelectedUnfocused" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ComboBoxItemForegroundDisabled" Color="#FF6E7781" />
+      <m:SolidColorBrush x:Key="ComboBoxItemPillFillBrush" Color="#FF0969DA" />
+      <m:SolidColorBrush x:Key="ComboBoxPlaceHolderForeground" Color="#FF6E7781" />
+
+      <!-- ListViewItem: the results list never selects, so every state is the row's own face -->
+      <m:SolidColorBrush x:Key="ListViewItemBackground" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ListViewItemForeground" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ListViewItemForegroundPointerOver" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ListViewItemForegroundPressed" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ListViewItemForegroundSelected" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ListViewItemForegroundSelectedPointerOver" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ListViewItemForegroundSelectedPressed" Color="#FF1F2328" />
+
+      <!-- ProgressBar -->
+      <m:SolidColorBrush x:Key="ProgressBarForeground" Color="#FF0969DA" />
+      <m:SolidColorBrush x:Key="ProgressBarBackground" Color="#FFD8DEE4" />
+      <m:SolidColorBrush x:Key="ProgressBarBorderBrush" Color="#00000000" />
+
+      <!-- ScrollBar -->
+      <m:SolidColorBrush x:Key="ScrollBarBackground" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ScrollBarBackgroundPointerOver" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="ScrollBarBackgroundDisabled" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ScrollBarBorderBrush" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ScrollBarBorderBrushPointerOver" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ScrollBarBorderBrushDisabled" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ScrollBarThumbFill" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="ScrollBarThumbFillPointerOver" Color="#FF6E7781" />
+      <m:SolidColorBrush x:Key="ScrollBarThumbFillPressed" Color="#FF59636E" />
+      <m:SolidColorBrush x:Key="ScrollBarThumbFillDisabled" Color="#FFD8DEE4" />
+      <m:SolidColorBrush x:Key="ScrollBarTrackFill" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ScrollBarTrackFillPointerOver" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="ScrollBarTrackFillDisabled" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ScrollBarTrackStroke" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ScrollBarTrackStrokePointerOver" Color="#FFD8DEE4" />
+      <m:SolidColorBrush x:Key="ScrollBarTrackStrokeDisabled" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ScrollBarButtonBackground" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ScrollBarButtonBackgroundPointerOver" Color="#FFEEF1F4" />
+      <m:SolidColorBrush x:Key="ScrollBarButtonBackgroundPressed" Color="#FFE7EBEF" />
+      <m:SolidColorBrush x:Key="ScrollBarButtonBackgroundDisabled" Color="#00000000" />
+      <m:SolidColorBrush x:Key="ScrollBarButtonArrowForeground" Color="#FF59636E" />
+      <m:SolidColorBrush x:Key="ScrollBarButtonArrowForegroundPointerOver" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ScrollBarButtonArrowForegroundPressed" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ScrollBarButtonArrowForegroundDisabled" Color="#FFD0D7DE" />
+
+      <!-- ContentDialog: the popup layer reads these from here, never from the page -->
+      <m:SolidColorBrush x:Key="ContentDialogBackground" Color="#FFFFFFFF" />
+      <m:SolidColorBrush x:Key="ContentDialogForeground" Color="#FF1F2328" />
+      <m:SolidColorBrush x:Key="ContentDialogBorderBrush" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="ContentDialogTopOverlay" Color="#FFF6F8FA" />
+      <m:SolidColorBrush x:Key="ContentDialogSeparatorBorderBrush" Color="#FFD0D7DE" />
+      <m:SolidColorBrush x:Key="ContentDialogSmokeFill" Color="#66000000" />
+      <m:SolidColorBrush x:Key="ContentDialogLightDismissOverlayBackground" Color="#66000000" />
+
+    </ResourceDictionary>
+  </Application.Resources>
+
+</Application>

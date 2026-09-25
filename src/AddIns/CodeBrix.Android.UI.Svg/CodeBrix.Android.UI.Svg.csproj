@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UI.Svg: the Android side of the CodeBrix.Platform Svg add-in (AP7.4). Its Core
+    (CodeBrix.Platform.UI.Svg.Core, re-shipped by the intake) parses and draws the SVG with CodeBrix.SkiaSvg on
+    the Skia canvas-host seam (SvgCanvas : SKCanvasHostElement); on every CodeBrix.Platform head the add-in's
+    platform side is only the composition hookup (ISvgProvider -> the Core's SvgProvider). This assembly
+    registers that hookup from its module initializer (loaded by name at start-up) and makes sure the canvas
+    add-in it draws through (CodeBrix.Android.SkiaSharp.Views) is registered first.
+    AssemblyName = the name CodeBrix.Platform.UI.Svg.Core (and UI.Core) grant InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android.UI.Svg</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.Svg</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.SkiaSharp.Views/CodeBrix.Android.SkiaSharp.Views.csproj" />
+    <!-- The add-in Cores (re-shipped from the pinned Platform build by the intake). -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.SkiaSharp.Views.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Svg.Core.dll" />
+    <!-- What the Svg Core draws with: CodeBrix.SkiaSvg (self-produced) and its text shaping's Android native library. -->
+    <PackageReference Include="CodeBrix.SkiaSvg.MitLicenseForever" />
+    <PackageReference Include="HarfBuzzSharp.NativeAssets.Android" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Surface library for the WikipediaPublisher paste-always head: WikipediaPublisher.RenderArticle
+    (CodeBrix.Samples WikipediaPublisher/WikipediaPublisher.RenderArticle), built as its own assembly with
+    the source library's own name, because its embedded fonts are looked up by that name
+    (WikipediaPublisher.RenderArticle.Fonts.*). Verbatim copies: see ../SOURCES.txt.
+  -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <RootNamespace>WikipediaPublisher.RenderArticle</RootNamespace>
+    <AssemblyName>WikipediaPublisher.RenderArticle</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Fonts\*.ttf" />
+    <None Remove="Fonts\OFL-*.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Fonts\*.ttf" />
+    <EmbeddedResource Include="Fonts\OFL-*.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CodeBrix.MarkupParse.MitLicenseForever" />
+    <PackageReference Include="CodeBrix.PdfDocCreate.MitLicenseForever" />
+    <PackageReference Include="CodeBrix.Imaging.ApacheLicenseForever" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <!-- Microsoft.Extensions.Logging.Abstractions: already referenced by the in-repository consumer wiring. -->
+  </ItemGroup>
+
+</Project>

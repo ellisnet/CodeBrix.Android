@@ -1,0 +1,51 @@
+<Project>
+
+  <!--
+    Repository-wide settings for CodeBrix.Android.
+
+    The two standalone debugging samples (samples/SimpleDebugApp_API_36 and
+    samples/SimpleDebugApp_API_37) are NOT part of this solution and must build
+    exactly as they did before this file existed, so every setting below is skipped
+    for them.
+  -->
+  <PropertyGroup>
+    <_CodeBrixAndroidStandaloneSample Condition="$(MSBuildProjectDirectory.Replace('\', '/').Contains('/samples/SimpleDebugApp_API_'))">true</_CodeBrixAndroidStandaloneSample>
+  </PropertyGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)build/PlatformPin.props" Condition="'$(_CodeBrixAndroidStandaloneSample)' != 'true'" />
+
+  <PropertyGroup Condition="'$(_CodeBrixAndroidStandaloneSample)' != 'true'">
+    <CodeBrixAndroidRepoRoot>$(MSBuildThisFileDirectory)</CodeBrixAndroidRepoRoot>
+
+    <!--
+      The extracted, re-shipped CodeBrix.Platform Core assemblies and tooling
+      (written by build/intake/CodeBrix.Android.Intake.proj).
+    -->
+    <CodeBrixPlatformIntakeDir>$(MSBuildThisFileDirectory)artifacts/intake/$(CodeBrixPlatformVersion)/</CodeBrixPlatformIntakeDir>
+    <CodeBrixPlatformIntakeLibDir>$(CodeBrixPlatformIntakeDir)lib/</CodeBrixPlatformIntakeLibDir>
+
+    <!-- Android: minimum API level for every Android assembly and app (TFM net10.0-android36.1). -->
+    <CodeBrixAndroidMinimumApiLevel>33</CodeBrixAndroidMinimumApiLevel>
+
+    <!-- Family settings -->
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+  <!--
+    NAMESPACE CONVENTION (the global::Android rule)
+
+    Inside `namespace CodeBrix.Android.*` the identifier `Android` binds to the
+    namespace CodeBrix.Android, not to the Mono.Android root namespace. Every
+    Mono.Android type is therefore written fully qualified with the global alias:
+
+        global::Android.Views.View view = ...;
+        using AView = global::Android.Views.View;     (a using alias, at the end of the using block)
+
+    Never write `Android.Views.View` (it fails to resolve, or worse, resolves to a
+    CodeBrix.Android type of the same name).
+  -->
+
+</Project>

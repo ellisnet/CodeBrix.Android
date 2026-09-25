@@ -1,0 +1,158 @@
+<Page
+    x:Class="InannaRosette.Views.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:InannaRosette.Controls"
+    xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+    xmlns:vm="clr-namespace:InannaRosette.ViewModels;assembly=InannaRosette.Core">
+
+    <Page.DataContext>
+        <vm:MainViewModel />
+    </Page.DataContext>
+
+    <Grid x:Name="RootGrid" Background="{StaticResource AppBackgroundBrush}" PointerMoved="OnRootPointerMoved">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="106" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="38" />
+        </Grid.RowDefinitions>
+
+        <!-- ===================================== HEADER ===================================== -->
+        <Grid Grid.Row="0" Background="{StaticResource HeaderBackgroundBrush}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="14"
+                        VerticalAlignment="Center" Margin="22,0,0,4">
+                <Viewbox x:Name="LogoBox" Width="42" Height="42" />
+                <StackPanel VerticalAlignment="Center" Spacing="3">
+                    <TextBlock x:Name="AppTitleText" Style="{StaticResource DisplayTextStyle}" />
+                    <TextBlock Text="An oracle of the Divine Feminine of Sumer and Akkad"
+                               Style="{StaticResource CaptionTextStyle}" />
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Margin="0,0,22,4" Spacing="9">
+                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+                    <TextBox x:Name="QuerentBox" Width="196" Height="31"
+                             PlaceholderText="Querent"
+                             Style="{StaticResource TempleTextBoxStyle}"
+                             Text="{d:Binding Querent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBox x:Name="QuestionBox" Width="452" Height="31"
+                             PlaceholderText="The question put to the rosette"
+                             Style="{StaticResource TempleTextBoxStyle}"
+                             Text="{d:Binding Question, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                    <Button Content="Shuffle" Style="{StaticResource TempleButtonStyle}"
+                            Command="{d:Binding ShuffleCommand}" />
+                    <Button Content="Draw" Style="{StaticResource TempleButtonStyle}"
+                            Command="{d:Binding DrawCommand}" />
+                    <Button Content="Auto-lay" Style="{StaticResource TempleButtonStyle}"
+                            Command="{d:Binding AutoLayCommand}" />
+                    <Button Content="Clear" Style="{StaticResource TempleButtonStyle}"
+                            Command="{d:Binding ClearCommand}" />
+                    <Button Content="Interpret" Style="{StaticResource TemplePrimaryButtonStyle}"
+                            Command="{d:Binding InterpretCommand}" />
+                    <Button Content="Create PDF" Style="{StaticResource TemplePrimaryButtonStyle}"
+                            Command="{d:Binding CreatePdfCommand}" />
+                </StackPanel>
+            </StackPanel>
+
+            <Rectangle Grid.Column="0" Grid.ColumnSpan="2" VerticalAlignment="Bottom" Height="1.5" Fill="#8AC9A14A" />
+            <Rectangle Grid.Column="0" Grid.ColumnSpan="2" VerticalAlignment="Bottom" Margin="0,0,0,4.5" Height="0.8" Fill="#40C9A14A" />
+        </Grid>
+
+        <!-- ===================================== THE SCENE ===================================== -->
+        <Canvas x:Name="ContentCanvas" Grid.Row="1" Background="Transparent"
+                SizeChanged="OnContentSizeChanged" PointerPressed="OnScenePressed">
+
+            <Border x:Name="AltarBorder" Canvas.ZIndex="0" CornerRadius="8"
+                    BorderBrush="#38C9A14A" BorderThickness="1"
+                    Background="{StaticResource AltarGlowBrush}" />
+
+            <Canvas x:Name="OrnamentLayer" Canvas.ZIndex="1" />
+            <Canvas x:Name="SlotLayer" Canvas.ZIndex="2" />
+
+            <Border x:Name="RailBorder" Canvas.ZIndex="3" CornerRadius="8"
+                    BorderBrush="#38C9A14A" BorderThickness="1"
+                    Background="#66150E2A"
+                    Visibility="{d:Binding DeckPanelVisibility}" />
+            <Canvas x:Name="RailLayer" Canvas.ZIndex="4"
+                    Visibility="{d:Binding DeckPanelVisibility}" />
+
+            <Border x:Name="InterpretationBorder" Canvas.ZIndex="6" CornerRadius="8"
+                    BorderBrush="#70C9A14A" BorderThickness="1"
+                    Background="#F2150E2A" Opacity="0"
+                    Visibility="{d:Binding InterpretationVisibility}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Margin="18,16,18,0" Spacing="4">
+                        <TextBlock x:Name="InterpTitleText" Style="{StaticResource TitleTextStyle}"
+                                   Text="{d:Binding InterpretationTitle}" />
+                        <TextBlock x:Name="InterpSubtitleText" Style="{StaticResource CaptionTextStyle}"
+                                   Text="{d:Binding InterpretationSubtitle}" />
+                        <Rectangle Height="1.2" Fill="#70C9A14A" Margin="0,9,0,0" />
+                        <Rectangle Height="0.8" Fill="#33C9A14A" Margin="0,3,0,0" />
+                    </StackPanel>
+                    <ScrollViewer x:Name="InterpScroller" Grid.Row="1" Style="{StaticResource PanelScrollViewerStyle}" Margin="18,0,10,0">
+                        <StackPanel x:Name="InterpStack" Spacing="13" Margin="0,14,8,18" />
+                    </ScrollViewer>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="18,10,18,16">
+                        <Button Content="Back to deck" Style="{StaticResource TempleButtonStyle}"
+                                Command="{d:Binding BackToDeckCommand}" />
+                        <Button Content="Create PDF Report" Style="{StaticResource TemplePrimaryButtonStyle}"
+                                Command="{d:Binding CreatePdfCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Canvas x:Name="CardLayer" Canvas.ZIndex="10" />
+            <Canvas x:Name="DetailLayer" Canvas.ZIndex="60" />
+
+            <!-- The blessing: a radiance and a line of gold over everything, and over nothing.
+                 It takes no pointer input, so a drag or a command runs on underneath it. -->
+            <Canvas x:Name="CelebrationLayer" Canvas.ZIndex="80" IsHitTestVisible="False" />
+        </Canvas>
+
+        <!-- ===================================== STATUS ===================================== -->
+        <Grid Grid.Row="2" Background="#5C0B0718">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Rectangle VerticalAlignment="Top" Height="0.8" Fill="#33C9A14A" Grid.ColumnSpan="2" />
+
+            <TextBlock Grid.Column="0" Margin="22,0,12,0" VerticalAlignment="Center"
+                       Style="{StaticResource CaptionTextStyle}" TextWrapping="NoWrap"
+                       TextTrimming="CharacterEllipsis"
+                       Text="{d:Binding StatusText}" />
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10"
+                        VerticalAlignment="Center" Margin="0,0,20,0">
+                <Border x:Name="StaleBadge" CornerRadius="2" Padding="7,2,7,3"
+                        BorderBrush="#99B6402E" BorderThickness="1" Background="#33B6402E"
+                        Visibility="{d:Binding StaleVisibility}">
+                    <TextBlock x:Name="StaleBadgeText" FontSize="9.5" Foreground="#D9634E" />
+                </Border>
+                <Button x:Name="SaveReadingButton" Content="Save reading…"
+                        Style="{StaticResource GhostButtonStyle}"
+                        Command="{d:Binding SaveReadingCommand}" />
+                <Button x:Name="OpenReadingButton" Content="Open reading…"
+                        Style="{StaticResource GhostButtonStyle}"
+                        Command="{d:Binding OpenReadingCommand}" />
+                <Rectangle Width="0.8" Height="16" Fill="#33C9A14A" />
+                <TextBlock x:Name="StationsCountText" Style="{StaticResource CaptionTextStyle}"
+                           TextWrapping="NoWrap" Foreground="#E6C476"
+                           Text="{d:Binding StationsText}" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>

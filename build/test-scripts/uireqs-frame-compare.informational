@@ -1,0 +1,38 @@
+# UIReqs frames that compare-uireqs-frames.sh passes to the frame-compare tool as --informational: compared
+# and reported, but never failing the comparison. Everything not listed here is strict.
+# One entry per line: a whole group (the folder directly under frames/<Orientation>/), or one feature of a
+# group as <Group>/<feature file name without extension>. '#' starts a comment.
+
+# Whole groups: frames depend on playback/loading timing, and the NUMBER of frames a run saves varies.
+AudioPlayer
+Lottie
+MediaPlayer
+VideoPlayer
+WebView
+
+# Single features, measured (2026-09-22, WP0.2): these differed between three runs of identical code
+# (every strict UIReqs project run three times, all three pairs compared). Features identical across all
+# three pairs stay strict.
+# animation: the enabled/disabled visual-state transition is caught part-way
+Buttons/ButtonCommand
+# animation: the flyout's close transition is caught part-way
+Buttons/DropDownButton
+# animation: the checked/unchecked visual-state transition is caught part-way
+Buttons/ToggleButton
+# GL timing: the GL canvas content depends on when the GL frame lands
+Graphics3DGL/Graphics3DGLInTheTree
+# drag inertia: the swipe's settling position varies
+Items/FlipView
+# drag inertia: the scroll position after the drag varies
+Items/ListView
+# animation: the selection indicator's slide is caught part-way
+Items/SelectorBar
+# drag inertia: the scroll position after the drag varies
+Navigation/ScrollViewer
+# indeterminate progress: the indicator position depends on elapsed time
+Range/ProgressBar
+# animation: the fade's midway frame depends on elapsed time
+ThemeFocus/Animation
+# ANDROID-ONLY (measured 2026-09-23, AP2L2 stability s2): the wheel scenario shows the Fluent scroll
+# indicator of the mouse-scrolled ScrollViewer, caught at a timing-dependent moment of its fade
+AndroidNative/native_scrolling

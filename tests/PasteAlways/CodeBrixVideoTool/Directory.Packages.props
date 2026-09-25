@@ -1,0 +1,20 @@
+<Project>
+
+  <!--
+    Paste-always head CodeBrixVideoTool: the repository pins, plus the self-produced CodeBrix.*
+    packages (not CodeBrix.Platform repo packages) the app's verbatim Core / Playback / Processing
+    sources (Surface/) use, at the versions CodeBrix.Samples CodeBrixVideoTool pins.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <PackageVersion Include="CodeBrix.VideoPlayback.MitLicenseForever" Version="1.0.256.1099" />
+    <PackageVersion Include="CodeBrix.VideoPlayback.Authoring.MitLicenseForever" Version="1.0.256.1099" />
+    <PackageVersion Include="CodeBrix.VideoPlayback.Dav1d.BsdLicenseForever" Version="1.0.257.141" />
+    <PackageVersion Include="CodeBrix.Audio.Opus.BsdLicenseForever" Version="1.0.250.73" />
+    <!-- Referenced directly only to exclude its native assets (it comes in through CodeBrix.Audio.Opus). -->
+    <PackageVersion Include="CodeBrix.Audio.MitLicenseForever" Version="1.0.250.60" />
+    <PackageVersion Include="CodeBrix.VideoProcessing.MitLicenseForever" Version="1.0.256.1018" />
+  </ItemGroup>
+
+</Project>

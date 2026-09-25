@@ -1,0 +1,11 @@
+<Project>
+
+  <!-- The in-repository CodeBrix.Android consumer wiring (targets half). -->
+  <Import Project="$(CodeBrixAndroidRepoRoot)build/inrepo/CodeBrix.Android.InRepo.targets" />
+
+  <!-- Every head: the pasted XAML is the only XAML; the MSBuild item shapes follow the source apps' .projitems. -->
+  <ItemGroup>
+    <None Remove="**\*.xaml" />
+  </ItemGroup>
+
+</Project>

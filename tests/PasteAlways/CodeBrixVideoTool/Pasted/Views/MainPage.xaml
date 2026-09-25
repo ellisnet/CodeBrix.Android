@@ -1,0 +1,483 @@
+<Page
+    x:Class="CodeBrixVideoTool.Views.MainPage"
+    xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+    xmlns:c="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+    xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+    xmlns:m="clr-namespace:Microsoft.UI.Xaml.Media;assembly=CodeBrix.Platform.UI"
+    xmlns:ui="clr-namespace:Microsoft.UI.Xaml;assembly=CodeBrix.Platform.UI"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:CodeBrixVideoTool.ViewModels;assembly=CodeBrixVideoTool.Core"
+    xmlns:conv="clr-namespace:CodeBrixVideoTool.Converters;assembly=CodeBrixVideoTool.Core"
+    xmlns:cv="clr-namespace:CodeBrix.Platform.UI.Converters;assembly=CodeBrix.Platform.UI.Toolkit"
+    xmlns:video="clr-namespace:CodeBrix.Platform.UI.VideoPlayer.Skia;assembly=CodeBrix.Platform.UI.VideoPlayer.Skia"
+    xmlns:local="using:CodeBrixVideoTool.Views"
+    FontFamily="{StaticResource RobotoFont}"
+    Background="{StaticResource AppWindowBrush}">
+
+    <Page.DataContext>
+        <vm:MainViewModel />
+    </Page.DataContext>
+
+    <Page.Resources>
+        <conv:TimecodeConverter x:Key="Timecode" />
+
+        <!-- A file this application cannot play is still listed, still selectable and still a
+             conversion source - it is only shown dimmed, so the rows that can be played stand out.
+             The two stops are real doubles rather than strings so the row's Opacity takes them
+             without a conversion of its own. -->
+        <cv:BoolToObjectConverter x:Key="PlayableOpacity">
+            <cv:BoolToObjectConverter.TrueValue>
+                <x:Double>1.0</x:Double>
+            </cv:BoolToObjectConverter.TrueValue>
+            <cv:BoolToObjectConverter.FalseValue>
+                <x:Double>0.45</x:Double>
+            </cv:BoolToObjectConverter.FalseValue>
+        </cv:BoolToObjectConverter>
+
+        <ui:Style x:Key="SectionHeading" TargetType="c:TextBlock">
+            <ui:Setter Property="FontSize" Value="11" />
+            <ui:Setter Property="FontWeight" Value="SemiBold" />
+            <ui:Setter Property="CharacterSpacing" Value="80" />
+            <ui:Setter Property="Foreground" Value="{StaticResource AppMutedTextBrush}" />
+            <ui:Setter Property="Margin" Value="0,0,0,8" />
+        </ui:Style>
+
+        <ui:Style x:Key="FieldLabel" TargetType="c:TextBlock">
+            <ui:Setter Property="FontSize" Value="12" />
+            <ui:Setter Property="Foreground" Value="{StaticResource AppMutedTextBrush}" />
+            <ui:Setter Property="Margin" Value="0,0,0,4" />
+        </ui:Style>
+
+        <ui:Style x:Key="TransportButton" TargetType="c:Button">
+            <ui:Setter Property="MinWidth" Value="68" />
+            <ui:Setter Property="Padding" Value="12,7" />
+        </ui:Style>
+
+        <ui:DataTemplate x:Key="LibraryItemTemplate">
+            <!-- One Opacity on the row dims the badge, the name and the summary together. The name is
+                 how the scripted run finds a row and reads the opacity it is really shown at. -->
+            <Grid x:Name="LibraryRow"
+                  Padding="2,6"
+                  Opacity="{d:Binding IsPlayable, Converter={StaticResource PlayableOpacity}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
+                        Background="{StaticResource AppRaisedPanelBrush}"
+                        BorderBrush="{StaticResource AppDividerBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="6,2"
+                        VerticalAlignment="Top"
+                        Margin="0,2,10,0">
+                    <TextBlock Text="{d:Binding FormatBadge}"
+                               FontSize="11"
+                               Foreground="{StaticResource AppAccentBrush}" />
+                </Border>
+
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="{d:Binding FileName}"
+                               FontSize="13"
+                               TextTrimming="CharacterEllipsis"
+                               Foreground="{StaticResource AppTextBrush}" />
+                    <TextBlock Text="{d:Binding Summary}"
+                               FontSize="11"
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource AppMutedTextBrush}" />
+                </StackPanel>
+            </Grid>
+        </ui:DataTemplate>
+
+        <ui:DataTemplate x:Key="LabelTemplate">
+            <TextBlock Text="{d:Binding Label}" TextTrimming="CharacterEllipsis" />
+        </ui:DataTemplate>
+
+        <!-- One line of what the last conversion had to say. The bound item IS the line, so this
+             template binds the string itself rather than a property of it. -->
+        <ui:DataTemplate x:Key="RunNoteTemplate">
+            <TextBlock Text="{d:Binding}"
+                       FontSize="11"
+                       TextWrapping="Wrap"
+                       Margin="0,2,0,0"
+                       Foreground="{StaticResource AppMutedTextBrush}" />
+        </ui:DataTemplate>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header: what the application is, and the two things that put files into it -->
+        <Border Grid.Row="0"
+                Background="{StaticResource AppPanelBrush}"
+                BorderBrush="{StaticResource AppDividerBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="20,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="{d:Binding Title}"
+                               FontSize="19"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource AppTextBrush}" />
+                    <TextBlock Text="{d:Binding Subtitle}"
+                               FontSize="12"
+                               Margin="0,2,0,0"
+                               Foreground="{StaticResource AppMutedTextBrush}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Content="Open file..."
+                            Padding="16,8"
+                            Command="{d:Binding OpenCommand}" />
+                    <Button Content="Remove"
+                            Padding="16,8"
+                            Command="{d:Binding RemoveCommand}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- The working area: the file list on the left, the picture and its transport on the right -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Background="{StaticResource AppPanelBrush}"
+                    BorderBrush="{StaticResource AppDividerBrush}"
+                    BorderThickness="0,0,1,0"
+                    Padding="16,16,10,16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="FILES" Style="{StaticResource SectionHeading}" />
+
+                    <Grid Grid.Row="1">
+                        <ListView x:Name="LibraryList"
+                                  ItemsSource="{d:Binding Library}"
+                                  SelectedItem="{d:Binding SelectedItem, Mode=TwoWay}"
+                                  ItemTemplate="{StaticResource LibraryItemTemplate}"
+                                  SelectionMode="Single"
+                                  Background="Transparent" />
+
+                        <TextBlock Text="Nothing here yet. Open an MP4 to import it, or a .mkv, .webm or .cbv file to play or convert it."
+                                   Visibility="{d:Binding EmptyLibraryVisibility}"
+                                   TextWrapping="Wrap"
+                                   FontSize="12"
+                                   Margin="4,8,10,0"
+                                   VerticalAlignment="Top"
+                                   Foreground="{StaticResource AppMutedTextBrush}" />
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- The stage. The player letterboxes whatever it is given inside it. -->
+                <Grid Grid.Row="0" Background="{StaticResource AppStageBrush}">
+                    <video:VideoPlayer x:Name="Player"
+                                       Stretch="Uniform"
+                                       MediaOpened="Player_MediaOpened"
+                                       PlaybackEnded="Player_PlaybackEnded"
+                                       MediaFailed="Player_MediaFailed" />
+
+                    <TextBlock Text="No video open"
+                               Visibility="{d:Binding Playback.PlayerPlaceholderVisibility}"
+                               FontSize="15"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource AppMutedTextBrush}" />
+
+                    <Border Visibility="{d:Binding Playback.UnplayableNoticeVisibility}"
+                            Background="{StaticResource AppNoticeBrush}"
+                            CornerRadius="6"
+                            Padding="18,14"
+                            MaxWidth="520"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="This file is not played here"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource AppNoticeTextBrush}" />
+                            <TextBlock Text="{d:Binding Playback.StatusText}"
+                                       FontSize="12"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource AppNoticeTextBrush}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Transport: the scrubber and the timecodes bind straight to the player element -->
+                <Border Grid.Row="1"
+                        Background="{StaticResource AppPanelBrush}"
+                        BorderBrush="{StaticResource AppDividerBrush}"
+                        BorderThickness="0,1,0,0"
+                        Padding="20,12"
+                        Visibility="{d:Binding Playback.TransportVisibility}">
+                    <StackPanel Spacing="10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0"
+                                       Text="{d:Binding Position, ElementName=Player, Converter={StaticResource Timecode}}"
+                                       Width="58"
+                                       FontSize="12"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource AppTextBrush}" />
+
+                            <Slider Grid.Column="1"
+                                    Maximum="{d:Binding DurationSeconds, ElementName=Player}"
+                                    Value="{d:Binding PositionSeconds, ElementName=Player, Mode=TwoWay}"
+                                    StepFrequency="0.1"
+                                    VerticalAlignment="Center"
+                                    Margin="6,0" />
+
+                            <TextBlock Grid.Column="2"
+                                       Text="{d:Binding Duration, ElementName=Player, Converter={StaticResource Timecode}}"
+                                       Width="58"
+                                       FontSize="12"
+                                       TextAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource AppMutedTextBrush}" />
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                <Button Content="Play"
+                                        Style="{StaticResource TransportButton}"
+                                        Command="{d:Binding Playback.PlayCommand}" />
+                                <Button Content="Pause"
+                                        Style="{StaticResource TransportButton}"
+                                        Command="{d:Binding Playback.PauseCommand}" />
+                                <Button Content="Stop"
+                                        Style="{StaticResource TransportButton}"
+                                        Command="{d:Binding Playback.StopCommand}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <CheckBox Content="Mute"
+                                          IsChecked="{d:Binding IsMuted, ElementName=Player, Mode=TwoWay}"
+                                          VerticalAlignment="Center" />
+                                <TextBlock Text="Volume"
+                                           FontSize="12"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource AppMutedTextBrush}" />
+                                <Slider Width="130"
+                                        Minimum="0"
+                                        Maximum="1"
+                                        StepFrequency="0.01"
+                                        Value="{d:Binding Volume, ElementName=Player, Mode=TwoWay}"
+                                        VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- The two selectors appear only when the open file has something to put in
+                             them, and get a row of their own so a narrow window never squeezes them
+                             out of the transport. -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <ComboBox Grid.Column="0"
+                                      Width="230"
+                                      Margin="0,0,10,0"
+                                      PlaceholderText="Chapter"
+                                      Visibility="{d:Binding Playback.ChapterVisibility}"
+                                      ItemsSource="{d:Binding Playback.Chapters}"
+                                      SelectedItem="{d:Binding Playback.SelectedChapter, Mode=TwoWay}"
+                                      ItemTemplate="{StaticResource LabelTemplate}" />
+
+                            <ComboBox Grid.Column="1"
+                                      Width="210"
+                                      PlaceholderText="Captions"
+                                      Visibility="{d:Binding Playback.CaptionVisibility}"
+                                      ItemsSource="{d:Binding Playback.CaptionTracks}"
+                                      SelectedItem="{d:Binding Playback.SelectedCaptionTrack, Mode=TwoWay}"
+                                      ItemTemplate="{StaticResource LabelTemplate}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- The operation panel: one conversion at a time, with its progress and its Cancel -->
+        <Border Grid.Row="2"
+                Background="{StaticResource AppPanelBrush}"
+                BorderBrush="{StaticResource AppDividerBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="20,14">
+            <StackPanel Spacing="10">
+                <TextBlock Text="OPERATION" Style="{StaticResource SectionHeading}" />
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Destination format" Style="{StaticResource FieldLabel}" />
+                        <ComboBox HorizontalAlignment="Stretch"
+                                  PlaceholderText="Choose a format"
+                                  ItemsSource="{d:Binding Conversion.Destinations}"
+                                  SelectedItem="{d:Binding Conversion.SelectedDestination, Mode=TwoWay}"
+                                  ItemTemplate="{StaticResource LabelTemplate}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Resolution" Style="{StaticResource FieldLabel}" />
+                        <ComboBox HorizontalAlignment="Stretch"
+                                  PlaceholderText="Choose a size"
+                                  ItemsSource="{d:Binding Conversion.Resolutions}"
+                                  SelectedItem="{d:Binding Conversion.SelectedResolution, Mode=TwoWay}"
+                                  ItemTemplate="{StaticResource LabelTemplate}" />
+                    </StackPanel>
+
+                    <!-- The quality stop. Its rows are the QualityLevel values themselves, whose own
+                         names are the words to show, so this drop-down carries no item template. -->
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Text="Quality" Style="{StaticResource FieldLabel}" />
+                        <ComboBox x:Name="QualityBox"
+                                  HorizontalAlignment="Stretch"
+                                  PlaceholderText="Choose a quality"
+                                  ItemsSource="{d:Binding Conversion.QualityLevels}"
+                                  SelectedItem="{d:Binding Conversion.SelectedQuality, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="6" VerticalAlignment="Bottom">
+                        <Button Content="{d:Binding Conversion.ActionLabel}"
+                                MinWidth="140"
+                                Padding="20,9"
+                                Background="{StaticResource AppAccentBrush}"
+                                Command="{d:Binding Conversion.RunCommand}" />
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" Spacing="14">
+                    <TextBlock Text="{d:Binding Conversion.VideoCodecText}"
+                               FontSize="11"
+                               Foreground="{StaticResource AppMutedTextBrush}" />
+                    <TextBlock Text="{d:Binding Conversion.AudioCodecText}"
+                               FontSize="11"
+                               Foreground="{StaticResource AppMutedTextBrush}" />
+                </StackPanel>
+
+                <TextBlock Text="{d:Binding Conversion.RouteText}"
+                           FontSize="12"
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource AppMutedTextBrush}" />
+
+                <Grid Visibility="{d:Binding Conversion.ProgressVisibility}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <ProgressBar Grid.Column="0"
+                                 Height="6"
+                                 Minimum="0"
+                                 Maximum="100"
+                                 Value="{d:Binding Conversion.ProgressPercent}"
+                                 IsIndeterminate="{d:Binding Conversion.IsProgressIndeterminate}"
+                                 VerticalAlignment="Center"
+                                 Margin="0,0,14,0" />
+
+                    <TextBlock Grid.Column="1"
+                               Text="{d:Binding Conversion.ProgressText}"
+                               FontSize="12"
+                               MinWidth="240"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource AppTextBrush}" />
+
+                    <Button Grid.Column="2"
+                            Content="Cancel"
+                            MinWidth="96"
+                            Padding="16,7"
+                            Margin="14,0,0,0"
+                            Command="{d:Binding Conversion.CancelCommand}" />
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Status bar -->
+        <Border Grid.Row="3"
+                Background="{StaticResource AppRaisedPanelBrush}"
+                BorderBrush="{StaticResource AppDividerBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="20,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="{d:Binding StatusText}"
+                           FontSize="12"
+                           TextTrimming="CharacterEllipsis"
+                           Foreground="{StaticResource AppTextBrush}" />
+
+                <TextBlock Grid.Column="1"
+                           Text="{d:Binding Playback.StatusText}"
+                           FontSize="12"
+                           Margin="20,0,0,0"
+                           TextTrimming="CharacterEllipsis"
+                           Foreground="{StaticResource AppMutedTextBrush}" />
+            </Grid>
+        </Border>
+
+        <!-- What the last conversion had to say for itself: the streamable-profile verdict when
+             there was one, then every note the run produced. Collapsed, and taking no room at all,
+             until a run leaves something behind; emptied again the moment the next run starts. -->
+        <Border Grid.Row="4"
+                Background="{StaticResource AppRaisedPanelBrush}"
+                BorderBrush="{StaticResource AppDividerBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="20,6,20,10"
+                Visibility="{d:Binding Conversion.LastRunNotesVisibility}">
+            <ItemsControl x:Name="LastRunNotesList"
+                          ItemsSource="{d:Binding Conversion.LastRunNotes}"
+                          ItemTemplate="{StaticResource RunNoteTemplate}" />
+        </Border>
+    </Grid>
+</Page>

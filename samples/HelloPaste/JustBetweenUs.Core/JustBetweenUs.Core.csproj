@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    JustBetweenUs.Core in the D-O2 app shape: the app's .Core library multi-targets
+    net10.0 (what the desktop heads consume, with the CodeBrix.Platform package) and
+    net10.0-android36.1 (what the Android head consumes, with CodeBrix.Android), so the
+    Platform package never reaches the APK. The sources are VERBATIM copies of CodeBrix.Samples
+    JustBetweenUs (Controls/ from CodeBrixPlatform/JustBetweenUs.Core, ViewModels/, Helpers/
+    and Assets/ from Shared/); see ../README.md. The assembly keeps its name: the XAML
+    names it (xmlns ...;assembly=JustBetweenUs.Core) and the embedded:// image URIs
+    resolve resources by it.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net10.0-android36.1</TargetFrameworks>
+
+    <!-- Match the namespace used by the app code -->
+    <RootNamespace>JustBetweenUs</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <!-- CodeBrix.Platform needs this define for its internal conditional compilation (the Android flavor gets it from CodeBrix.Android) -->
+    <DefineConstants>$(DefineConstants);HAS_CODEBRIX;HAS_CODEBRIX_WINUI</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(TargetFramework.Contains('-android'))">
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\star_icon.json" />
+    <EmbeddedResource Include="Assets\clipboard.svg" />
+    <EmbeddedResource Include="Assets\padlock-icon.svg" />
+    <EmbeddedResource Include="Assets\unlocked-icon.svg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <!-- Bundled Open Sans font -->
+    <PackageReference Include="CodeBrix.Platform.Fonts.OpenSans.ApacheLicenseForever" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JustBetweenUs.Encryption\JustBetweenUs.Encryption.csproj" />
+  </ItemGroup>
+
+</Project>

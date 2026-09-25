@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Surface library for the PolyHavenBrowser paste-always head: PolyHavenBrowser.CreateDocument
+    (CodeBrix.Samples PolyHavenBrowser/src/libs/PolyHavenBrowser.CreateDocument), built as its own assembly with
+    the source library's own settings (nullable, implicit usings) and name (its embedded fonts are looked up by
+    it). Verbatim copies: see ../SOURCES.txt.
+  -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>PolyHavenBrowser.CreateDocument</RootNamespace>
+    <AssemblyName>PolyHavenBrowser.CreateDocument</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Fonts\*.ttf" />
+    <None Remove="Fonts\OFL-*.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Fonts\*.ttf" />
+    <EmbeddedResource Include="Fonts\OFL-*.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CodeBrix.PdfDocuments.MitLicenseForever" />
+    <PackageReference Include="CodeBrix.Imaging.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

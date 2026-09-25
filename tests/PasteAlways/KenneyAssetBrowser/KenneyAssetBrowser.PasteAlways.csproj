@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: KenneyAssetBrowser (CodeBrix.Samples
+    KenneyAssetBrowser/src/KenneyAssetBrowser.UI). Pasted/ = the shared UI project's files,
+    verbatim. Surface/ = the page's view models, converters and services
+    (KenneyAssetBrowser.Core) and its AssetRead and Settings libraries, verbatim; the Rendering
+    library as its own Surface project (verbatim copies: the real GL renderer, glTF loader and
+    image decoders). See Surface/SOURCES.txt. The SkiaSharpViews, Graphics3DGL, FlexPanel and
+    AppSettings add-ins are the real Android add-ins; the AudioPlayer Core comes from the intake.
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.kenneyassetbrowser</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>KenneyAssetBrowser.PasteAlways</RootNamespace>
+    <AssemblyName>KenneyAssetBrowser.PasteAlways</AssemblyName>
+    <CodeBrixAndroidInRepoAddIns>FlexPanel;AudioPlayer;AppSettings;SkiaSharpViews;Graphics3DGL</CodeBrixAndroidInRepoAddIns>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <!-- The Rendering library is its own assembly, not the head's. -->
+  <ItemGroup>
+    <Compile Remove="Surface\KenneyAssetBrowser.Rendering\**" />
+    <None Remove="Surface\KenneyAssetBrowser.Rendering\**" />
+    <!-- The Rendering library (an Android library over the Graphics3DGL add-in) keeps AndroidX classes.jar imports
+         under its obj/; the head's default **/*.jar glob must not bind them. -->
+    <AndroidLibrary Remove="Surface\**" />
+    <AndroidJavaSource Remove="Surface\**" />
+    <ProjectReference Include="Surface\KenneyAssetBrowser.Rendering\KenneyAssetBrowser.Rendering.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="CodeBrix.Compression.MitLicenseForever" />
+  </ItemGroup>
+
+</Project>

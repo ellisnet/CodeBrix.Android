@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UIReqs.Device: the scenario app of the UIReqs port (AP2). It hosts the
+    CodeBrix.Platform UIReqs virtual application on Android and runs the COPIED scenario code
+    (Scenarios/: steps, hooks, element factory, canvas vocabulary; from CodeBrix.Platform
+    src/UIReqs/Platform.UI.Core, see PORTING.txt) step by step for the host runner
+    (tests/CodeBrix.Android.UIReqs), which drives it over `adb forward` (Runtime/StepServer).
+    Scenarios/Features/ holds the ONE copy of the feature files; the host project links them.
+    Nullable is enabled: the copied scenario code is CodeBrix.Platform code (NRT on).
+    Deploy with build/test-scripts/android-uireqs-run.sh (Debug, -t:Install).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <ApplicationId>com.codebrix.uireqs</ApplicationId>
+    <ApplicationTitle>CodeBrix UIReqs</ApplicationTitle>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <RootNamespace>CodeBrix.Android.UIReqs.Device</RootNamespace>
+    <AssemblyName>CodeBrix.Android.UIReqs.Device</AssemblyName>
+    <Nullable>enable</Nullable>
+    <!-- Uno0007: the Platform analyzer asks for the Lottie add-in package wherever ProgressRing is
+         used (Scenarios/Support/RangeElements.cs). The Android Lottie add-in is AP7; the Range
+         scenarios that need it stay pending until then. -->
+    <NoWarn>$(NoWarn);Uno0007</NoWarn>
+    <!-- The copied Graphics3DGL fixtures hand the GL binding vertex-attribute offsets as raw pointers (as the
+         Platform's own Graphics3DGL UIReqs project does). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The feature files are the host runner's input (linked there); they are not compiled here. -->
+    <None Remove="Scenarios/Features/**" />
+    <None Include="Scenarios/Features/**/*.feature" />
+    <!-- Android-only groups (AndroidFeatures/<Group>/, steps in AndroidSteps/): real Android input and
+         native behaviour that the copied, injector-driven scenarios cannot show. -->
+    <None Remove="AndroidFeatures/**" />
+    <None Include="AndroidFeatures/**/*.feature" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SilverAssertions.ApacheLicenseForever" />
+    <PackageReference Include="CodeBrix.Platform.Fonts.OpenSans.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

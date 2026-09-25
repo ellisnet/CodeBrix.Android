@@ -1,0 +1,589 @@
+<Page
+    x:Class="KenneyAssetBrowser.Views.MainPage"
+    xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+    xmlns:c="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+    xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+    xmlns:m="clr-namespace:Microsoft.UI.Xaml.Media;assembly=CodeBrix.Platform.UI"
+    xmlns:ui="clr-namespace:Microsoft.UI.Xaml;assembly=CodeBrix.Platform.UI"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:KenneyAssetBrowser.Views"
+    xmlns:vm="clr-namespace:KenneyAssetBrowser.ViewModels;assembly=KenneyAssetBrowser.Core"
+    xmlns:conv="clr-namespace:KenneyAssetBrowser.Converters;assembly=KenneyAssetBrowser.Core"
+    xmlns:flex="clr-namespace:CodeBrix.Platform.UI.FlexPanel;assembly=CodeBrix.Platform.UI.FlexPanel"
+    xmlns:skia="clr-namespace:SkiaSharp.Views.Windows;assembly=CodeBrix.Platform.SkiaSharp.Views"
+    xmlns:audio="clr-namespace:CodeBrix.Platform.UI.AudioPlayer.Skia;assembly=CodeBrix.Platform.UI.AudioPlayer.Skia"
+    xmlns:render="clr-namespace:KenneyAssetBrowser.Rendering;assembly=KenneyAssetBrowser.Rendering"
+    FontFamily="{StaticResource MerriweatherFont}"
+    Background="#16181D">
+
+    <Page.DataContext>
+        <vm:MainViewModel />
+    </Page.DataContext>
+
+    <Page.Resources>
+        <!-- ═══ The app's dark palette (accent: Kenney sky blue) ═══ -->
+        <m:SolidColorBrush x:Key="WindowBrush" Color="#16181D" />
+        <m:SolidColorBrush x:Key="HeaderBrush" Color="#1B1E25" />
+        <m:SolidColorBrush x:Key="CardBrush" Color="#1F232B" />
+        <m:SolidColorBrush x:Key="CardWellBrush" Color="#171A20" />
+        <m:SolidColorBrush x:Key="HairlineBrush" Color="#2A2F39" />
+        <m:SolidColorBrush x:Key="TextPrimaryBrush" Color="#F2F4F8" />
+        <m:SolidColorBrush x:Key="TextSecondaryBrush" Color="#A8B0BF" />
+        <m:SolidColorBrush x:Key="TextTertiaryBrush" Color="#6E7686" />
+        <m:SolidColorBrush x:Key="AccentBrush" Color="#4FA6E8" />
+        <m:SolidColorBrush x:Key="AccentDimBrush" Color="#3C82B8" />
+
+        <!-- Re-key the theme's standard-button brushes to the dark palette, so every plain
+             Button on this page (cards, toolbar buttons) hovers and presses in-palette -->
+        <m:SolidColorBrush x:Key="ButtonBackground" Color="#262B34" />
+        <m:SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#2E3440" />
+        <m:SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#232830" />
+        <m:SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="#1F232B" />
+        <m:SolidColorBrush x:Key="ButtonForeground" Color="#F2F4F8" />
+        <m:SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#FFFFFF" />
+        <m:SolidColorBrush x:Key="ButtonForegroundPressed" Color="#F2F4F8" />
+        <m:SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#6E7686" />
+        <m:SolidColorBrush x:Key="ButtonBorderBrush" Color="#2A2F39" />
+        <m:SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#3A4150" />
+        <m:SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#2A2F39" />
+        <m:SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="#2A2F39" />
+
+        <!-- Re-key the theme's accent-button brushes to the app's blue accent, so
+             {ThemeResource AccentButtonStyle} buttons follow the app palette -->
+        <m:SolidColorBrush x:Key="AccentButtonBackground" Color="#4FA6E8" />
+        <m:SolidColorBrush x:Key="AccentButtonBackgroundPointerOver" Color="#66B4F0" />
+        <m:SolidColorBrush x:Key="AccentButtonBackgroundPressed" Color="#3B8CC9" />
+        <m:SolidColorBrush x:Key="AccentButtonBackgroundDisabled" Color="#3A3F49" />
+        <m:SolidColorBrush x:Key="AccentButtonForeground" Color="#0E1114" />
+        <m:SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#0E1114" />
+        <m:SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#0E1114" />
+        <m:SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#6E7686" />
+
+        <!-- Re-key the theme's slider brushes to the dark palette, so the audio scrubber's
+             track, filled portion and thumb follow the app's blue accent -->
+        <m:SolidColorBrush x:Key="SliderTrackFill" Color="#2A2F39" />
+        <m:SolidColorBrush x:Key="SliderTrackFillPointerOver" Color="#333945" />
+        <m:SolidColorBrush x:Key="SliderTrackFillPressed" Color="#333945" />
+        <m:SolidColorBrush x:Key="SliderTrackValueFill" Color="#4FA6E8" />
+        <m:SolidColorBrush x:Key="SliderTrackValueFillPointerOver" Color="#66B4F0" />
+        <m:SolidColorBrush x:Key="SliderTrackValueFillPressed" Color="#3B8CC9" />
+        <m:SolidColorBrush x:Key="SliderThumbBackground" Color="#4FA6E8" />
+        <m:SolidColorBrush x:Key="SliderThumbBackgroundPointerOver" Color="#66B4F0" />
+        <m:SolidColorBrush x:Key="SliderThumbBackgroundPressed" Color="#3B8CC9" />
+
+        <!-- Formats the scrubber's elapsed/duration labels (m:ss.f — asset-pack clips are
+             usually well under a second, so the tenth carries the information) -->
+        <conv:TimecodeConverter x:Key="TimecodeConverter" />
+
+        <!-- The primary (accent) button: the theme's accent style plus app shaping -->
+        <ui:Style x:Key="PrimaryButtonStyle" TargetType="c:Button" BasedOn="{StaticResource AccentButtonStyle}">
+            <ui:Setter Property="CornerRadius" Value="8" />
+            <ui:Setter Property="Padding" Value="16,7" />
+            <ui:Setter Property="FontWeight" Value="SemiBold" />
+        </ui:Style>
+
+        <!-- One bundle card of the sidebar; the whole card is its own select button -->
+        <ui:DataTemplate x:Key="BundleCellTemplate">
+            <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                    Padding="10" Margin="0,0,0,8" CornerRadius="10" BorderThickness="1"
+                    Background="{d:Binding CardBackground}"
+                    BorderBrush="{d:Binding CardBorder}"
+                    Command="{d:Binding SelectCommand}">
+                <Grid ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Width="48" Height="48" CornerRadius="8"
+                            Background="{StaticResource CardWellBrush}">
+                        <Grid>
+                            <FontIcon Glyph="&#xE8B7;" FontSize="18" Foreground="#3A4150"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Image Source="{d:Binding Thumbnail}" Stretch="UniformToFill" />
+                        </Grid>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="{d:Binding Title}" FontSize="13.5" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       TextTrimming="CharacterEllipsis" MaxLines="1" />
+                            <TextBlock Text="{d:Binding VersionText}" FontSize="10.5"
+                                       Foreground="{StaticResource TextTertiaryBrush}"
+                                       VerticalAlignment="Bottom" />
+                        </StackPanel>
+                        <TextBlock Text="{d:Binding SubtitleText}" FontSize="11"
+                                   Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextTrimming="CharacterEllipsis" MaxLines="1" />
+                    </StackPanel>
+                </Grid>
+            </Button>
+        </ui:DataTemplate>
+
+        <!-- One asset card of the browsing grid; the whole card opens the asset -->
+        <ui:DataTemplate x:Key="AssetCellTemplate">
+            <Button Width="230" Height="248" Padding="0" CornerRadius="12" BorderThickness="1"
+                    Background="{StaticResource CardBrush}"
+                    BorderBrush="{StaticResource HairlineBrush}"
+                    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                    Command="{d:Binding OpenCommand}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="140" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Thumbnail well (a kind glyph shows until the thumbnail arrives) -->
+                    <Border Grid.Row="0" Background="{StaticResource CardWellBrush}"
+                            CornerRadius="11,11,0,0">
+                        <Grid>
+                            <FontIcon Glyph="{d:Binding Glyph}" FontSize="30"
+                                      Foreground="#3A4150"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Visibility="{d:Binding PlaceholderVisibility}" />
+                            <Image Source="{d:Binding Thumbnail}" Stretch="Uniform" Margin="10" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Name and the category it lives in -->
+                    <StackPanel Grid.Row="1" Padding="14,10,14,0" Spacing="3">
+                        <TextBlock Text="{d:Binding Title}" FontSize="13.5" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   TextTrimming="CharacterEllipsis" MaxLines="1" />
+                        <TextBlock Text="{d:Binding Subtitle}" FontSize="11"
+                                   Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextTrimming="CharacterEllipsis" MaxLines="1" />
+                    </StackPanel>
+
+                    <!-- Footer: kind chip on the left, detail (size / formats) on the right -->
+                    <Grid Grid.Row="2" Padding="14,8,14,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Background="#262B34" CornerRadius="4"
+                                Padding="7,2" VerticalAlignment="Center">
+                            <TextBlock Text="{d:Binding KindLabel}" FontSize="9.5" FontWeight="SemiBold"
+                                       CharacterSpacing="60"
+                                       Foreground="{StaticResource AccentBrush}" />
+                        </Border>
+                        <TextBlock Grid.Column="1" Text="{d:Binding DetailText}" FontSize="11"
+                                   Foreground="{StaticResource TextTertiaryBrush}"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" MaxLines="1" />
+                    </Grid>
+                </Grid>
+            </Button>
+        </ui:DataTemplate>
+
+        <!-- One label/value row of the viewer's facts panel -->
+        <ui:DataTemplate x:Key="AssetFactTemplate">
+            <Grid Padding="0,7">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="110" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{d:Binding Label}" FontSize="12.5"
+                           Foreground="{StaticResource TextTertiaryBrush}" />
+                <TextBlock Grid.Column="1" Text="{d:Binding Value}" FontSize="12.5"
+                           Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" />
+            </Grid>
+        </ui:DataTemplate>
+
+        <!-- One row of the spritesheet viewer's sprite list; selecting spotlights the sprite -->
+        <ui:DataTemplate x:Key="AtlasRegionTemplate">
+            <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                    Padding="10,6" CornerRadius="6" BorderThickness="0"
+                    Background="{d:Binding RowBackground}"
+                    Command="{d:Binding SelectCommand}">
+                <StackPanel Spacing="1">
+                    <TextBlock Text="{d:Binding Name}" FontSize="12"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               TextTrimming="CharacterEllipsis" MaxLines="1" />
+                    <TextBlock Text="{d:Binding BoundsText}" FontSize="10.5"
+                               Foreground="{StaticResource TextTertiaryBrush}" />
+                </StackPanel>
+            </Button>
+        </ui:DataTemplate>
+    </Page.Resources>
+
+    <Grid x:Name="RootGrid" RequestedTheme="Dark" Background="{StaticResource WindowBrush}">
+
+        <!-- ══════════════════════════ BROWSING VIEW ══════════════════════════ -->
+        <Grid Visibility="{d:Binding BrowsingViewVisibility}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Header: identity on the left; search, category filter and the assets folder
+                 on the right. A wrapping FlexPanel keeps everything on one row while the
+                 window is wide enough. -->
+            <Border Grid.Row="0" Background="{StaticResource HeaderBrush}"
+                    BorderBrush="{StaticResource HairlineBrush}" BorderThickness="0,0,0,1"
+                    Padding="24,10,24,10">
+                <flex:FlexPanel Direction="Row" Wrap="Wrap" AlignItems="Center">
+
+                    <!-- Grow=1: the identity block soaks up the free main-axis space, keeping
+                         the other groups pinned right while they still share its row -->
+                    <StackPanel Spacing="2" Margin="0,6,16,6" flex:FlexPanel.Grow="1">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE8F1;" FontSize="19" Foreground="{StaticResource AccentBrush}"
+                                      VerticalAlignment="Center" />
+                            <TextBlock Text="Kenney Asset Browser" FontSize="19" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock Text="Browse your downloaded kenney.nl asset bundles — free, CC0-licensed game assets"
+                                   FontSize="11.5" Foreground="{StaticResource TextTertiaryBrush}" />
+                    </StackPanel>
+
+                    <!-- Search and the category filter travel as one unit when the panel wraps -->
+                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,6,16,6">
+                        <TextBox Width="240" VerticalAlignment="Center"
+                                 PlaceholderText="Search assets…"
+                                 Text="{d:Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 CornerRadius="8" />
+                        <ComboBox Width="190" VerticalAlignment="Center"
+                                  CornerRadius="8"
+                                  ItemsSource="{d:Binding Categories}"
+                                  SelectedItem="{d:Binding SelectedCategory, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <Button CornerRadius="8" Padding="14,8" Margin="0,6,0,6" BorderThickness="1"
+                            MaxWidth="300"
+                            Command="{d:Binding PickFolderCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE8B7;" FontSize="13"
+                                      Foreground="{StaticResource AccentBrush}"
+                                      VerticalAlignment="Center" />
+                            <TextBlock Text="{d:Binding AssetsFolderLabel}" FontSize="12.5"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" MaxLines="1" />
+                        </StackPanel>
+                    </Button>
+                </flex:FlexPanel>
+            </Border>
+
+            <!-- First launch: no assets folder chosen yet -->
+            <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Spacing="16" MaxWidth="520"
+                        Visibility="{d:Binding FolderPromptVisibility}">
+                <FontIcon Glyph="&#xE8B7;" FontSize="44" Foreground="{StaticResource AccentDimBrush}"
+                          HorizontalAlignment="Center" />
+                <TextBlock Text="Welcome to Kenney Asset Browser" FontSize="20" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimaryBrush}" TextAlignment="Center" />
+                <TextBlock FontSize="13" LineHeight="21" TextWrapping="Wrap" TextAlignment="Center"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Text="Download asset bundles (.zip) from kenney.nl and place them in a folder of your choice, then point this app at that folder. Your choice is remembered for next time." />
+                <Button HorizontalAlignment="Center"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{d:Binding PickFolderCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE8B7;" FontSize="14" VerticalAlignment="Center" />
+                        <TextBlock Text="Choose assets folder…" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <!-- The catalog: bundle sidebar beside the asset grid -->
+            <Grid Grid.Row="1" Visibility="{d:Binding CatalogAreaVisibility}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Bundle sidebar -->
+                <Border Grid.Column="0" Background="{StaticResource HeaderBrush}"
+                        BorderBrush="{StaticResource HairlineBrush}" BorderThickness="0,0,1,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Padding="16,14,16,6" Spacing="3">
+                            <TextBlock Text="BUNDLES" FontSize="11" FontWeight="SemiBold"
+                                       CharacterSpacing="80"
+                                       Foreground="{StaticResource AccentBrush}" />
+                            <TextBlock Text="{d:Binding BundleCountText}" FontSize="11"
+                                       Foreground="{StaticResource TextTertiaryBrush}" />
+                            <TextBlock Text="{d:Binding CatalogWarningsText}" FontSize="10.5"
+                                       Foreground="#D9905B" TextWrapping="Wrap"
+                                       Visibility="{d:Binding CatalogWarningsVisibility}" />
+                        </StackPanel>
+                        <ScrollViewer Grid.Row="1" Padding="12,4,12,12"
+                                      VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{d:Binding BundleCells}"
+                                          ItemTemplate="{StaticResource BundleCellTemplate}" />
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+
+                <!-- Asset grid -->
+                <Grid Grid.Column="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Caption row: result count on the left, the bundle's license on the right -->
+                    <Grid Grid.Row="0" Padding="24,12,24,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{d:Binding ResultCountText}" FontSize="12"
+                                   Foreground="{StaticResource TextTertiaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <Button Grid.Column="1" CornerRadius="6" Padding="10,5" BorderThickness="1"
+                                Command="{d:Binding ShowLicenseCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE8A5;" FontSize="12"
+                                          Foreground="{StaticResource AccentBrush}"
+                                          VerticalAlignment="Center" />
+                                <TextBlock Text="License" FontSize="11.5" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <!-- Fixed-size cells; the per-row count follows the window width. Cells
+                         materialize lazily: the page asks for more as this view scrolls
+                         toward its bottom edge. -->
+                    <ScrollViewer x:Name="CatalogScroll" Grid.Row="1"
+                                  Padding="24,4,24,8"
+                                  VerticalScrollBarVisibility="Auto">
+                        <StackPanel HorizontalAlignment="Center">
+                            <ItemsRepeater ItemsSource="{d:Binding Cells}"
+                                           ItemTemplate="{StaticResource AssetCellTemplate}">
+                                <ItemsRepeater.Layout>
+                                    <UniformGridLayout Orientation="Horizontal"
+                                                       MinItemWidth="230" MinItemHeight="248"
+                                                       MinColumnSpacing="14" MinRowSpacing="14"
+                                                       ItemsStretch="None" />
+                                </ItemsRepeater.Layout>
+                            </ItemsRepeater>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Catalog (re)load indicator -->
+                    <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Spacing="14" Visibility="{d:Binding CatalogLoadingVisibility}">
+                        <ProgressBar Width="220" Height="4" IsIndeterminate="True"
+                                     Foreground="{StaticResource AccentBrush}" Background="#262B34" />
+                        <TextBlock Text="Reading asset bundles…" FontSize="13"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   TextAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <!-- ══════════════════════════ VIEWER VIEW ══════════════════════════ -->
+        <Grid Visibility="{d:Binding ViewerViewVisibility}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Top bar: back to the catalog, then the asset's name and origin -->
+            <Border Grid.Row="0" Background="{StaticResource HeaderBrush}"
+                    BorderBrush="{StaticResource HairlineBrush}" BorderThickness="0,0,0,1"
+                    Padding="16,12,24,12">
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <Button Width="42" Height="38" Padding="0" CornerRadius="8" BorderThickness="1"
+                            VerticalAlignment="Center"
+                            Command="{d:Binding BackCommand}"
+                            Content="←" FontSize="17" />
+                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Text="{d:Binding ViewerTitle}" FontSize="18" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" />
+                        <TextBlock Text="{d:Binding ViewerSubtitle}" FontSize="11.5"
+                                   Foreground="{StaticResource TextTertiaryBrush}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Facts pane and the viewer share a FlexPanel whose main axis follows the
+                 window's orientation (flipped in MainPage.xaml.cs): facts beside the viewer
+                 in landscape, above it in portrait -->
+            <flex:FlexPanel x:Name="ViewerContentFlex" Grid.Row="1" Padding="24,20,24,16"
+                            Direction="Row">
+
+                <!-- Explicit Width (not FlexPanel.Basis) in landscape: the pane's content is
+                     measured against it, so the text inside wraps at the pane width -->
+                <ScrollViewer x:Name="ViewerInfoPane" VerticalScrollBarVisibility="Auto"
+                              Margin="0,0,20,0" Width="380">
+                    <StackPanel Spacing="16" Padding="0,0,10,10">
+                        <Border Background="{StaticResource CardBrush}"
+                                BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1"
+                                CornerRadius="12" Padding="20,16,20,12">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="DETAILS" FontSize="11" FontWeight="SemiBold"
+                                           CharacterSpacing="80"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           Margin="0,0,0,6" />
+                                <ItemsControl ItemsSource="{d:Binding ViewerFacts}"
+                                              ItemTemplate="{StaticResource AssetFactTemplate}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Spritesheet only: every named sprite of the atlas -->
+                        <Border Background="{StaticResource CardBrush}"
+                                BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1"
+                                CornerRadius="12" Padding="12,16,12,12"
+                                Visibility="{d:Binding RegionListVisibility}">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="SPRITES" FontSize="11" FontWeight="SemiBold"
+                                           CharacterSpacing="80"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           Margin="8,0,0,4" />
+                                <ItemsControl ItemsSource="{d:Binding AtlasRegions}"
+                                              ItemTemplate="{StaticResource AtlasRegionTemplate}" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- The viewer well. Grow=1: it takes whatever main-axis space the facts pane
+                     leaves. Exactly one child is visible at a time, driven by the view model. -->
+                <Grid RowSpacing="8" flex:FlexPanel.Grow="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Background="{StaticResource CardWellBrush}"
+                            BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1"
+                            CornerRadius="12">
+                        <Grid>
+                            <!-- 2D images and spritesheets: a SkiaSharp canvas painted by the
+                                 Rendering library's ImageCanvasPainter (checkerboard, zoom,
+                                 sprite spotlight) -->
+                            <skia:SKXamlCanvas x:Name="ImageCanvas"
+                                               Visibility="{d:Binding ImageViewerVisibility}" />
+
+                            <!-- 3D models: a self-contained GL canvas that draws the bound model
+                                 and handles rotate/zoom itself; animated models additionally
+                                 bind their baked clip and play state -->
+                            <render:ModelSceneGlCanvas x:Name="ModelCanvas"
+                                                       Model="{d:Binding CurrentModel}"
+                                                       AnimationClip="{d:Binding CurrentAnimationClip}"
+                                                       IsAnimationPlaying="{d:Binding IsAnimationPlaying}"
+                                                       Visibility="{d:Binding ModelViewerVisibility}" />
+
+                            <!-- Text documents (License.txt and friends) -->
+                            <ScrollViewer Visibility="{d:Binding TextViewerVisibility}"
+                                          Padding="24,16" VerticalScrollBarVisibility="Auto">
+                                <TextBlock Text="{d:Binding ViewerText}" FontSize="13" LineHeight="21"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           TextWrapping="Wrap" />
+                            </ScrollViewer>
+
+                            <!-- Audio clips: an invisible AudioPlayer element (fed the clip's raw
+                                 stream by the view model through the audio bridge — it decodes
+                                 Ogg Vorbis, WAV, MP3 and FLAC itself) plus a simple transport -->
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Spacing="18" Visibility="{d:Binding AudioViewerVisibility}">
+                                <audio:AudioPlayer x:Name="AudioElement" />
+                                <FontIcon Glyph="&#xE8D6;" FontSize="52"
+                                          Foreground="{StaticResource AccentDimBrush}"
+                                          HorizontalAlignment="Center" />
+                                <TextBlock Text="{d:Binding ViewerTitle}" FontSize="15"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center" />
+
+                                <!-- Position tracker: elapsed · scrubber · duration, bound
+                                     straight to the AudioPlayer element rather than through the
+                                     view model. The Slider follows playback via the two-way
+                                     PositionSeconds binding, and dragging it seeks the clip
+                                     (the add-in debounces to one seek on thumb release). -->
+                                <StackPanel Orientation="Horizontal" Spacing="10"
+                                            HorizontalAlignment="Center">
+                                    <TextBlock Width="52" VerticalAlignment="Center"
+                                               FontSize="12" TextAlignment="Right"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               Text="{d:Binding Position, ElementName=AudioElement, Converter={StaticResource TimecodeConverter}}" />
+                                    <Slider Width="300" VerticalAlignment="Center"
+                                            StepFrequency="0.01"
+                                            Maximum="{d:Binding DurationSeconds, ElementName=AudioElement}"
+                                            Value="{d:Binding PositionSeconds, ElementName=AudioElement, Mode=TwoWay}" />
+                                    <TextBlock Width="52" VerticalAlignment="Center"
+                                               FontSize="12"
+                                               Foreground="{StaticResource TextTertiaryBrush}"
+                                               Text="{d:Binding Duration, ElementName=AudioElement, Converter={StaticResource TimecodeConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Spacing="10"
+                                            HorizontalAlignment="Center">
+                                    <Button Style="{StaticResource PrimaryButtonStyle}"
+                                            Content="Play" MinWidth="86"
+                                            Command="{d:Binding PlayAudioCommand}" />
+                                    <Button CornerRadius="8" Padding="16,7" BorderThickness="1"
+                                            Content="Pause"
+                                            Command="{d:Binding PauseAudioCommand}" />
+                                    <Button CornerRadius="8" Padding="16,7" BorderThickness="1"
+                                            Content="Stop"
+                                            Command="{d:Binding StopAudioCommand}" />
+                                    <Button CornerRadius="8" Padding="16,7" BorderThickness="1"
+                                            Content="{d:Binding AudioLoopLabel}"
+                                            Command="{d:Binding ToggleAudioLoopCommand}" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Everything else: explain why there is nothing to show -->
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Spacing="12" MaxWidth="420"
+                                        Visibility="{d:Binding NoPreviewVisibility}">
+                                <FontIcon Glyph="&#xE897;" FontSize="34" Foreground="#3A4150"
+                                          HorizontalAlignment="Center" />
+                                <TextBlock Text="{d:Binding NoPreviewText}" FontSize="13"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           TextWrapping="Wrap" TextAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Hint on the left; the 2D zoom toolbar on the right -->
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{d:Binding ViewerHint}" FontSize="12"
+                                   Foreground="{StaticResource TextTertiaryBrush}"
+                                   VerticalAlignment="Center" />
+
+                        <!-- Animated 3D models: pick a clip and play/pause it -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
+                                    Visibility="{d:Binding AnimationBarVisibility}">
+                            <ComboBox Width="210" VerticalAlignment="Center" CornerRadius="6"
+                                      ItemsSource="{d:Binding AnimationNames}"
+                                      SelectedItem="{d:Binding SelectedAnimation, Mode=TwoWay}" />
+                            <Button Height="30" Padding="14,0" CornerRadius="6" BorderThickness="1"
+                                    Content="{d:Binding AnimationPlayLabel}" FontSize="11.5"
+                                    Command="{d:Binding ToggleAnimationCommand}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
+                                    Visibility="{d:Binding ZoomBarVisibility}">
+                            <Button Width="34" Height="30" Padding="0" CornerRadius="6" BorderThickness="1"
+                                    Content="−" FontSize="15"
+                                    Command="{d:Binding ZoomOutCommand}" />
+                            <Border Background="#262B34" CornerRadius="6" Padding="10,0"
+                                    VerticalAlignment="Stretch">
+                                <TextBlock Text="{d:Binding ZoomText}" FontSize="11.5"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           VerticalAlignment="Center" />
+                            </Border>
+                            <Button Width="34" Height="30" Padding="0" CornerRadius="6" BorderThickness="1"
+                                    Content="+" FontSize="15"
+                                    Command="{d:Binding ZoomInCommand}" />
+                            <Button Height="30" Padding="12,0" CornerRadius="6" BorderThickness="1"
+                                    Content="Fit" FontSize="11.5"
+                                    Command="{d:Binding ZoomResetCommand}" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </flex:FlexPanel>
+        </Grid>
+    </Grid>
+</Page>

@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UI: the bootstrap chain, the hosting (CodeBrixApplication,
+    CodeBrixActivity, CodeBrixRootLayout, the native window wrapper), the Android
+    implementation of every CodeBrix.Platform.UI Core contract, logging to logcat, and
+    (later phases) the element handlers.
+
+    AssemblyName = the name CodeBrix.Platform.UI.Core grants InternalsVisibleTo to
+    (hosting needs UI.Core internals, so it cannot live in a differently named assembly).
+
+    Two target frameworks: net10.0-android36.1 (everything) and net10.0 (the portable
+    parts only - Portable/, Diagnostics/, the handler core Handlers/Core/ (mappers, handler
+    base, registry, factory), Overlay/Portable/ and the lanes' portable helpers
+    (Platform/Recycler/Portable/, Handlers/<Family>/Portable/: pure C#, no Android types) - so
+    host-free tests can run them against the real Core seam).
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net10.0-android36.1</TargetFrameworks>
+    <AssemblyName>CodeBrix.Android.UI</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-android36.1'">
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <!-- net10.0: portable parts only. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <Compile Remove="Android/**" />
+    <Compile Remove="Hosting/**" />
+    <Compile Remove="Input/**" />
+    <Compile Remove="Logging/**" />
+    <Compile Remove="Projection/**" />
+    <Compile Remove="Platform/**" />
+    <Compile Remove="Handlers/**" />
+    <Compile Include="Handlers/Core/**/*.cs" />
+    <Compile Include="Handlers/*/Portable/**/*.cs" />
+    <Compile Include="Platform/Recycler/Portable/**/*.cs" />
+    <Compile Remove="Diagnostics/NativeViewDump.cs" />
+    <Compile Remove="Diagnostics/NativeViewLocator.cs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-android36.1'">
+    <ProjectReference Include="../CodeBrix.Android/CodeBrix.Android.csproj" />
+    <ProjectReference Include="../CodeBrix.Android.UI.Composition/CodeBrix.Android.UI.Composition.csproj" />
+    <ProjectReference Include="../CodeBrix.Android.UI.Dispatching/CodeBrix.Android.UI.Dispatching.csproj" />
+    <ProjectReference Include="../CodeBrix.Android.UI.Toolkit/CodeBrix.Android.UI.Toolkit.csproj" />
+    <PackageReference Include="Xamarin.Google.Android.Material" />
+    <!-- AP10-B: RefreshContainer's native pull-to-refresh (pinned in Directory.Packages.props by the plan). -->
+    <PackageReference Include="Xamarin.AndroidX.SwipeRefreshLayout" />
+  </ItemGroup>
+
+</Project>

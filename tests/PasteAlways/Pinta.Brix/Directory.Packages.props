@@ -1,0 +1,17 @@
+<Project>
+
+  <!--
+    Paste-always head Pinta.Brix: the repository pins, plus the packages the app's verbatim
+    libraries (Surface/) use at the versions CodeBrix.Samples Pinta.Brix pins. SkiaSharp is
+    Microsoft-owned; the CodeBrix.* ids are self-produced and not CodeBrix.Platform repo packages.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <!-- SkiaSharp 4.152.0: pinned by the repository's Directory.Packages.props since AP7-A (same version). -->
+    <PackageVersion Include="CodeBrix.PolygonTools.MitLicenseForever" Version="1.0.252.1257" />
+    <PackageVersion Include="CodeBrix.Imaging.ApacheLicenseForever" Version="1.0.248.1113" />
+    <!-- CodeBrix.SkiaSvg 1.0.252.363: pinned by the repository's Directory.Packages.props since AP7-A (same version). -->
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Host-free tests (net10.0) of CodeBrix.Android: the portable logic of CodeBrix.Android.UI
+    (its net10.0 build), the extracted Core run host-free (HostFree/: the net10.0 flavors of
+    CodeBrix.Android.UI.Dispatching and .UI.Composition give Core a managed dispatcher pump and
+    the inert composition platform), the intake's acceptance, and, compiled in from source
+    (Linked/), the portable helpers of the Android-only CodeBrix.Android. The code that needs
+    Android APIs is exercised on a device (samples/HelloPaste's self-check,
+    build/test-scripts/device-smoke.sh).
+
+    AssemblyName = the name CodeBrix.Platform.UI.Core grants InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>CodeBrix.Android.UI.Tests</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\CodeBrix.Android.UI\CodeBrix.Android.UI.csproj" />
+    <ProjectReference Include="..\..\src\CodeBrix.Android.UI.Composition\CodeBrix.Android.UI.Composition.csproj" />
+    <ProjectReference Include="..\..\src\CodeBrix.Android.UI.Dispatching\CodeBrix.Android.UI.Dispatching.csproj" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)build/intake/CodeBrix.Android.Intake.proj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- The portable helpers of the Android-only assemblies, compiled into this test assembly. -->
+  <ItemGroup>
+    <Compile Include="..\..\src\CodeBrix.Android\Portable\*.cs" Link="Linked\CodeBrix.Android\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Foundation.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Foundation.Logging.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Composition.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Dispatching.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Xaml.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="SilverAssertions.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

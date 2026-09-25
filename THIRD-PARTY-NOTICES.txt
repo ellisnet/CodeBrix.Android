@@ -1,0 +1,270 @@
+THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
+
+CodeBrix.Android runs CodeBrix.Platform applications on Android with native
+Android and Material Components views. It incorporates, or will incorporate as
+the work proceeds, material from the projects listed below (collectively,
+"Third Party Code"). Jeremy Ellis and contributors are not the original
+author(s) of the Third Party Code. The original copyright notices and the
+licenses under which Jeremy Ellis and contributors received such Third Party
+Code are set forth below. Such licenses and notices are provided for
+informational purposes only. Jeremy Ellis and contributors license the
+CodeBrix.Android project to you under the terms set forth in the LICENSE file
+(the Apache License, Version 2.0), which is located at the root of this
+repository.
+
+Every source file derived from one of the projects below carries a provenance
+header that names the project, the source path and the commit or tag it was
+taken from. Functionality obtained by merely referencing a published NuGet
+package is not documented here; such packages carry their own license and
+notice files.
+
+If you have any questions about any Third Party Code noticed here, or if you
+believe that any Third Party Code noticed here has been included in
+CodeBrix.Android in error, please open a new issue at:
+https://github.com/ellisnet/CodeBrix.Android/issues
+
+================================================================================
+ 1. .NET MAUI
+================================================================================
+
+    Project URL:  https://github.com/dotnet/maui
+    Commit:       828569a864
+    Copyright:    Copyright (c) .NET Foundation and Contributors
+    License:      MIT
+
+    Android handler, property-mapper and platform-extension code is ported from
+    .NET MAUI. .NET MAUI source files carry no per-file license headers; each
+    ported file in this repository starts with:
+
+      // Derived from .NET MAUI, <path> @ 828569a864. Copyright (c) .NET Foundation and Contributors.
+      // Licensed under the MIT License. See THIRD-PARTY-NOTICES.txt.
+
+    Files derived from .NET MAUI (source path in the MAUI repository -> file here):
+      src/Core/src/PropertyMapper.cs               -> src/CodeBrix.Android.UI/Handlers/Core/PropertyMapper.cs
+      src/Core/src/CommandMapper.cs                -> src/CodeBrix.Android.UI/Handlers/Core/CommandMapper.cs
+      src/Core/src/PropertyMapperExtensions.cs     -> src/CodeBrix.Android.UI/Handlers/Core/PropertyMapperExtensions.cs
+      src/Core/src/CommandMapperExtensions.cs      -> src/CodeBrix.Android.UI/Handlers/Core/CommandMapperExtensions.cs
+      src/Core/src/Handlers/ElementHandlerState.cs -> src/CodeBrix.Android.UI/Handlers/Core/ElementHandlerState.cs
+      src/Core/src/Hosting/Internal/RegisteredHandlerServiceTypeSet.cs
+                                                   -> src/CodeBrix.Android.UI/Handlers/Core/RegisteredHandlerTypeSet.cs
+      src/Core/src/Handlers/Element/ElementHandler.cs -> src/CodeBrix.Android.UI/Handlers/Core/ElementHandler.cs
+      src/Core/src/Handlers/Element/ElementHandlerOfT.cs -> src/CodeBrix.Android.UI/Handlers/Core/ElementHandlerOfT.cs
+      src/Core/src/Handlers/View/ViewHandler.cs, ViewHandlerOfT.cs, ViewHandlerOfT.Android.cs
+                                                   -> src/CodeBrix.Android.UI/Handlers/Views/ViewHandler.cs, ViewMappers.cs
+      src/Core/src/Handlers/ViewHandlerExtensions.Android.cs, src/Core/src/Platform/Android/ContextExtensions.cs
+                                                   -> src/CodeBrix.Android.UI/Handlers/Views/ViewHandlerExtensions.cs
+      src/Core/src/Platform/Android/MeasureSpecExtensions.cs -> src/CodeBrix.Android.UI/Platform/MeasureSpecExtensions.cs
+      src/Core/src/Platform/Android/LayoutViewGroup.cs -> src/CodeBrix.Android.UI/Platform/CodeBrixViewGroup.cs
+      src/Core/src/Platform/Android/ContentViewGroup.cs -> src/CodeBrix.Android.UI/Platform/CodeBrixContentViewGroup.cs
+      src/Core/src/Platform/Android/BorderDrawable.cs, src/Core/src/Graphics/MauiDrawable.Android.cs
+                                                   -> src/CodeBrix.Android.UI/Platform/Drawables/BorderDrawable.cs
+      src/Core/src/Platform/Android/MauiWindowInsetListener.cs, SafeAreaPadding.cs (WindowInsetsExtensions)
+                                                   -> src/CodeBrix.Android.UI/Platform/Insets/WindowInsetsListener.cs
+      src/Core/src/Platform/Android/SafeAreaExtensions.cs (the per-edge overlap), SafeAreaPadding.cs
+                                                   -> src/CodeBrix.Android.UI/Portable/Layout/SafeAreaMath.cs
+
+      AP3b (lists and tabs):
+      src/Controls/src/Core/Handlers/Items/Android/ItemsSources/ObservableItemsSource.cs, ICollectionChangedNotifier.cs,
+      IItemsViewSource.cs            -> src/CodeBrix.Android.UI/Platform/Recycler/ItemsSources/ (same file names)
+      src/Controls/src/Core/Handlers/Items/Android/ItemContentView.cs (measure/layout technique)
+                                                   -> src/CodeBrix.Android.UI/Platform/Recycler/RecyclerItemHost.cs
+      src/Controls/src/Core/Handlers/Items/Android/Adapters/ItemsViewAdapter.cs, TemplatedItemViewHolder.cs (technique)
+                                                   -> src/CodeBrix.Android.UI/Platform/Recycler/CoreItemsAdapter.cs
+      src/Controls/src/Core/Handlers/Items/Android/SpacingItemDecoration.cs
+                                                   -> src/CodeBrix.Android.UI/Platform/Recycler/SpacingItemDecoration.cs
+
+      AP3a (the handler follows the MAUI file's technique; the object model is WinUI's):
+      src/Core/src/Handlers/Button/ButtonHandler.Android.cs, src/Core/src/Platform/Android/MauiMaterialButton.cs
+                                                   -> src/CodeBrix.Android.UI/Handlers/Buttons/ButtonHandler.cs
+      src/Core/src/Handlers/CheckBox/CheckBoxHandler.Android.cs, src/Core/src/Handlers/RadioButton/RadioButtonHandler2.Android.cs
+                                                   -> src/CodeBrix.Android.UI/Handlers/Buttons/CheckBoxHandler.cs
+      src/Core/src/Handlers/Switch/SwitchHandler2.Android.cs -> src/CodeBrix.Android.UI/Handlers/Buttons/ToggleSwitchHandler.cs
+      src/Core/src/Handlers/Slider/SliderHandler2.Android.cs -> src/CodeBrix.Android.UI/Handlers/Inputs/SliderHandler.cs
+      src/Core/src/Handlers/ProgressBar/ProgressBarHandler2.Android.cs, src/Core/src/Handlers/ActivityIndicator/ActivityIndicatorHandler.Android.cs,
+      src/Core/src/Platform/Android/MaterialActivityIndicator.cs -> src/CodeBrix.Android.UI/Handlers/Inputs/ProgressHandlers.cs
+      src/Core/src/Handlers/Entry/EntryHandler2.Android.cs, src/Core/src/Handlers/Editor/EditorHandler2.Android.cs,
+      src/Core/src/Platform/Android/EditTextExtensions.cs -> src/CodeBrix.Android.UI/Handlers/Text/TextBoxHandler.cs, PasswordBoxHandler.cs
+      src/Core/src/Platform/Android/Material3Controls/MauiMaterialEditText.cs -> src/CodeBrix.Android.UI/Platform/Text/CodeBrixEditText.cs
+      src/Core/src/Handlers/Entry/EntryHandler2.Android.cs, src/Core/src/Handlers/Stepper/StepperHandler.Android.cs
+                                                   -> src/CodeBrix.Android.UI/Handlers/Inputs/NumberBoxHandler.cs
+      src/Core/src/Handlers/SearchBar/SearchBarHandler2.Android.cs,
+      src/Controls/src/Core/Compatibility/Handlers/Shell/Android/ShellSearchView.cs -> src/CodeBrix.Android.UI/Handlers/Inputs/AutoSuggestBoxHandler.cs
+      src/Core/src/Handlers/Picker/PickerHandler2.Android.cs, src/Core/src/Platform/Android/Material3Controls/MauiMaterialPicker.cs
+                                                   -> src/CodeBrix.Android.UI/Handlers/Selection/ComboBoxHandler.cs
+      src/Core/src/Handlers/Image/ImageHandler.Android.cs, ImageHandler2.Android.cs -> src/CodeBrix.Android.UI/Handlers/Media/ImageHandler.cs
+      AP5:
+      src/Core/src/Animations/PlatformTicker.Android.cs (technique) -> src/CodeBrix.Android.UI/Platform/Animation/AnimatorScaleMonitor.cs
+      AP6 (technique; the object model is WinUI's):
+      src/Core/src/Handlers/ShapeView/ShapeViewHandler.Android.cs -> src/CodeBrix.Android.UI/Handlers/Shapes/ShapeHandler.cs
+      src/Controls/src/Core/Compatibility/Handlers/Android/FrameRenderer.cs -> src/CodeBrix.Android.UI/Handlers/Composed/ExpanderHandler.cs
+      AP7-A add-ins (technique; the object model is WinUI's WebView2):
+      src/Core/src/Platform/Android/MauiWebViewClient.cs, MauiWebChromeClient.cs
+                                                   -> src/AddIns/CodeBrix.Android.UI.WebView/Android/CodeBrixWebViewClients.cs
+      src/Core/src/Platform/Android/MauiWebViewClient.cs, MauiWebChromeClient.cs, MauiWebView.cs
+                                                   -> src/AddIns/CodeBrix.Android.UI.WebView/Android/AndroidNativeWebView.cs
+      AP10-A (technique):
+      src/Core/src/Handlers/Toolbar/ToolbarHandler.Android.cs, src/Core/src/Platform/Android/ToolbarExtensions.cs
+                                                   -> src/CodeBrix.Android.UI/Handlers/AppBars/CommandBarHandler.cs
+      src/Core/src/Handlers/Button/ButtonHandler.Android.cs, src/Core/src/Platform/Android/MauiMaterialButton.cs
+                                                   -> src/CodeBrix.Android.UI/Handlers/AppBars/AppBarButtonHandler.cs
+      src/Core/src/Platform/Android/MauiPageControl.cs, src/Core/src/Handlers/IndicatorView/IndicatorViewHandler.Android.cs
+                                                   -> src/CodeBrix.Android.UI/Handlers/Paging/PipsPagerHandler.cs
+      AP10-B (technique):
+      src/Core/src/Platform/Android/MauiSwipeRefreshLayout.cs, src/Core/src/Handlers/RefreshView/RefreshViewHandler.Android.cs
+                                                   -> src/CodeBrix.Android.UI/Handlers/Status/RefreshContainerHandler.cs
+      src/Core/src/Platform/Android/MauiScrollView.cs -> src/CodeBrix.Android.UI/Handlers/Scroller/ScrollPresenterHandler.cs
+
+    License text:
+
+      The MIT License (MIT)
+
+      Copyright (c) .NET Foundation and Contributors
+
+      All rights reserved.
+
+      Permission is hereby granted, free of charge, to any person obtaining a copy
+      of this software and associated documentation files (the "Software"), to deal
+      in the Software without restriction, including without limitation the rights
+      to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+      copies of the Software, and to permit persons to whom the Software is
+      furnished to do so, subject to the following conditions:
+
+      The above copyright notice and this permission notice shall be included in all
+      copies or substantial portions of the Software.
+
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+      FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+      SOFTWARE.
+
+================================================================================
+ 2. Uno Platform (the upstream open-source XAML platform of CodeBrix.Platform)
+================================================================================
+
+    Project URL:  https://github.com/unoplatform/uno
+    Tag:          6.6.166
+    Copyright:    Copyright (c) nventive inc., Uno Platform Inc., and the Uno
+                  Platform contributors. All rights reserved.
+    License:      Apache License, Version 2.0 (full text in the LICENSE file
+                  at the root of this repository)
+
+    CodeBrix.Platform is derived from this project (see CodeBrix.Platform's
+    own THIRD-PARTY-NOTICES.txt, PART A, item 1, which also ships inside the
+    CodeBrix.Platform packages and is re-shipped with the Core assemblies this
+    repository redistributes - item 3). Android plumbing (the Activity host,
+    the native window wrapper, the Looper dispatcher, MotionEvent and KeyEvent
+    bridges, window insets, Storage Access Framework pickers) is ported from
+    it under the Apache License, Version 2.0.
+
+    Each derived file starts with an Apache-2.0 provenance header of the form
+
+      // Derived from the upstream open-source XAML platform of CodeBrix.Platform (see THIRD-PARTY-NOTICES.txt, item 2),
+      // src/{U}.UI/<path> @ tag 6.6.166.
+      // Licensed under the Apache License, Version 2.0. See THIRD-PARTY-NOTICES.txt.
+
+    and a "//was previously:" marker on renamed namespace and type lines. In
+    those headers and markers {U} stands for "Uno" (the project's name is
+    written out only in this file).
+
+    Files derived from it:
+      src/CodeBrix.Android.UI/Hosting/AndroidNativeWindowWrapper.cs
+          from src/Uno.UI/UI/Xaml/Window/Native/NativeWindowWrapper.Android.cs
+          (class NativeWindowWrapper, namespace Uno.UI.Xaml.Controls)
+      src/CodeBrix.Android.UI/Input/VirtualKeyHelper.cs
+          from src/Uno.UWP/System/VirtualKeyHelper.Android.cs
+          (class VirtualKeyHelper, namespace Windows.System; table form, Alt/arrow/OEM-key fixes)
+      src/CodeBrix.Android.UI/Input/PointerHelpers.cs
+          from src/Uno.UWP/Extensions/PointerHelpers.Android.cs and MotionEventExtensions.Android.cs
+          (namespace Uno.UI.Xaml.Extensions)
+      src/CodeBrix.Android.UI/Input/AndroidCorePointerInputSource.cs
+          from src/Uno.UI.Runtime.Skia.Android/Devices/Input/AndroidCorePointerInputSource.cs
+          (namespace Uno.UI.Runtime.Skia.Android; per window, wheel, capture, pointer icons added)
+      src/CodeBrix.Android.UI/Input/AndroidKeyboardInputSource.cs
+          from src/Uno.UI.Runtime.Skia.Android/Devices/Input/AndroidKeyboardInputSource.cs
+          (namespace Uno.UI.Runtime.Skia.Android)
+      src/CodeBrix.Android.UI/Platform/Text/InputScopeMapping.cs (AP3a)
+          from src/Uno.UI/UI/Xaml/Controls/TextBox/InputScopeHelper.Android.cs
+          (class InputScopeHelper, namespace Microsoft.UI.Xaml.Controls; password and multi-line forms added)
+      src/CodeBrix.Android/Services/ClipboardAndroidExtension.cs (AP4)
+          from src/Uno.UWP/ApplicationModel/DataTransfer/Clipboard.Android.cs
+          (static class Clipboard, namespace Windows.ApplicationModel.DataTransfer; as the IClipboardExtension,
+          bitmaps through the CodeBrix FileProvider added)
+      src/CodeBrix.Android/Services/LauncherAndroidExtension.cs (AP4)
+          from src/Uno.UWP/System/Launcher.Android.cs
+          (static class Launcher, namespace Windows.System; as the ILauncherExtension, ms-settings URIs not mapped)
+      src/CodeBrix.Android/Services/DataTransferManagerAndroidExtension.cs (AP4)
+          from src/Uno.UWP/ApplicationModel/DataTransfer/DataTransferManager.Android.cs
+          (class DataTransferManager, namespace Windows.ApplicationModel.DataTransfer; as the
+          IDataTransferManagerExtension, bitmap sharing added)
+      src/CodeBrix.Android.UI/Handlers/Shapes/ShapeStroke.cs and Handlers/Shapes/Portable/StrokeMath.cs (AP6)
+          from src/{U}.UI.Composition/Composition/CompositionSpriteShape.skia.cs
+          (class CompositionSpriteShape, namespace Microsoft.UI.Composition; the WinUI cap / dashed-end / miter-clip
+          rules, rewritten for android.graphics Path, PathMeasure, Path.Op and PathIterator)
+      src/CodeBrix.Android.UI/Handlers/Composed/MaterialPickers.cs (AP6)
+          from src/{U}.UI/UI/Xaml/Controls/DatePicker/NativeDatePickerFlyout.Android.cs,
+          src/{U}.UI/UI/Xaml/Controls/TimePicker/NativeTimePickerFlyout.Android.cs and
+          src/{U}.UI.Runtime.Skia.Android/UI/Xaml/Controls/{DatePicker,TimePicker}/AndroidSkia{Date,Time}PickerProvider.cs
+          (namespaces Microsoft.UI.Xaml.Controls / {U}.UI.Runtime.Skia.Android; over MaterialDatePicker / MaterialTimePicker)
+
+================================================================================
+ 3. CodeBrix.Platform (re-shipped Core assemblies and build tooling)
+================================================================================
+
+    Project URL:  https://github.com/ellisnet/CodeBrix.Platform
+    Copyright:    Copyright (c) 2026 Jeremy Ellis and contributors
+    License:      Apache License, Version 2.0
+
+    The CodeBrix.Android packages redistribute, unmodified, the platform-neutral
+    Core assemblies (*.Core.dll), the XAML parser (CodeBrix.Platform.Xaml.dll),
+    the XAML source generator, analyzers and MSBuild tasks of a pinned
+    CodeBrix.Platform build. Their provenance and third-party notices are the
+    THIRD-PARTY-NOTICES.txt files of the CodeBrix.Platform packages they come
+    from, which are redistributed with them.
+
+================================================================================
+ 4. Material Components for Android and AndroidX
+================================================================================
+
+    The native widget layer is Material Components for Android and the AndroidX
+    libraries, consumed as their .NET binding packages
+    (Xamarin.Google.Android.Material, Xamarin.AndroidX.*), which carry their own
+    license and notice files (MIT for the bindings, Apache License, Version 2.0
+    for the Java libraries). No source from them is included in this
+    repository.
+
+================================================================================
+ 5. CodeBrix.Samples (sample and test code only - not in any package)
+================================================================================
+
+    Project URL:  https://github.com/ellisnet/CodeBrix.Samples
+    Copyright:    Copyright (c) 2026 Jeremy Ellis and contributors
+    License:      Apache License, Version 2.0
+
+    samples/HelloPaste and the paste-always compile test (tests/PasteAlways)
+    contain VERBATIM copies of CodeBrix.Samples application code - XAML pages,
+    their code-behind and the view models and libraries they use - to prove
+    that CodeBrix.Platform pages compile and run on Android unchanged. Each copy
+    keeps its content; the source path of every copied file is listed in
+    samples/HelloPaste/README.md and in tests/PasteAlways/<App>/pasted-files.sha256
+    and Surface/SOURCES.txt. Files that replace desktop-only services or add-in
+    types are marked "STUB" in their first lines. None of this code is part of a
+    CodeBrix.Android package.
+
+    The JustBetweenUs application is based on, and was inspired by, a code
+    sample provided by Paul Ainsworth.
+
+================================================================================
+ 6. Test-only dependencies (never in a package)
+================================================================================
+
+    tests/CodeBrix.Android.UIReqs (the host half of the UIReqs port) references
+    Reqnroll.xunit.v3 (https://github.com/reqnroll/Reqnroll, BSD-3-Clause), the
+    Gherkin runner the CodeBrix.Platform UIReqs suite already uses. It is a
+    test-only reference: no CodeBrix.Android package references or ships it.
+
+================================================================================
+
+END OF THIRD-PARTY SOFTWARE NOTICES AND INFORMATION

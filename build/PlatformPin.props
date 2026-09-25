@@ -1,0 +1,22 @@
+<Project>
+
+  <!--
+    The pinned CodeBrix.Platform build that CodeBrix.Android re-ships.
+
+    CodeBrixPlatformVersion is set HERE and nowhere else. Every other file in this
+    repository (the intake project, the extracted-assembly paths, the version stamp
+    in CodeBrix.Android.UI, the nuspec release notes) reads it from this property.
+    It is never "latest": moving to a newer Platform build is a deliberate pin bump
+    (change the value, run the intake, fix what the intake gates report).
+
+    CodeBrixPlatformSkiaSharpViewsVersion: the one Platform-repo package that is not
+    versioned with the family (its version follows the family's locked SkiaSharp
+    version). Bump it together with CodeBrixPlatformVersion when the pinned build
+    ships a different one.
+  -->
+  <PropertyGroup>
+    <CodeBrixPlatformVersion>1.0.268.12</CodeBrixPlatformVersion>
+    <CodeBrixPlatformSkiaSharpViewsVersion>4.152.0</CodeBrixPlatformSkiaSharpViewsVersion>
+  </PropertyGroup>
+
+</Project>

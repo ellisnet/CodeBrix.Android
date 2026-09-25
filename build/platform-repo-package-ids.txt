@@ -1,0 +1,39 @@
+# The NuGet package ids produced by the CodeBrix.Platform repository.
+#
+# No CodeBrix.Android package may declare a dependency on any id in this list
+# (the Core assemblies are extracted from the pinned build and re-shipped
+# instead). The package dependency gate reads this file; refresh it on every pin
+# bump. One id per line; lines starting with '#' are comments.
+
+# The framework package
+CodeBrix.Platform.ApacheLicenseForever
+
+# Heads (Linux; built from the Linux local feed)
+CodeBrix.Platform.Runtime.Skia.ApacheLicenseForever
+CodeBrix.Platform.Runtime.Skia.FrameBuffer.ApacheLicenseForever
+CodeBrix.Platform.Runtime.Skia.FrameBuffer.Emulated.ApacheLicenseForever
+CodeBrix.Platform.Runtime.Skia.Wayland.ApacheLicenseForever
+CodeBrix.Platform.Runtime.Skia.X11.ApacheLicenseForever
+
+# Heads (Windows and macOS; packed on those machines, not in the Linux feed)
+CodeBrix.Platform.Runtime.Skia.Win32.ApacheLicenseForever
+CodeBrix.Platform.Runtime.Skia.Wpf.ApacheLicenseForever
+CodeBrix.Platform.Runtime.Skia.MacOS.ApacheLicenseForever
+
+# Add-ins
+CodeBrix.Platform.AdvancedTextEdit.ApacheLicenseForever
+CodeBrix.Platform.AppSettings.ApacheLicenseForever
+CodeBrix.Platform.AudioPlayer.ApacheLicenseForever
+CodeBrix.Platform.CommandBar.ApacheLicenseForever
+CodeBrix.Platform.FlexPanel.ApacheLicenseForever
+CodeBrix.Platform.Graphics2DSK.ApacheLicenseForever
+CodeBrix.Platform.Graphics3DGL.ApacheLicenseForever
+CodeBrix.Platform.Lottie.ApacheLicenseForever
+CodeBrix.Platform.MediaPlayer.LgplLicenseForever
+CodeBrix.Platform.PlotterView.ApacheLicenseForever
+CodeBrix.Platform.SkiaSharp.Views.MitLicenseForever
+CodeBrix.Platform.Svg.ApacheLicenseForever
+CodeBrix.Platform.TerminalView.ApacheLicenseForever
+CodeBrix.Platform.TextLayout.ApacheLicenseForever
+CodeBrix.Platform.VideoPlayer.ApacheLicenseForever
+CodeBrix.Platform.WebView.ApacheLicenseForever
