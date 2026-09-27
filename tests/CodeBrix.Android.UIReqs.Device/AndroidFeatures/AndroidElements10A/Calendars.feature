@@ -7,11 +7,12 @@ Feature: Calendars and the picker presenters
 	it has no PickerItem.
 
 Scenario: A single-selection CalendarView is the platform calendar within its MinDate and MaxDate
-	Given the application shows the AP10 sample "calendar view" named "cal"
+	Given the application shows the AP10 sample "calendar view on a fixed day" named "cal"
 	Then "cal" is shown by a native CalendarView
 	And the Core tree of "cal" holds no CalendarPanel
 	And the Core tree of "cal" holds no CalendarViewDayItem
 	And the native calendar of "cal" runs from "2026-01-01" to "2026-12-31"
+	And the native calendar of "cal" shows "2026-03-14"
 	When the frame is captured
 
 Scenario: A date selected in Core is the day the native calendar shows

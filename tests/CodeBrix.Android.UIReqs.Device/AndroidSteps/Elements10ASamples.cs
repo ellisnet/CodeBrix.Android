@@ -56,12 +56,30 @@ internal static class Samples
             MaxDate = new DateTimeOffset(2026, 12, 31, 0, 0, 0, TimeSpan.Zero),
             SelectionMode = CalendarViewSelectionMode.Single,
         },
+        // AP1.10 (D-P1.10-1): the captured calendar frame must not depend on the day the suite runs. The platform
+        // calendar always has a selected day - today when Core selects none - so this sample selects a fixed day and
+        // the native calendar shows March 2026 whatever today is.
+        "calendar view on a fixed day" => FixedDayCalendar(),
         "multiple selection calendar view" => new CalendarView { Width = 360, Height = 360, SelectionMode = CalendarViewSelectionMode.Multiple },
         "calendar date picker" => new CalendarDatePicker { Width = 280, PlaceholderText = "Pick a date", Header = "Due" },
         "date picker" => new DatePicker { Date = new DateTimeOffset(2026, 9, 24, 12, 0, 0, TimeSpan.Zero) },
         "time picker" => new TimePicker { Time = new TimeSpan(9, 30, 0) },
         _ => throw new ArgumentException("no AP10 sample " + sample),
     };
+
+    private static CalendarView FixedDayCalendar()
+    {
+        var calendar = new CalendarView
+        {
+            Width = 360,
+            Height = 360,
+            MinDate = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+            MaxDate = new DateTimeOffset(2026, 12, 31, 0, 0, 0, TimeSpan.Zero),
+            SelectionMode = CalendarViewSelectionMode.Single,
+        };
+        calendar.SelectedDates.Add(new DateTimeOffset(2026, 3, 14, 12, 0, 0, TimeSpan.Zero));
+        return calendar;
+    }
 
     private static T Reg<T>(string name, T element)
         where T : DependencyObject

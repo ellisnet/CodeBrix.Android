@@ -86,10 +86,20 @@ internal static class AndroidPlatformBootstrap
             ApiExtensibility.Register(typeof(IImagingPlatform), _ => imaging);
             ApiExtensibility.Register(typeof(global::Windows.UI.ViewManagement.IInputPaneExtension), _ => new InputPaneAndroidExtension());
 
+            // AP7-B: the soft keyboard of the CUSTOM text-entry controls (SoftwareKeyboardFocus: TerminalView,
+            // AdvancedTextEdit) - an input connection that types into Core as key presses (Input/TextInput).
+            var textInput = CodeBrix.Android.UI.Input.TextInput.CoreTextInputController.Create();
+            ApiExtensibility.Register(typeof(global::CodeBrix.Platform.UI.Xaml.Controls.Extensions.ITextInputFocusNotificationsSingleton), _ => textInput);
+
             // The system animation setting (C0c): UISettings.AnimationsEnabled follows the animator duration scale.
             // Registered before any XAML type is used; the refresh covers an entry point that read UISettings first.
             ApiExtensibility.Register(typeof(global::CodeBrix.Platform.Contracts.IAnimationSettingsPlatform), _ => new AnimationSettingsAndroidPlatform());
             global::Windows.UI.ViewManagement.UISettings.RefreshAnimationSettingsPlatform();
+
+            // Decision D2: the device form (AnalyticsInfo.DeviceForm, the form part of DeviceFamily "Android.<form>")
+            // is the width size class of the current window, read at query time (Compact -> Mobile, Medium -> Tablet,
+            // Expanded -> Desktop), so a docked phone moving between size classes reports its current form.
+            global::CodeBrix.Android.Android.AnalyticsInfoAndroidExtension.CurrentWindowWidthDp = Policy.WindowSizeClassMonitor.CurrentWindowWidthDp;
 
             // Input (AP2.5): one pointer and one keyboard source per window; Core's input manager creates
             // them with the window's XamlRoot host (XamlRootMap.Register -> ContentRoot.SetHost).

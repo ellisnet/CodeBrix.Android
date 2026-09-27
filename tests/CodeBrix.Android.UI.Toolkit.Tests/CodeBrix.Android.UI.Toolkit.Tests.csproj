@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Host-free tests (net10.0) of the Android side of the Toolkit's TriPaneView (AP7-B):
+    - Core/: the contract the Android assemblies rely on, read from the pinned Toolkit Core (the grants to the Android
+      assembly names, the TriPaneView drag entry points and the divider's IsDragging property the handler drives);
+    - Handlers/: the adaptive plan and the divider touch target (CodeBrix.Android.UI's portable Handlers/Toolkit/Portable,
+      its net10.0 flavor);
+    - Engine/: the adaptive plan driven against the Toolkit Core's ENGINE itself (TriPaneLayoutState over a host that
+      keeps the four weights in fields, as the engine's own host contract allows): what the engine lays out, which
+      divider is a restore grip, a grip tap through the engine's drag entry points, the weights coming back.
+    The handler, its view group and the finger drags run on the emulator (the AndroidToolkit UIReqs group and the
+    TriPaneViewDemo sample gate).
+
+    AssemblyName = the name CodeBrix.Platform.UI.Toolkit.Core grants InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>CodeBrix.Android.UI.Toolkit.Tests</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.Toolkit.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\CodeBrix.Android.UI\CodeBrix.Android.UI.csproj" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)build/intake/CodeBrix.Android.Intake.proj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\CoreMetadata.cs" Link="Shared\CoreMetadata.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Read as metadata only (PEReader), never loaded. -->
+    <AssemblyMetadata Include="CodeBrix.Android.Tests.CoreLib" Value="$(CodeBrixPlatformIntakeLibDir)" />
+    <!-- The engine tests load the Toolkit Core itself (its engine names no XAML type). -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Toolkit.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Foundation.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Core.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="SilverAssertions.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

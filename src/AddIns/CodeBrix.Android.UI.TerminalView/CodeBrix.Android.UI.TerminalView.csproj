@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UI.TerminalView: the Android side of the CodeBrix.Platform TerminalView add-in (AP7-B). Its Core
+    (CodeBrix.Platform.UI.TerminalView.Core, re-shipped by the intake) is the whole terminal: the TerminalControl (its
+    code-built template, scroll bar, context menu, timers, focus and clipboard) over the engine (Engine/TerminalRenderer:
+    the CodeBrix.Terminal VT buffer, selection, palette, font and blink state, the grid painting, fit/measure, hit test,
+    the press/drag/double-click gestures; Engine/TerminalInputEncoder: modifier tracking, clipboard/scroll chords and the
+    VT key encoding). Every platform supplies only the CANVAS the control draws on: the contract IRenderCanvasPlatform.
+    This assembly registers the Android canvas supply from its module initializer (TerminalView.Core loads it BY NAME;
+    the CodeBrix.Android.UI bootstrap also loads it at start-up): an element painted through the Skia canvas-host
+    factory of the SkiaSharp.Views add-in, shown by that add-in's canvas-element handler as a native Skia view. It also
+    registers the terminal's soft-keyboard profile (CodeBrix.Android.UI Input/TextInput: the input connection that
+    types into the control as key presses). The cell grid is measured with the TextLayout add-in's engine and font
+    source; the terminal font is Roboto Mono (the RobotoMono fonts package, an ms-appx asset of the app).
+    AssemblyName = the name CodeBrix.Platform.UI.TerminalView.Core (and UI.Core) grant InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android.UI.TerminalView</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.TerminalView</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.SkiaSharp.Views/CodeBrix.Android.SkiaSharp.Views.csproj" />
+    <!-- The text engine and its Android font source: the terminal measures its cell and lays its runs out with it. -->
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.TextLayout/CodeBrix.Android.UI.TextLayout.csproj" />
+    <!-- The add-in Cores (re-shipped from the pinned Platform build by the intake): the Skia canvas-host seam, the text
+         engine and the TerminalView Core itself. -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.SkiaSharp.Views.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.TextLayout.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.TerminalView.Core.dll" />
+    <!-- What the TerminalView Core is built on (the same versions its Platform package depends on): the VT engine
+         (self-produced) and the terminal font (Roboto Mono; its .ttf becomes an app asset at
+         ms-appx:///CodeBrix.Platform.Fonts.RobotoMono/Fonts/RobotoMono.ttf). -->
+    <PackageReference Include="CodeBrix.Terminal.MitLicenseForever" />
+    <PackageReference Include="CodeBrix.Platform.Fonts.RobotoMono.OflLicenseForever" />
+    <PackageReference Include="SkiaSharp" />
+  </ItemGroup>
+
+</Project>

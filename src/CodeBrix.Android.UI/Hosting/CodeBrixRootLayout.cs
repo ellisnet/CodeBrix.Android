@@ -23,6 +23,11 @@ public sealed class CodeBrixRootLayout : AFrameLayout
         Focusable = true;
         FocusableInTouchMode = true;
 
+        // The root layout holds the Android focus for every Core-focused element (FocusAndroidPlatform). Out of touch mode
+        // (after any key event that came through the system: a hardware keyboard's arrow, an IME's key event) Android would
+        // draw its default focus highlight - a translucent grey - over the WHOLE window (AP7-B TerminalView, FIXLIST).
+        DefaultFocusHighlightEnabled = false;
+
         ContentLayer = CreateLayer(context);
         PopupLayer = CreateLayer(context);
         FocusLayer = CreateLayer(context);

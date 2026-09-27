@@ -23,11 +23,19 @@ XML documentation (IntelliSense) ships alongside the assemblies.
 
 The package carries everything an Android head needs from CodeBrix.Platform, and depends on the .NET bindings of Material Components for Android and AndroidX. An Android head never references the CodeBrix.Platform desktop packages.
 
+Each CodeBrix.Platform add-in has an Android package of its own, named after the add-in's CodeBrix.Platform package: `CodeBrix.Android.<AddIn>.ApacheLicenseForever` (for example `CodeBrix.Android.Svg.ApacheLicenseForever` for the Svg add-in). `AGENT-README.txt` lists them.
+
 ## CodeBrix.Android supports:
 
 * Compiling CodeBrix.Platform XAML and code-behind unchanged for Android ("paste always"), with the same XAML dialect as a CodeBrix.Platform desktop build
 * Hosting a CodeBrix.Platform app in an Android activity: the app's `Application`, `OnLaunched`, `Window` and `Frame` navigation run unchanged, edge to edge, with resizing, docking and theme changes handled without restarting the activity
 * The CodeBrix.Platform object model on Android: dependency properties, bindings, resources, styles, templates, Frame and Page, laid out by the same layout engine as on the desktop
+* Native Android views for every element: Material 3 buttons, check boxes, switches, sliders, progress indicators, text boxes, lists and grids (RecyclerView), tabs, navigation (bottom bar, rail, drawer), app bars, dialogs, menus, flyouts, date, time and colour pickers, info bars, badges and more, with shapes, borders and gradients drawn natively
+* Adaptive layout by window size class: a NavigationView becomes a bottom bar, a rail or a drawer, dialogs and menus change form, and the app switches live when a phone is docked to a desktop or a window is resized
+* Material 3 theming from the app's own Fluent resources, light and dark themes, dynamic colour, and the user's font scale
+* Touch, mouse, stylus and hardware keyboard input through the CodeBrix.Platform routed events, keyboard accelerators, focus, and the Android back button and predictive back gesture
+* File pickers (the Storage Access Framework), the clipboard, sharing, the launcher, connectivity and haptics
+* Build-time warnings (CBAND0001-CBAND0008, never errors) for the CodeBrix.Platform constructs Android accepts and ignores, at the C# or XAML line that uses them
 * `ApplicationData` folders and settings, preferred languages, `SoftwareBitmap` and PNG/JPEG encoding, and device and display information backed by Android
 * App and library assets addressed by `ms-appx:///` URIs, including the fonts of the CodeBrix font packages
 * The app's own fonts everywhere: a font family named by a page resolves to the app's default font file, never to a system font

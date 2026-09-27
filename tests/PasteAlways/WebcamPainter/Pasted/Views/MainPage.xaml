@@ -1,0 +1,99 @@
+<Page
+    x:Class="WebcamPainter.Views.MainPage"
+    xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+    xmlns:c="clr-namespace:CodeBrix.Platform.UI.Converters;assembly=CodeBrix.Platform.UI.Toolkit"
+    xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+    xmlns:ui="clr-namespace:Microsoft.UI.Xaml;assembly=CodeBrix.Platform.UI"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:WebcamPainter.Views"
+    xmlns:vm="clr-namespace:WebcamPainter.ViewModels;assembly=WebcamPainter.Core"
+    xmlns:conv="clr-namespace:WebcamPainter.Converters;assembly=WebcamPainter.Core"
+    xmlns:webcam="clr-namespace:WebcamPainter.Webcam;assembly=WebcamPainter.Webcam"
+    xmlns:painting="clr-namespace:WebcamPainter.Painting;assembly=WebcamPainter.Painting"
+    FontFamily="{StaticResource RobotoFont}"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.DataContext>
+        <vm:MainViewModel />
+    </Page.DataContext>
+
+    <Page.Resources>
+        <c:BoolToVisibilityConverter x:Key="VisibleWhenTrue" />
+        <c:BoolToVisibilityConverter x:Key="VisibleWhenFalse" Invert="True" />
+        <conv:ColorToBrushConverter x:Key="ColorToBrush" />
+
+        <!-- One highlighter button: the palette entry supplies the caption, the ink color
+             and the caption color, and hands back the view model's own select command -->
+        <ui:DataTemplate x:Key="HighlighterColorTemplate">
+            <Button Content="{d:Binding Name}" HorizontalAlignment="Stretch" Margin="0,0,0,8"
+                    Background="{d:Binding Color, Converter={StaticResource ColorToBrush}}"
+                    Foreground="{d:Binding TextColor, Converter={StaticResource ColorToBrush}}"
+                    Command="{d:Binding SelectColorCommand}"
+                    CommandParameter="{d:Binding Name}" />
+        </ui:DataTemplate>
+    </Page.Resources>
+
+    <Grid Padding="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,8">
+            <TextBlock Text="Webcam Painter" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <ComboBox MinWidth="280" VerticalAlignment="Center"
+                      ItemsSource="{d:Binding Cameras}"
+                      SelectedItem="{d:Binding SelectedCamera, Mode=TwoWay}"
+                      IsEnabled="{d:Binding IsCaptureMode}" />
+        </StackPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- The main viewer: the mirrored live preview in Capture Mode; the captured
+                 still being painted (plus the hand crosshair) in Paint Mode -->
+            <Border Grid.Column="0" BorderBrush="Gray" BorderThickness="1" Background="Black">
+                <painting:PaintCanvas x:Name="MainCanvas" />
+            </Border>
+
+            <!-- Paint Mode side panel: the little mirrored self-view (so the user can see
+                 their hand) and the highlighter colors. Beside the canvas - never over it. -->
+            <StackPanel Grid.Column="1" Width="200" Margin="12,0,0,0" Spacing="8"
+                        Visibility="{d:Binding IsPaintMode, Converter={StaticResource VisibleWhenTrue}}">
+                <Border BorderBrush="Gray" BorderThickness="1" Background="Black" Height="150">
+                    <webcam:CameraCanvas x:Name="SelfViewCanvas" />
+                </Border>
+
+                <TextBlock Text="{d:Binding ActiveColorText}" FontSize="13" TextWrapping="Wrap" />
+
+                <!-- Highlighter colors: one button per palette entry, so the palette is the
+                     only place the colors are written down -->
+                <ItemsControl ItemsSource="{d:Binding HighlighterColors}"
+                              ItemTemplate="{StaticResource HighlighterColorTemplate}" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="0,8,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8"
+                        Visibility="{d:Binding IsCaptureMode, Converter={StaticResource VisibleWhenTrue}}">
+                <Button Content="Take Photo" Command="{d:Binding TakePhotoCommand}"
+                        MinWidth="120" Style="{ThemeResource AccentButtonStyle}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8"
+                        Visibility="{d:Binding IsCaptureMode, Converter={StaticResource VisibleWhenFalse}}">
+                <Button Content="Clear" Command="{d:Binding ClearCommand}" MinWidth="100" />
+                <Button Content="Save…" Command="{d:Binding SaveCommand}"
+                        MinWidth="100" Style="{ThemeResource AccentButtonStyle}" />
+                <Button Content="Back" Command="{d:Binding BackCommand}" MinWidth="100" />
+            </StackPanel>
+        </Grid>
+
+        <TextBlock Grid.Row="3" Text="{d:Binding StatusText}" Margin="0,8,0,0" TextWrapping="Wrap" />
+    </Grid>
+</Page>

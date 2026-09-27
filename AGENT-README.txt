@@ -41,6 +41,14 @@ CodeBrix Fluent symbols font package.
 
 License: Apache License 2.0.
 
+Add-ins: each CodeBrix.Platform add-in has its own Android package, named after
+the add-in's CodeBrix.Platform package (see ADD-INS ON ANDROID for the list).
+Reference it from the Android target framework instead of the add-in's
+CodeBrix.Platform package:
+    dotnet add package CodeBrix.Android.Svg.ApacheLicenseForever
+Every CodeBrix.Android package of one release depends on the others of the
+same release at exactly that version; keep them on one version.
+
 Requirements: the .NET 10 SDK with the "android" workload, and the Android SDK.
 
 
@@ -137,9 +145,16 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     saved document a file copied back to it every time you close it after
     writing - so desktop code that opens file.Path keeps working; prefer the
     StorageFile's streams. A picked folder's Path is empty (use its members).
-  * AnalyticsInfo.VersionInfo.DeviceFamily is "Android.<form>" (for example
-    "Android.Mobile"); UISettings.AnimationsEnabled follows the system's
-    "remove animations" setting.
+  * AnalyticsInfo.VersionInfo.DeviceFamily is "Android.<form>", where the
+    form comes from the window size class: "Android.Mobile" (compact width),
+    "Android.Tablet" (medium) or "Android.Desktop" (expanded - a Googlebook,
+    or a phone docked in desktop mode). AnalyticsInfo.DeviceForm ("Mobile",
+    "Tablet", "Desktop") is read from the current window every time you ask,
+    so it follows a phone that is docked or undocked. DeviceFamily itself is
+    fixed the first time the app reads it (it names the form of that moment);
+    read AnalyticsInfo.DeviceForm when you need the current form. Television,
+    car, watch and VR-headset devices report those forms. UISettings.
+    AnimationsEnabled follows the system's "remove animations" setting.
   * Display: every element of the page gets a native Android view through an
     element handler. Core still does the layout; the views are placed exactly
     where Core laid the elements out. Panels, Border and ContentPresenter draw
@@ -151,8 +166,10 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     shows its Fluent template (mirrored by native views). Controls in their
     default style are native Material widgets (buttons, CheckBox, RadioButton,
     ToggleSwitch, Slider, progress, TextBox, PasswordBox, NumberBox,
-    AutoSuggestBox, Image, lists and tabs); a control with its own Template keeps
-    the Fluent look. Shapes draw and hit-test natively as WinUI does (caps,
+    AutoSuggestBox, Image, lists and tabs); a control with its own
+    ControlTemplate (a local Template, or a Style that sets one) is not a
+    native widget: its template is expanded and shown with native views, as
+    it is written. Shapes draw and hit-test natively as WinUI does (caps,
     dashes, Stretch, gradient brushes). ColorPicker is native; DatePicker and
     TimePicker open Material picker dialogs. Expander is a native Material
     card with a native header row unless the AppContext switch
@@ -178,7 +195,9 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     outline roles; dynamic colour where the device offers it); every Fluent key
     an app defines wins. FontSize follows the user's font scale unless
     IsTextScaleFactorEnabled=false. An Auto NavigationView becomes a bottom bar
-    / rail / drawer by window size class and switches live. Storyboards run.
+    / rail / drawer by window size class and switches live; a TriPaneView
+    shows one / two / three panes the same way (see ADD-INS ON ANDROID).
+    Storyboards run.
   * Insets: the app is laid out edge to edge; a Page keeps its content clear of
     the status bar, navigation bar and display cutout it overlaps (its
     Background still runs under them). A NavigationView shown as a bottom bar /
@@ -245,14 +264,55 @@ BUILD PROPERTIES YOU MAY SET
   CodeBrixAndroidRootPlatformAssemblies     default true (false: the CodeBrix.Android
                                             assemblies are not trimmer roots)
   EnableDefaultAndroidAssetItems            default false (see above)
+  CodeBrixAndroidXamlScan                   default true (false: no CBAND warnings
+                                            for XAML, see below)
+
+BUILD DIAGNOSTICS (CBAND)
+-------------------------
+The package's analyzer reports, as WARNINGS that never fail a build (they are
+kept out of TreatWarningsAsErrors), the CodeBrix.Platform constructs Android
+accepts but does not show as they look on the desktop, at the C# line or the
+XAML file and line that uses them:
+  CBAND0001  a ControlTemplate on a control Android shows as a native control
+  CBAND0002  template members (OnApplyTemplate, GetTemplateChild,
+             VisualStateManager.GoToState) used on such a control
+  CBAND0003  composition APIs, system backdrops, ThemeShadow (ignored)
+  CBAND0004  3-D projections and 3-D transforms (ignored)
+  CBAND0005  ScrollViewer zoom (ignored)
+  CBAND0006  a PasswordChar that is not a single character
+  CBAND0007  frame-buffer head options (no effect)
+  CBAND0008  acrylic and Mica materials (a solid fallback colour)
+Silence an id with NoWarn as usual (or #pragma warning disable in C#).
 
 
 ADD-INS ON ANDROID
 ------------------
-Each CodeBrix.Platform add-in has an Android package
-(CodeBrix.Android.<AddIn>.ApacheLicenseForever): the add-in's platform-neutral
-Core plus its Android assembly. Application code written against the add-in
-compiles and runs unchanged; what differs on Android:
+Each add-in's Android package holds the add-in's platform-neutral assembly and
+its Android assembly, and depends on the framework package (and on the add-in
+packages it builds on). Application code and XAML written against the add-in
+compile and run unchanged. The add-in packages:
+
+    CodeBrix.Platform add-in   Android package
+    AppSettings                CodeBrix.Android.AppSettings.ApacheLicenseForever
+    CommandBar                 CodeBrix.Android.CommandBar.ApacheLicenseForever
+                               (brings Svg and SkiaSharp.Views)
+    FlexPanel                  CodeBrix.Android.FlexPanel.ApacheLicenseForever
+    Graphics2DSK               CodeBrix.Android.Graphics2DSK.ApacheLicenseForever
+                               (brings SkiaSharp.Views)
+    Graphics3DGL               CodeBrix.Android.Graphics3DGL.ApacheLicenseForever
+    Lottie                     CodeBrix.Android.Lottie.ApacheLicenseForever
+                               (brings SkiaSharp.Views)
+    MediaPlayer                CodeBrix.Android.MediaPlayer.ApacheLicenseForever
+    SkiaSharp.Views            CodeBrix.Android.SkiaSharp.Views.ApacheLicenseForever
+    Svg                        CodeBrix.Android.Svg.ApacheLicenseForever
+                               (brings SkiaSharp.Views)
+    TerminalView               CodeBrix.Android.TerminalView.ApacheLicenseForever
+                               (brings TextLayout and SkiaSharp.Views)
+    TextLayout                 CodeBrix.Android.TextLayout.ApacheLicenseForever
+    WebView                    CodeBrix.Android.WebView.ApacheLicenseForever
+
+The TriPaneView of CodeBrix.Platform's Toolkit is part of the framework package.
+What differs on Android:
   * SkiaSharp.Views: SKXamlCanvas paints in software into a kept buffer and
     repaints only on Invalidate(), as on every head. SKSwapChainPanel is not
     supported (it throws NotSupportedException unless RaiseOnUnsupported is
@@ -268,6 +328,43 @@ compiles and runs unchanged; what differs on Android:
   * TextLayout: the text engine is the add-in's Core; on Android it draws with
     SkiaSharp typefaces the Android assembly loads from the app's assets by the
     font rule above (a family name is the app's DefaultTextFontFamily file).
+    Shaping (HarfBuzz), bidi and line breaking (the device's ICU, found by the
+    engine on its first layout; Android 13+ always has it) run on the device
+    exactly as on the desktop heads. Draw a layout on an SKXamlCanvas (add the
+    SkiaSharp.Views package too); the engine has no element of its own.
+  * Lottie: AnimatedVisualPlayer with LottieVisualSource /
+    ThemableLottieVisualSource plays as on the desktop heads (the Core decodes
+    with Skottie and runs the frame clock); each frame is drawn on a native
+    Skia view. Name the document with embedded:// (a resource of your
+    assembly), ms-appdata:/// or http(s); an ms-appx:/// document does not load
+    yet (the app's assets are not files on Android). The framework's
+    ProgressRing does not need this add-in on Android (it is the native
+    Material indicator).
+  * TriPaneView (framework package, no add-in): the control and its engine
+    work as on the desktop heads (weights, minimize/restore, grips, events).
+    On top, it follows the window's width size class, live: Compact = one pane
+    (the upper one; the dividers become restore grips and a tap on a grip
+    switches panes), Medium = the side pane and one stacked pane, Expanded =
+    three panes. The form is reached through the weights: a pane the window has
+    no room for gets weight 0 (your bound percent properties and IsMinimized
+    flags see it, and DividerDragCompleted is not raised), and the weights come
+    back exactly when the window widens. With RestoreGripMode Never there are no
+    grips, so your code must switch panes. A finger within 48 dp of a divider
+    drags it (the divider's own DragStarted/DragDelta/DragCompleted events are
+    not raised for such a drag; the control's DividerDragCompleted is); a mouse
+    uses the divider exactly as on the desktop. Turn the adaptive form off with
+    the AppContext switch CodeBrix.Android.UI.AdaptiveTriPaneView = false.
+  * TerminalView: TerminalControl works as on the desktop heads (feed, grid
+    fitting and GridResized, colours, fonts, scrollback and its scroll bar,
+    Shift+PageUp/PageDown, the finger or mouse drag selection, Ctrl+Shift+C/V,
+    the right-click menu, TitleChanged); the grid is painted on a native Skia
+    view. Hardware keys (and adb input) reach it as on the desktop. When it
+    gets the focus the soft keyboard opens with a terminal layout (no
+    suggestions or autocorrection; the digits row is shown): every key reaches
+    InputEmitted at once, the keyboard's Enter is CR and its delete is DEL. A
+    finger or pen on the terminal brings a dismissed keyboard back; a mouse
+    does not. The keyboard covers the bottom rows of a terminal that fills the
+    window (the control is not resized for it).
   * Graphics3DGL: GLCanvasElement renders on an OpenGL ES 3.0 context, so
     shaders must be GLSL ES (`#version 300 es` plus a precision statement);
     desktop GLSL (`#version 330 core`) does not compile. SkiaGLCanvasElement,
@@ -348,8 +445,12 @@ COMMON PITFALLS TO AVOID
     libraries as shown under APP SHAPE.
   * Do not put app assets under the Android `Assets/` convention expecting the
     prefix to be stripped: CodeBrix.Android keeps ms-appx paths as they are.
-  * ControlTemplates written for CodeBrix.Platform controls are accepted but
-    have no effect on controls that CodeBrix.Android shows as native widgets.
+  * A ControlTemplate (or a Style that sets Template) on a control takes that
+    control off its native widget: the template is shown as written, with
+    native views, but the control loses the Material widget's look, ripple and
+    accessibility. Leave the Template of Button, CheckBox, TextBox, ... unset
+    to get the native control (CBAND0001 points such templates out); restyle
+    it with properties and the Fluent lightweight-styling resource keys.
 
 
 WHAT THIS PACKAGE DOES NOT DO
@@ -361,6 +462,14 @@ WHAT THIS PACKAGE DOES NOT DO
   * It does not support iOS (see CodeBrix.Mobile) or Android versions below
     API 33.
   * It does not use the CodeBrix.Platform desktop head or runtime packages.
+  * It has no Android package for the AudioPlayer, VideoPlayer, PlotterView
+    and AdvancedTextEdit add-ins (the list under ADD-INS ON ANDROID is
+    complete).
+  * It does not let an app register its own native element handlers: the
+    handler-authoring API is internal.
+  * The CodeBrix.Platform types that are not implemented on any head are not
+    implemented here either (TitleBar, ListBox, the rich-text family, Hub,
+    SemanticZoom, MapControl, the swap-chain panels, ...).
 
 
 WORKING EXAMPLES ON GITHUB
@@ -376,6 +485,8 @@ QUICK REFERENCE CARD
 
   Package      CodeBrix.Android.ApacheLicenseForever (Android head, and the
                Android target framework of shared libraries)
+  Add-ins      CodeBrix.Android.<AddIn>.ApacheLicenseForever, one version with
+               the framework package
   TFM          net10.0-android36.1, SupportedOSPlatformVersion 33
   XAML         unchanged CodeBrix.Platform XAML, desktop dialect
   Assets       ms-appx:///<path>  ==  Android asset <path>
@@ -385,4 +496,5 @@ QUICK REFERENCE CARD
                MainActivity : CodeBrixActivity (ConfigurationChanges =
                CodeBrixActivity.HandledConfigurationChanges, Material3 theme)
   Deploy       dotnet build -t:Install (Debug), Release APK for side-loading
+  Warnings     CBAND0001-0008: accepted-but-ignored constructs, never errors
 ================================================================================

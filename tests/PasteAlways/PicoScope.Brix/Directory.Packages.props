@@ -1,0 +1,14 @@
+<Project>
+
+  <!--
+    Paste-always head PicoScope.Brix: the repository pins, plus the self-produced CodeBrix.Plotter
+    package (not a CodeBrix.Platform repo package; it depends only on SkiaSharp / SkiaSharp.HarfBuzz) at
+    the version the pinned PlotterView add-in declares.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <PackageVersion Include="CodeBrix.Plotter.MitLicenseForever" Version="1.0.252.1250" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,308 @@
+<Project Sdk="Microsoft.Build.NoTargets/3.7.134">
+
+  <!--
+    ========================================================================
+    CodeBrix.Android pack driver
+    ========================================================================
+    Packs the CodeBrix.Android framework package and one package per add-in, from the ALREADY-BUILT
+    outputs of the solution (pack-only, the family's CodeBrix.Platform pack-driver pattern), then runs
+    the three package gates over the produced .nupkg files. Run it through build/pack.sh (which builds
+    the solution first and holds the Android track's build lock), or directly after a solution build:
+
+        dotnet build build/nuget/CodeBrix.Android.Pack.proj -c Release
+
+    It is NOT part of the solution build (CodeBrix.Android.slnx lists it as a file only).
+
+    Output:   artifacts/packages/<Configuration>/<BuildVersion>/*.nupkg (git-ignored)
+    Nuspecs:  the framework package is build/nuget/CodeBrix.Android.ApacheLicenseForever.nuspec;
+              each add-in package's nuspec is GENERATED from its project (see _CodeBrixAndroidAddInNuspec)
+              into artifacts/packages/<Configuration>/<BuildVersion>/nuspec/.
+    Versions: one date-stamped version per run, stamped on every package (below). Dependency
+              versions come from Directory.Packages.props (the $dep_<Package_Id>$ tokens); the
+              CodeBrix.Android packages depend on each other at exactly the run's version.
+    Gates:    build/intake/CodeBrix.Android.IntakeGate "packages" mode (MAINTAINER-README.txt,
+              PACKAGING / PUBLISHING): (a) no dependency on a package the CodeBrix.Platform repository
+              produces, (b) no Skia twin of a Core assembly (and one owner per assembly, lib/ only in the
+              Android TFM folder), (c) every dependency's owner is allowed. A failed gate fails the run.
+    Publishing is Jeremy's: this project never pushes anything.
+    ========================================================================
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!--
+    Canonical CodeBrix date-stamped version, computed ONCE per pack run and stamped on every package.
+    Format: 1.<years since _VersionBaseYear>.<day of year, 1-based>.<minute of day>, all from UTC now -
+    the family's canonical block (the packable CodeBrix csprojs carry it; here, as in the CodeBrix.Platform
+    pack driver, it is the single source for the whole package set).
+    OVERRIDE: pass -p:BuildVersion=1.x.y.z to re-pack an existing version (the date stamp is only the
+    fallback). The assemblies themselves are not re-stamped: the pack takes the solution's built outputs.
+  -->
+  <PropertyGroup>
+    <_VersionBaseYear>2026</_VersionBaseYear>
+    <_VersionYears>$([MSBuild]::Subtract($([System.DateTime]::UtcNow.Year), $(_VersionBaseYear)))</_VersionYears>
+    <_VersionDayOfYear>$([System.DateTime]::UtcNow.DayOfYear)</_VersionDayOfYear>
+    <_VersionMinuteOfDay>$([System.Convert]::ToInt32($([System.Math]::Floor($([System.DateTime]::UtcNow.TimeOfDay.TotalMinutes)))))</_VersionMinuteOfDay>
+    <BuildVersion Condition="'$(BuildVersion)' == ''">1.$(_VersionYears).$(_VersionDayOfYear).$(_VersionMinuteOfDay)</BuildVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <_CbaRepoRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..'))</_CbaRepoRoot>
+    <_CbaAndroidTfm>net10.0-android36.1</_CbaAndroidTfm>
+    <_CbaPackOutputDir>$(_CbaRepoRoot)artifacts/packages/$(Configuration)/$(BuildVersion)/</_CbaPackOutputDir>
+    <_CbaNuspecDir>$(_CbaPackOutputDir)nuspec/</_CbaNuspecDir>
+    <_CbaPropsFile>$(_CbaNuspecDir)nuspec-properties.props</_CbaPropsFile>
+    <_CbaPackShim>$(MSBuildThisFileDirectory)pack-shim/CodeBrix.Android.PackShim.csproj</_CbaPackShim>
+    <_CbaPackInfoTargets>$(MSBuildThisFileDirectory)CodeBrix.Android.PackInfo.targets</_CbaPackInfoTargets>
+    <_CbaFrameworkNuspec>$(MSBuildThisFileDirectory)CodeBrix.Android.ApacheLicenseForever.nuspec</_CbaFrameworkNuspec>
+    <_CbaFrameworkPackageId>CodeBrix.Android.ApacheLicenseForever</_CbaFrameworkPackageId>
+    <_CbaPackageSuffix>ApacheLicenseForever</_CbaPackageSuffix>
+    <_CbaIntakeGateProject>$(_CbaRepoRoot)build/intake/CodeBrix.Android.IntakeGate/CodeBrix.Android.IntakeGate.csproj</_CbaIntakeGateProject>
+  </PropertyGroup>
+
+  <!--
+    The framework package: the projects whose android outputs it ships (its nuspec lists the files; the
+    driver checks the nuspec declares every PackageReference these projects pass to a consumer).
+  -->
+  <ItemGroup>
+    <CodeBrixAndroidFrameworkProject Include="$(_CbaRepoRoot)src/CodeBrix.Android/CodeBrix.Android.csproj" />
+    <CodeBrixAndroidFrameworkProject Include="$(_CbaRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <CodeBrixAndroidFrameworkProject Include="$(_CbaRepoRoot)src/CodeBrix.Android.UI.Composition/CodeBrix.Android.UI.Composition.csproj" />
+    <CodeBrixAndroidFrameworkProject Include="$(_CbaRepoRoot)src/CodeBrix.Android.UI.Dispatching/CodeBrix.Android.UI.Dispatching.csproj" />
+    <CodeBrixAndroidFrameworkProject Include="$(_CbaRepoRoot)src/CodeBrix.Android.UI.Toolkit/CodeBrix.Android.UI.Toolkit.csproj" />
+  </ItemGroup>
+
+  <!--
+    THE ADD-IN PACKAGES: one line per src/AddIns/<project folder>. Adding an add-in = adding its line.
+    Package id = CodeBrix.Android.<PackageName>.ApacheLicenseForever, where PackageName is the folder name
+    without "CodeBrix.Android." and a leading "UI." / "WinUI." (the CodeBrix.Platform add-in package's
+    name: CodeBrix.Android.UI.Svg -> CodeBrix.Android.Svg.ApacheLicenseForever). Optional metadata:
+    PackageName (override), Description (default: a sentence naming the add-in).
+    Every src/AddIns folder must be listed here or in CodeBrixAndroidAddInNotPacked (with a reason);
+    the driver stops on an add-in it does not know.
+  -->
+  <ItemGroup>
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.AppSettings" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.SkiaSharp.Views" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.CommandBar" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.FlexPanel" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.Lottie" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.MediaPlayer" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.Svg" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.TerminalView" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.TextLayout" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.WebView" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.WinUI.Graphics2DSK" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.WinUI.Graphics3DGL" />
+  </ItemGroup>
+
+  <!-- Add-in folders deliberately not packed (none today). Form: <CodeBrixAndroidAddInNotPacked Include="<folder>" Reason="..." /> -->
+  <ItemGroup>
+  </ItemGroup>
+
+  <Target Name="PackCodeBrixAndroid" AfterTargets="Build"
+          DependsOnTargets="_CbaCheckAddInList;_CbaWriteNuspecProperties;_CbaCheckFrameworkNuspec;_CbaGenerateAddInNuspecs">
+
+    <Message Importance="high" Text="CodeBrix.Android pack: version $(BuildVersion) ($(Configuration), CodeBrix.Platform $(CodeBrixPlatformVersion)) -> $(_CbaPackOutputDir)" />
+
+    <ItemGroup>
+      <_CbaNuspec Include="$(_CbaFrameworkNuspec)" />
+      <_CbaNuspec Include="@(_CbaGeneratedNuspec)" />
+    </ItemGroup>
+
+    <Exec Command="dotnet pack &quot;$(_CbaPackShim)&quot; -p:CbaNuspec=&quot;%(_CbaNuspec.FullPath)&quot; -p:CbaNuspecBasePath=&quot;$(_CbaRepoRoot).&quot; -p:CbaNuspecPropsFile=&quot;$(_CbaPropsFile)&quot; --output &quot;$(_CbaPackOutputDir).&quot; --nologo --verbosity minimal" />
+
+    <!-- THE PACKAGE GATES (a failure fails the run). -->
+    <MSBuild Projects="$(_CbaIntakeGateProject)" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" PropertyName="_CbaIntakeGateAssembly" />
+    </MSBuild>
+    <Error Condition="!Exists('$(_CbaIntakeGateAssembly)')" Text="The package gate tool is not built ($(_CbaIntakeGateAssembly)): build the solution in $(Configuration) first." />
+    <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;$(_CbaIntakeGateAssembly)&quot; packages --package-dir &quot;$(_CbaPackOutputDir).&quot; --platform-ids &quot;$(_CbaRepoRoot)build/platform-repo-package-ids.txt&quot; --owners &quot;$(MSBuildThisFileDirectory)package-dependency-owners.txt&quot; --external-assemblies &quot;$(_CbaRepoRoot)build/intake/gates/allowed-references.txt&quot; --report &quot;$(_CbaPackOutputDir)package-gates.txt&quot;" />
+
+    <ItemGroup>
+      <_CbaProduced Include="$(_CbaPackOutputDir)*.nupkg" />
+    </ItemGroup>
+    <Message Importance="high" Text="CodeBrix.Android pack: @(_CbaProduced->Count()) packages, gates PASS: $(_CbaPackOutputDir)" />
+  </Target>
+
+  <!-- Every add-in folder is packed or deliberately excluded. -->
+  <Target Name="_CbaCheckAddInList">
+    <ItemGroup>
+      <_CbaAddInFolderProject Include="$(_CbaRepoRoot)src/AddIns/*/*.csproj" />
+      <_CbaAddInFolder Include="@(_CbaAddInFolderProject->'%(Filename)')" />
+      <_CbaAddInFolder Remove="@(CodeBrixAndroidAddIn);@(CodeBrixAndroidAddInNotPacked)" />
+      <_CbaListedMissing Include="@(CodeBrixAndroidAddIn)" Condition="!Exists('$(_CbaRepoRoot)src/AddIns/%(Identity)/%(Identity).csproj')" />
+    </ItemGroup>
+    <Error Condition="'@(_CbaAddInFolder)' != ''" Text="Add-in project(s) not in the pack list: @(_CbaAddInFolder). Add a CodeBrixAndroidAddIn line (or a CodeBrixAndroidAddInNotPacked line with a reason) to build/nuget/CodeBrix.Android.Pack.proj." />
+    <Error Condition="'@(_CbaListedMissing)' != ''" Text="Listed add-in project(s) do not exist: @(_CbaListedMissing)." />
+  </Target>
+
+  <!-- The nuspec token values, shared by every nuspec of the run. -->
+  <Target Name="_CbaWriteNuspecProperties">
+    <ItemGroup>
+      <_CbaDepToken Include="@(PackageVersion)" TokenName="dep_$([System.String]::Copy('%(Identity)').Replace('.', '_').Replace('-', '_'))" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_CbaNuspecProperties>codebrixversion=$(BuildVersion);configuration=$(Configuration);platformversion=$(CodeBrixPlatformVersion);@(_CbaDepToken->'%(TokenName)=%(Version)', ';')</_CbaNuspecProperties>
+    </PropertyGroup>
+    <MakeDir Directories="$(_CbaNuspecDir)" />
+    <WriteLinesToFile File="$(_CbaPropsFile)" Overwrite="true"
+                      Lines="&lt;Project&gt;;  &lt;PropertyGroup&gt;;    &lt;NuspecProperties&gt;$([MSBuild]::Escape('$(_CbaNuspecProperties)'))&lt;/NuspecProperties&gt;;  &lt;/PropertyGroup&gt;;&lt;/Project&gt;" />
+  </Target>
+
+  <!-- The hand-written framework nuspec declares every PackageReference the framework projects pass on. -->
+  <Target Name="_CbaCheckFrameworkNuspec">
+    <MSBuild Projects="@(CodeBrixAndroidFrameworkProject)" Targets="CodeBrixAndroidPackInfo"
+             Properties="TargetFramework=$(_CbaAndroidTfm);Configuration=$(Configuration);CustomAfterMicrosoftCommonTargets=$(_CbaPackInfoTargets)">
+      <Output TaskParameter="TargetOutputs" ItemName="_CbaFrameworkInfo" />
+    </MSBuild>
+    <PropertyGroup>
+      <_CbaFrameworkNuspecText>$([System.IO.File]::ReadAllText('$(_CbaFrameworkNuspec)'))</_CbaFrameworkNuspecText>
+    </PropertyGroup>
+    <ItemGroup>
+      <_CbaFrameworkPackage Include="@(_CbaFrameworkInfo->WithMetadataValue('Kind', 'Package'))" />
+      <_CbaFrameworkPackage>
+        <Declared>$(_CbaFrameworkNuspecText.Contains('id="%(Identity)"'))</Declared>
+      </_CbaFrameworkPackage>
+      <_CbaFrameworkPackageMissing Include="@(_CbaFrameworkPackage->WithMetadataValue('Declared', 'False'))" />
+    </ItemGroup>
+    <Error Condition="'@(_CbaFrameworkPackageMissing)' != ''" Text="build/nuget/CodeBrix.Android.ApacheLicenseForever.nuspec does not declare the dependency(ies) @(_CbaFrameworkPackageMissing->Distinct()) that the framework projects reference." />
+  </Target>
+
+  <!-- One generated nuspec per listed add-in. -->
+  <Target Name="_CbaGenerateAddInNuspecs">
+    <MSBuild Projects="$(MSBuildThisFileFullPath)" Targets="_CbaAddInNuspec"
+             Properties="CbaAddIn=%(CodeBrixAndroidAddIn.Identity);CbaPackageName=%(CodeBrixAndroidAddIn.PackageName);CbaDescription=%(CodeBrixAndroidAddIn.Description);Configuration=$(Configuration);BuildVersion=$(BuildVersion)">
+      <Output TaskParameter="TargetOutputs" ItemName="_CbaGeneratedNuspec" />
+    </MSBuild>
+  </Target>
+
+  <!--
+    Generates the nuspec of ONE add-in (CbaAddIn = its src/AddIns folder name). Runs in its own driver
+    instance (the MSBuild task above), so its items never mix with another add-in's.
+      lib/net10.0-android36.1/  the add-in assembly (+ xml, pdb, aar) and the Core(s) it OWNS: the Core
+                                references of its project minus the framework Cores (src/Directory.Build.props
+                                references them in every project) minus the Cores its add-in dependencies ship.
+      notices/<package-id>/     the THIRD-PARTY-NOTICES.txt of the CodeBrix.Platform package of each owned Core.
+      dependencies              the framework package and each referenced add-in package, at exactly this run's
+                                version; each PackageReference of the project that flows to a consumer and that
+                                the framework package does not already bring, at its central version token.
+  -->
+  <Target Name="_CbaAddInNuspec" Returns="@(_CbaThisNuspec)" Condition="'$(CbaAddIn)' != ''">
+    <PropertyGroup>
+      <_CbaAddInProjectPath>$(_CbaRepoRoot)src/AddIns/$(CbaAddIn)/$(CbaAddIn).csproj</_CbaAddInProjectPath>
+      <_CbaName>$(CbaPackageName)</_CbaName>
+      <_CbaName Condition="'$(_CbaName)' == ''">$(CbaAddIn.Substring(17))</_CbaName>
+      <_CbaName Condition="'$(CbaPackageName)' == '' and $(_CbaName.StartsWith('UI.'))">$(_CbaName.Substring(3))</_CbaName>
+      <_CbaName Condition="'$(CbaPackageName)' == '' and $(_CbaName.StartsWith('WinUI.'))">$(_CbaName.Substring(6))</_CbaName>
+      <_CbaId>CodeBrix.Android.$(_CbaName).$(_CbaPackageSuffix)</_CbaId>
+      <_CbaDescription>$(CbaDescription)</_CbaDescription>
+      <_CbaDescription Condition="'$(_CbaDescription)' == ''">The $(_CbaName) add-in for CodeBrix.Android applications: the platform-neutral assembly of the CodeBrix.Platform $(_CbaName) add-in and its Android implementation, so code and XAML written against the add-in run unchanged on Android.</_CbaDescription>
+      <_CbaTag>$(_CbaName.ToLowerInvariant())</_CbaTag>
+      <_CbaThisNuspecPath>$(_CbaNuspecDir)$(_CbaId).nuspec</_CbaThisNuspecPath>
+    </PropertyGroup>
+
+    <MSBuild Projects="$(_CbaAddInProjectPath)" Targets="CodeBrixAndroidPackInfo"
+             Properties="TargetFramework=$(_CbaAndroidTfm);Configuration=$(Configuration);CustomAfterMicrosoftCommonTargets=$(_CbaPackInfoTargets)">
+      <Output TaskParameter="TargetOutputs" ItemName="_CbaInfo" />
+    </MSBuild>
+    <MSBuild Projects="$(_CbaRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" Targets="CodeBrixAndroidPackInfo"
+             Properties="TargetFramework=$(_CbaAndroidTfm);Configuration=$(Configuration);CustomAfterMicrosoftCommonTargets=$(_CbaPackInfoTargets)">
+      <Output TaskParameter="TargetOutputs" ItemName="_CbaFrameworkInfo" />
+    </MSBuild>
+
+    <ItemGroup>
+      <_CbaSelf Include="@(_CbaInfo->WithMetadataValue('Kind', 'Project'))" />
+      <_CbaAddInRef Include="@(_CbaInfo->WithMetadataValue('Kind', 'AddIn'))" />
+    </ItemGroup>
+    <MSBuild Projects="@(_CbaAddInRef)" Targets="CodeBrixAndroidPackCores"
+             Properties="TargetFramework=$(_CbaAndroidTfm);Configuration=$(Configuration);CustomAfterMicrosoftCommonTargets=$(_CbaPackInfoTargets)"
+             Condition="'@(_CbaAddInRef)' != ''">
+      <Output TaskParameter="TargetOutputs" ItemName="_CbaDependencyCores" />
+    </MSBuild>
+
+    <PropertyGroup>
+      <_CbaAssemblyName>@(_CbaSelf->'%(AssemblyName)')</_CbaAssemblyName>
+      <_CbaOutputDir>@(_CbaSelf->'%(OutputDir)')</_CbaOutputDir>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <!-- Owned Cores. -->
+      <_CbaOwnedCore Include="@(_CbaInfo->WithMetadataValue('Kind', 'Core'))" />
+      <_CbaOwnedCore Remove="@(_CbaFrameworkInfo->WithMetadataValue('Kind', 'Core'))" />
+      <_CbaOwnedCore Remove="@(_CbaDependencyCores)" />
+      <_CbaOwnedCoreName Include="@(_CbaOwnedCore->'%(Filename)')" />
+      <!-- CodeBrix.Platform.UI.Svg.Core -> Svg: the Platform package id is CodeBrix.Platform.Svg.<licence suffix>. -->
+      <_CbaOwnedCoreName>
+        <Short>$([System.Text.RegularExpressions.Regex]::Replace('%(Identity)', '^CodeBrix\.Platform\.((UI|WinUI)\.)?(.*)\.Core$', '$3'))</Short>
+      </_CbaOwnedCoreName>
+
+      <_CbaLibFile Include="$(_CbaOutputDir)$(_CbaAssemblyName).dll;$(_CbaOutputDir)$(_CbaAssemblyName).xml;$(_CbaOutputDir)$(_CbaAssemblyName).pdb;$(_CbaOutputDir)$(_CbaAssemblyName).aar" />
+      <_CbaLibFile Include="$(CodeBrixPlatformIntakeLibDir)%(_CbaOwnedCoreName.Identity).*" Condition="'@(_CbaOwnedCoreName)' != ''" />
+      <_CbaLibFileExisting Include="@(_CbaLibFile)" Condition="Exists('%(FullPath)')" />
+      <_CbaNotice Include="$(CodeBrixPlatformIntakeDir)notices/CodeBrix.Platform.%(_CbaOwnedCoreName.Short).*LicenseForever/THIRD-PARTY-NOTICES.txt" Condition="'@(_CbaOwnedCoreName)' != ''" />
+      <_CbaNotice>
+        <Folder>$([System.IO.Path]::GetFileName($([System.IO.Path]::GetDirectoryName('%(FullPath)'))))</Folder>
+      </_CbaNotice>
+
+      <!-- Dependencies. -->
+      <_CbaDepAddIn Include="@(_CbaAddInRef->'%(Filename)')" />
+      <_CbaDepAddIn>
+        <Short>$([System.Text.RegularExpressions.Regex]::Replace('%(Identity)', '^CodeBrix\.Android\.((UI|WinUI)\.)?', ''))</Short>
+      </_CbaDepAddIn>
+      <_CbaDepAddInName Include="@(_CbaDepAddIn->'%(Short)')" />
+      <_CbaDepPackage Include="@(_CbaInfo->WithMetadataValue('Kind', 'Package'))" />
+      <_CbaDepPackage Remove="@(_CbaFrameworkInfo->WithMetadataValue('Kind', 'Package'))" />
+      <_CbaDepPackageToken Include="@(_CbaDepPackage)" TokenName="dep_$([System.String]::Copy('%(Identity)').Replace('.', '_').Replace('-', '_'))" />
+    </ItemGroup>
+
+    <Error Condition="!Exists('$(_CbaOutputDir)$(_CbaAssemblyName).dll')" Text="$(CbaAddIn): $(_CbaOutputDir)$(_CbaAssemblyName).dll is missing - build the solution in $(Configuration) first." />
+    <Error Condition="'@(_CbaOwnedCoreName)' != '' and '@(_CbaNotice)' == ''" Text="$(CbaAddIn): no CodeBrix.Platform notices found for its Core(s) @(_CbaOwnedCoreName)." />
+
+    <ItemGroup>
+      <_CbaLine Include="&lt;%3Fxml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;%3F&gt;" />
+      <_CbaLine Include="&lt;!-- GENERATED by build/nuget/CodeBrix.Android.Pack.proj from src/AddIns/$(CbaAddIn) - do not edit. --&gt;" />
+      <_CbaLine Include="&lt;package xmlns=&quot;http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd&quot;&gt;" />
+      <_CbaLine Include="  &lt;metadata minClientVersion=&quot;5.0&quot;&gt;" />
+      <_CbaLine Include="    &lt;id&gt;$(_CbaId)&lt;/id&gt;" />
+      <_CbaLine Include="    &lt;version&gt;%24codebrixversion%24&lt;/version&gt;" />
+      <_CbaLine Include="    &lt;title&gt;CodeBrix.Android.$(_CbaName)&lt;/title&gt;" />
+      <_CbaLine Include="    &lt;authors&gt;Jeremy Ellis&lt;/authors&gt;" />
+      <_CbaLine Include="    &lt;requireLicenseAcceptance&gt;true&lt;/requireLicenseAcceptance&gt;" />
+      <_CbaLine Include="    &lt;license type=&quot;expression&quot;&gt;Apache-2.0&lt;/license&gt;" />
+      <_CbaLine Include="    &lt;icon&gt;icon-codebrix-128.png&lt;/icon&gt;" />
+      <_CbaLine Include="    &lt;readme&gt;README.md&lt;/readme&gt;" />
+      <_CbaLine Include="    &lt;projectUrl&gt;https://github.com/ellisnet/CodeBrix.Android&lt;/projectUrl&gt;" />
+      <_CbaLine Include="    &lt;description&gt;$(_CbaDescription)&lt;/description&gt;" />
+      <_CbaLine Include="    &lt;copyright&gt;Copyright (c) 2026 Jeremy Ellis and contributors&lt;/copyright&gt;" />
+      <_CbaLine Include="    &lt;tags&gt;android%3Bxaml%3B$(_CbaTag)%3Badd-in%3BCodeBrix&lt;/tags&gt;" />
+      <_CbaLine Include="    &lt;repository type=&quot;git&quot; url=&quot;https://github.com/ellisnet/CodeBrix.Android&quot; /&gt;" />
+      <_CbaLine Include="    &lt;dependencies&gt;" />
+      <_CbaLine Include="      &lt;group targetFramework=&quot;$(_CbaAndroidTfm)&quot;&gt;" />
+      <_CbaLine Include="        &lt;dependency id=&quot;$(_CbaFrameworkPackageId)&quot; version=&quot;[%24codebrixversion%24]&quot; /&gt;" />
+      <_CbaLine Include="@(_CbaDepAddInName->'        &lt;dependency id=&quot;CodeBrix.Android.%(Identity).$(_CbaPackageSuffix)&quot; version=&quot;[%24codebrixversion%24]&quot; /&gt;')" />
+      <_CbaLine Include="@(_CbaDepPackageToken->'        &lt;dependency id=&quot;%(Identity)&quot; version=&quot;%24%(TokenName)%24&quot; /&gt;')" />
+      <_CbaLine Include="      &lt;/group&gt;" />
+      <_CbaLine Include="    &lt;/dependencies&gt;" />
+      <_CbaLine Include="  &lt;/metadata&gt;" />
+      <_CbaLine Include="  &lt;files&gt;" />
+      <_CbaLine Include="    &lt;file src=&quot;icon-codebrix-128.png&quot; target=&quot;&quot; /&gt;" />
+      <_CbaLine Include="    &lt;file src=&quot;README.md&quot; target=&quot;&quot; /&gt;" />
+      <_CbaLine Include="    &lt;file src=&quot;AGENT-README.txt&quot; target=&quot;&quot; /&gt;" />
+      <_CbaLine Include="    &lt;file src=&quot;THIRD-PARTY-NOTICES.txt&quot; target=&quot;&quot; /&gt;" />
+      <_CbaLine Include="@(_CbaLibFileExisting->'    &lt;file src=&quot;%(FullPath)&quot; target=&quot;lib/$(_CbaAndroidTfm)&quot; /&gt;')" />
+      <_CbaLine Include="@(_CbaNotice->'    &lt;file src=&quot;%(FullPath)&quot; target=&quot;notices/%(Folder)&quot; /&gt;')" />
+      <_CbaLine Include="  &lt;/files&gt;" />
+      <_CbaLine Include="&lt;/package&gt;" />
+      <_CbaThisNuspec Include="$(_CbaThisNuspecPath)" PackageId="$(_CbaId)" />
+    </ItemGroup>
+
+    <MakeDir Directories="$(_CbaNuspecDir)" />
+    <WriteLinesToFile File="$(_CbaThisNuspecPath)" Lines="@(_CbaLine)" Overwrite="true" />
+    <Message Importance="high" Text="  $(_CbaId): $(_CbaAssemblyName) + Core(s) [@(_CbaOwnedCoreName)] ; depends on [@(_CbaDepAddInName->'CodeBrix.Android.%(Identity)')] [@(_CbaDepPackage)]" />
+  </Target>
+
+</Project>

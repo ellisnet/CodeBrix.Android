@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Repository tooling (never packed, never shipped): the CodeBrix.Android parity score (AP8).
+    Reads the pinned build's extracted Core assemblies (artifacts/intake/<version>/lib/*.Core.dll) and the
+    built CodeBrix.Android assemblies, and writes
+      (a) the NotImplemented count per public Core type (members marked NotImplemented for the Core, or whose
+          body throws NotImplementedException / raises ApiInformation.TryRaiseNotImplemented), and
+      (b) the Android "declined" list: the public DependencyProperties of each element type with a native
+          handler that the handler's property mapper does not map and the explained list
+          (declined-explained.tsv) does not explain.
+    Run it through build/test-scripts/parity-score.sh; the report goes to artifacts/parity/<version>/<config>/.
+    Written fresh on CodeBrix.AssemblyTools (static IL reading; nothing is loaded or executed).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>CodeBrix.Android.ParityScore</AssemblyName>
+    <RootNamespace>CodeBrix.Android.ParityScore</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CodeBrix.AssemblyTools.MitLicenseForever" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="declined-explained.tsv" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

@@ -12,6 +12,8 @@ AGENT-README FILES (consumer documentation, one per NuGet package)
   AGENT-README.txt
       CodeBrix.Android.ApacheLicenseForever - builds and runs CodeBrix.Platform
       C# and XAML apps as native Android apps with Material Components views.
+      Also the consumer documentation of every add-in package,
+      CodeBrix.Android.<AddIn>.ApacheLicenseForever (ADD-INS ON ANDROID).
 
 MAINTAINER AND EXTRAS
 ---------------------
@@ -20,6 +22,9 @@ MAINTAINER AND EXTRAS
       maintainers, including the CodeBrix.Platform intake.
   EXTRAS-README.txt
       Samples, tools and other non-package content in this repository.
+  templates/TEMPLATE_INTEGRATION.md
+      The Android head of the CodeBrix.Platform application template, and what
+      the application template and its skill need to offer it.
 
 GENERAL
 -------

@@ -1,0 +1,17 @@
+<Project>
+
+  <!--
+    Paste-always head WebcamPainter: the repository pins, plus the self-produced CodeBrix.* packages
+    (not CodeBrix.Platform repo packages; none depends on one, none ships native assets) the app's
+    verbatim Core / Webcam / Painting / Vision sources (Surface/) use, at the versions CodeBrix.Samples
+    WebcamPainter pins.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <PackageVersion Include="CodeBrix.Imaging.Drawing.ApacheLicenseForever" Version="1.0.252.351" />
+    <PackageVersion Include="CodeBrix.Webcam.LgplLicenseForever" Version="3.0.252.10" />
+    <PackageVersion Include="CodeBrix.VideoProcessing.OpenCV5.ApacheLicenseForever" Version="1.0.268.257" />
+  </ItemGroup>
+
+</Project>

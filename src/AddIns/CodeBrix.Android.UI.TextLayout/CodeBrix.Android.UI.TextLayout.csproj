@@ -38,6 +38,11 @@
          (Microsoft; the family's locked SkiaSharp / HarfBuzzSharp release pair). -->
     <PackageReference Include="SkiaSharp" />
     <PackageReference Include="SkiaSharp.NativeAssets.Android" />
+    <!-- The managed HarfBuzzSharp assembly itself (AP7-B TerminalView, FIXLIST [AP7-B TerminalView]): the Core's FontDetails
+         holds HarfBuzzSharp types, and the native-assets package does not bring the managed assembly - an app with no other
+         HarfBuzzSharp consumer (the Svg add-in's CodeBrix.SkiaSvg was the only one) failed its first layout with a
+         TypeLoadException. -->
+    <PackageReference Include="HarfBuzzSharp" />
     <PackageReference Include="HarfBuzzSharp.NativeAssets.Android" />
   </ItemGroup>
 

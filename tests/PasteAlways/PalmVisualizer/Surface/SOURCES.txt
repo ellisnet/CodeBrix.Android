@@ -1,0 +1,25 @@
+# Surface/ of the PalmVisualizer paste-always head: every file, with its CodeBrix.Samples source.
+# (verbatim) = an unedited copy; (stub) = a compile stub (see its header). Everything compiles into the head
+# (the source projects use the head's language settings); CameraCanvas derives from the real SkiaSharp.Views add-in.
+Surface/PalmVisualizer.Core/Helpers/HostHelper.cs  <- CodeBrix.Samples/PalmVisualizer/src/PalmVisualizer.Core/Helpers/HostHelper.cs  (verbatim)
+Surface/PalmVisualizer.Core/RegisterServices.cs  <- CodeBrix.Samples/PalmVisualizer/src/PalmVisualizer.Core/RegisterServices.cs  (verbatim)
+Surface/PalmVisualizer.Core/ViewModels/MainViewModel.cs  <- CodeBrix.Samples/PalmVisualizer/src/PalmVisualizer.Core/ViewModels/MainViewModel.cs  (verbatim)
+Surface/PalmVisualizer.Camera/CameraCanvas.cs  <- CodeBrix.Samples/PalmVisualizer/src/libs/PalmVisualizer.Camera/CameraCanvas.cs  (verbatim)
+Surface/PalmVisualizer.Camera/IWebcamCaptureService.cs  <- CodeBrix.Samples/PalmVisualizer/src/libs/PalmVisualizer.Camera/IWebcamCaptureService.cs  (verbatim)
+Surface/PalmVisualizer.Vision/IPalmTracker.cs  <- CodeBrix.Samples/PalmVisualizer/src/libs/PalmVisualizer.Vision/IPalmTracker.cs  (verbatim)
+Surface/PalmVisualizer.Vision/PalmTrackingResult.cs  <- CodeBrix.Samples/PalmVisualizer/src/libs/PalmVisualizer.Vision/PalmTrackingResult.cs  (verbatim)
+Surface/PalmVisualizer.Vision/TrackedPalm.cs  <- CodeBrix.Samples/PalmVisualizer/src/libs/PalmVisualizer.Vision/TrackedPalm.cs  (verbatim)
+Surface/PalmVisualizer.Rendering/IGameCanvasHost.cs  <- CodeBrix.Samples/PalmVisualizer/src/libs/PalmVisualizer.Rendering/IGameCanvasHost.cs  (verbatim)
+Surface/PalmVisualizer.Rendering/IVisualizerSession.cs  <- CodeBrix.Samples/PalmVisualizer/src/libs/PalmVisualizer.Rendering/IVisualizerSession.cs  (verbatim)
+Surface/PalmVisualizer.Rendering/IVisualizerSessionFactory.cs  <- CodeBrix.Samples/PalmVisualizer/src/libs/PalmVisualizer.Rendering/IVisualizerSessionFactory.cs  (verbatim)
+Surface/PalmVisualizer.Rendering/VisualizerSessionFactory.cs  <- CodeBrix.Samples/PalmVisualizer/src/libs/PalmVisualizer.Rendering/VisualizerSessionFactory.cs  (verbatim)
+Surface/PalmVisualizer.Rendering/PalmAttractor.cs  <- CodeBrix.Samples/PalmVisualizer/src/libs/PalmVisualizer.Rendering/PalmAttractor.cs  (verbatim)
+Surface/PalmVisualizer.Rendering/PalmAttractorField.cs  <- CodeBrix.Samples/PalmVisualizer/src/libs/PalmVisualizer.Rendering/PalmAttractorField.cs  (verbatim)
+Surface/PalmVisualizer.Camera/CameraDevice.cs  <- CodeBrix.Samples/PalmVisualizer/src/libs/PalmVisualizer.Camera/CameraDevice.cs  (stub: CodeBrix.Webcam)
+Surface/PalmVisualizer.Camera/WebcamCaptureService.cs  <- CodeBrix.Samples/PalmVisualizer/src/libs/PalmVisualizer.Camera/WebcamCaptureService.cs  (stub: CodeBrix.Webcam)
+Surface/PalmVisualizer.Vision/PalmTracker.cs  <- CodeBrix.Samples/PalmVisualizer/src/libs/PalmVisualizer.Vision/PalmTracker.cs  (stub: CodeBrix.VideoProcessing.OpenCV5)
+Surface/PalmVisualizer.Rendering/VisualizerSession.cs  <- CodeBrix.Samples/PalmVisualizer/src/libs/PalmVisualizer.Rendering/VisualizerSession.cs  (stub: CodeBrix.Platform.GameEngine)
+Surface/Stubs/GameEngine/GameSurfaceCanvas.cs  <- (stub of CodeBrix.Platform.GameEngine.Host.Rendering.GameSurfaceCanvas + FirstStarted types, package CodeBrix.Platform.GameEngine.MitLicenseForever)
+# Not copied: PalmVisualizer.Rendering/EtherealBackdrop.cs (GameEngine drawing; only the stubbed VisualizerSession
+# uses it), PalmVisualizer.Vision/Internal/*.cs (OpenCV inference; only the stubbed PalmTracker uses them), the
+# libraries' InternalsVisibleTo.cs files and the embedded .tflite models.

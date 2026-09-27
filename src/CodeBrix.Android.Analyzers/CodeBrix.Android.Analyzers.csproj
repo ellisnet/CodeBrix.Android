@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The CBAND diagnostics (plan 2026-09-23 section 3.3, decision D-P12): CodeBrix.Platform constructs that compile
+    unchanged for Android but that CodeBrix.Android accepts and ignores (or shows differently). WARNINGS ONLY, never
+    errors. One Roslyn analyzer assembly with two analyzers: CbandCSharpAnalyzer (hand-written C#) and
+    CbandXamlAnalyzer (the XAML scan over the Page / ApplicationDefinition items, which the XAML generator's build
+    logic passes to the compiler as additional files). Shipped through the consumer buildTransitive logic
+    (build/nuget/buildTransitive) and, in this repository, build/inrepo/CodeBrix.Android.InRepo.targets.
+    netstandard2.0: the analyzer-host exception to the family's net10.0-only rule (the compiler loads analyzers
+    as netstandard2.0 assemblies). Microsoft.CodeAnalysis.CSharp 5.0.0 = the compiler of the first .NET 10 SDK, so
+    every .NET 10 SDK can load it.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>CodeBrix.Android.Analyzers</AssemblyName>
+    <RootNamespace>CodeBrix.Android.Analyzers</RootNamespace>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+    <DevelopmentDependency>true</DevelopmentDependency>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Analyzer release tracking (RS2008): the CBAND ids and their severities. -->
+  <ItemGroup>
+    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+  </ItemGroup>
+
+</Project>

@@ -38,6 +38,38 @@ internal sealed class AndroidKeyboardInputSource : ICodeBrixKeyboardInputSource
     /// <inheritdoc />
     public event TypedEventHandler<object, KeyEventArgs> KeyUp;
 
+    /// <summary>
+    /// Raises one soft-keyboard key in Core (AP7-B, the text-input connection of custom text-entry controls:
+    /// Input/TextInput): a KeyDown carrying the character the key types, or a KeyUp. The Platform software keyboard's
+    /// injection shape (its ISoftwareKeyInjector): no modifiers, the character on the press only.
+    /// </summary>
+    /// <param name="pressed">True for the press, false for the release.</param>
+    /// <param name="key">The virtual key (<see cref="VirtualKey.None"/> for a character no key names).</param>
+    /// <param name="unicodeKey">The character the key types (press only), or null.</param>
+    /// <returns>True when Core handled it.</returns>
+    internal bool InjectSoftwareKey(bool pressed, VirtualKey key, char? unicodeKey)
+    {
+        try
+        {
+            var args = new KeyEventArgs("keyboard", key, VirtualKeyModifiers.None, default(CorePhysicalKeyStatus), unicodeKey: pressed ? unicodeKey : null);
+            if (pressed)
+            {
+                KeyDown?.Invoke(this, args);
+            }
+            else
+            {
+                KeyUp?.Invoke(this, args);
+            }
+
+            return args.Handled;
+        }
+        catch (Exception ex)
+        {
+            Microsoft.UI.Xaml.Application.Current?.RaiseRecoverableUnhandledException(ex);
+            return false;
+        }
+    }
+
     /// <summary>Raises one Android key event in Core; returns true when Core handled it.</summary>
     internal bool OnNativeKeyEvent(AKeyEvent e)
     {

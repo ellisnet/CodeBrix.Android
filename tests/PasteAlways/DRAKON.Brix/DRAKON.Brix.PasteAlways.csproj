@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: DRAKON.Brix (CodeBrix.Samples DRAKON.Brix/src/DRAKON.Brix.UI).
+    Pasted/ = the shared UI project's files, verbatim. Surface/ = the app's DRAKON.Brix.Core (verbatim), a stub of
+    the TclBridge library's RuntimeHost and a stub of the TkCanvas TkHostView element (TkCanvas: no Android flavor,
+    D-O14 NotSupported). See Surface/SOURCES.txt.
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.drakonbrix</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>DRAKON.Brix.PasteAlways</RootNamespace>
+    <AssemblyName>DRAKON.Brix.PasteAlways</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="CodeBrix.Platform.Fonts.OpenSans.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

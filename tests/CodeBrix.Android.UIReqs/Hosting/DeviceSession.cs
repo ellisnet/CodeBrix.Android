@@ -173,7 +173,11 @@ internal static class DeviceSession
         }
         catch (Exception exception)
         {
-            await channel.SendAsync(new JsonObject { ["error"] = exception.Message }).ConfigureAwait(false);
+            // AP1.10: the whole exception (type and stack), not only its message - a one-off
+            // "Object reference not set to an instance of an object." in a stability run could not be traced
+            // (FIXLIST [AP1.10]). The host log keeps it too.
+            Console.Error.WriteLine($"UIReqs host: capture {sequence} failed: {exception}");
+            await channel.SendAsync(new JsonObject { ["error"] = exception.ToString() }).ConfigureAwait(false);
         }
     }
 
@@ -190,12 +194,15 @@ internal static class DeviceSession
 
     /// <summary>
     /// True for the device shell commands a scenario may ask the host to run: <c>wm size</c> and
-    /// <c>wm density</c>, with no argument, <c>reset</c>, a size <c>WxH</c> or a density - nothing else.
+    /// <c>wm density</c>, with no argument, <c>reset</c>, a size <c>WxH</c> or a density, and <c>input tap X Y</c>
+    /// (AP7-B TerminalView: a real system touch, the only thing that puts the display back into touch mode after a
+    /// scenario sent a navigation key through the system) and <c>ime reset</c> (a fresh input method after a scenario
+    /// that typed through a custom control's session, so its state cannot reach the next scenarios) - nothing else.
     /// </summary>
     /// <param name="args">The shell command line.</param>
     /// <returns>True when allowed.</returns>
     internal static bool IsAllowedShell(string? args) =>
-        args != null && System.Text.RegularExpressions.Regex.IsMatch(args, @"^wm (size( (reset|[1-9][0-9]{1,4}x[1-9][0-9]{1,4}))?|density( (reset|[1-9][0-9]{1,3}))?)$");
+        args != null && System.Text.RegularExpressions.Regex.IsMatch(args, @"^(wm (size( (reset|[1-9][0-9]{1,4}x[1-9][0-9]{1,4}))?|density( (reset|[1-9][0-9]{1,3}))?)|input tap [0-9]{1,4} [0-9]{1,4}|ime reset)$");
 
     private static async Task ServeShellAsync(UIReqsChannel channel, string? args)
     {

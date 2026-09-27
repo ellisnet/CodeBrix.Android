@@ -25,6 +25,7 @@ internal sealed class ActivityInputRouter : IActivityInputHook
 {
     private readonly CodeBrixActivity _activity;
     private readonly int[] _location = new int[2];
+    private readonly int[] _decorLocation = new int[2];
     private readonly HashSet<uint> _cancelled = new();
     private readonly HashSet<AKeycode> _editorKeys = new();
 
@@ -156,11 +157,21 @@ internal sealed class ActivityInputRouter : IActivityInputHook
 
     private (float X, float Y, double Density) Origin()
     {
-        // The XamlRoot's content is the root layout's content layer (window coordinates of its top-left).
+        // The XamlRoot's content is the root layout's content layer. The activity receives MotionEvents in its DECOR
+        // VIEW's coordinates, so the origin is the layer's position relative to the decor view (AP7-B TerminalView, FIXLIST
+        // [AP7-B TerminalView]): with the soft keyboard up on a window that shows the status bar, Android lays the decor
+        // view out BELOW the status bar inside the window, and a plain window location was off by that offset - every touch
+        // landed a status bar's height above the finger while the keyboard was up.
         var layer = _activity.RootLayout?.ContentLayer;
         if (layer != null)
         {
             layer.GetLocationInWindow(_location);
+            if (_activity.Window?.DecorView is { } decor)
+            {
+                decor.GetLocationInWindow(_decorLocation);
+                _location[0] -= _decorLocation[0];
+                _location[1] -= _decorLocation[1];
+            }
         }
         else
         {

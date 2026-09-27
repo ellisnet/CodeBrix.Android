@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <!-- Add-in Cores re-shipped by the intake, on request (CodeBrixAndroidInRepoAddIns="FlexPanel;AudioPlayer";
-       names: FlexPanel AudioPlayer CommandBar AppSettings SkiaSharpViews Svg Graphics2DSK Graphics3DGL TextLayout WebView MediaPlayer (the last two: Android assembly only, their Cores are the framework's)). -->
+       names: FlexPanel AudioPlayer CommandBar AppSettings SkiaSharpViews Svg Graphics2DSK Graphics3DGL TextLayout Lottie TerminalView WebView MediaPlayer (the last two: Android assembly only, their Cores are the framework's)). -->
   <PropertyGroup Condition="'$(CodeBrixAndroidInRepoConsumer)' == 'true'">
     <_CodeBrixAndroidInRepoAddIns>;$(CodeBrixAndroidInRepoAddIns);</_CodeBrixAndroidInRepoAddIns>
   </PropertyGroup>
@@ -43,11 +43,13 @@
     <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.AudioPlayer.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';AudioPlayer;'))" />
     <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.CommandBar.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';CommandBar;'))" />
     <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.AppSettings.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';AppSettings;'))" />
-    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.SkiaSharp.Views.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';SkiaSharpViews;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';Svg;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';CommandBar;'))" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.SkiaSharp.Views.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';SkiaSharpViews;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';Svg;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';CommandBar;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';Lottie;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';TerminalView;'))" />
     <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Svg.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';Svg;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';CommandBar;'))" />
     <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.WinUI.Graphics2DSK.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';Graphics2DSK;'))" />
     <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.WinUI.Graphics3DGL.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';Graphics3DGL;'))" />
-    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.TextLayout.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';TextLayout;'))" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.TextLayout.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';TextLayout;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';TerminalView;'))" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Lottie.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';Lottie;'))" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.TerminalView.Core.dll" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';TerminalView;'))" />
   </ItemGroup>
 
   <!--
@@ -55,7 +57,7 @@
     add-in's package would bring it (its Core and its Android assembly).
   -->
   <ItemGroup Condition="'$(_CodeBrixAndroidInRepoIsHead)' == 'true'">
-    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.SkiaSharp.Views/CodeBrix.Android.SkiaSharp.Views.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';SkiaSharpViews;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';Svg;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';Graphics2DSK;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';CommandBar;'))" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.SkiaSharp.Views/CodeBrix.Android.SkiaSharp.Views.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';SkiaSharpViews;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';Svg;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';Graphics2DSK;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';CommandBar;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';Lottie;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';TerminalView;'))" />
     <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.Svg/CodeBrix.Android.UI.Svg.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';Svg;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';CommandBar;'))" />
     <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.CommandBar/CodeBrix.Android.UI.CommandBar.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';CommandBar;'))" />
     <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.FlexPanel/CodeBrix.Android.UI.FlexPanel.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';FlexPanel;'))" />
@@ -64,12 +66,24 @@
     <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.MediaPlayer/CodeBrix.Android.UI.MediaPlayer.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';MediaPlayer;'))" />
     <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.WinUI.Graphics2DSK/CodeBrix.Android.WinUI.Graphics2DSK.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';Graphics2DSK;'))" />
     <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.WinUI.Graphics3DGL/CodeBrix.Android.WinUI.Graphics3DGL.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';Graphics3DGL;'))" />
-    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.TextLayout/CodeBrix.Android.UI.TextLayout.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';TextLayout;'))" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.TextLayout/CodeBrix.Android.UI.TextLayout.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';TextLayout;')) or $(_CodeBrixAndroidInRepoAddIns.Contains(';TerminalView;'))" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.Lottie/CodeBrix.Android.UI.Lottie.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';Lottie;'))" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.TerminalView/CodeBrix.Android.UI.TerminalView.csproj" Condition="$(_CodeBrixAndroidInRepoAddIns.Contains(';TerminalView;'))" />
   </ItemGroup>
 
   <!-- Android flavors: the XAML source generator and analyzers (package analyzers/). -->
   <ItemGroup Condition="'$(_CodeBrixAndroidInRepoIsAndroid)' == 'true'">
     <Analyzer Include="$(CodeBrixPlatformIntakeDir)analyzers/dotnet/cs/*.dll" />
+  </ItemGroup>
+
+  <!--
+    Android flavors: the CBAND analyzer and XAML scan (AP8-T), as the package's analyzers/dotnet/cs/ would bring it.
+    Its diagnostics are warnings the consumer targets keep out of TreatWarningsAsErrors (CodeBrixAndroidCbandIds).
+  -->
+  <ItemGroup Condition="'$(_CodeBrixAndroidInRepoIsAndroid)' == 'true'">
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.Analyzers/CodeBrix.Android.Analyzers.csproj"
+                      ReferenceOutputAssembly="false" OutputItemType="Analyzer" SetTargetFramework="TargetFramework=netstandard2.0"
+                      GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained" UndefineProperties="RuntimeIdentifier;RuntimeIdentifiers;SelfContained" />
   </ItemGroup>
 
   <!-- Android heads: CodeBrix.Android.UI (package lib/) and the Fluent symbols font the package depends on. -->

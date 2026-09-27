@@ -44,6 +44,11 @@
     <PackageVersion Include="SkiaSharp" Version="4.152.0" />
     <PackageVersion Include="SkiaSharp.Views" Version="4.152.0" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Android" Version="4.152.0" />
+    <!-- The Lottie add-in's decoder (Skottie + its scene graph; native code in SkiaSharp's native library). -->
+    <PackageVersion Include="SkiaSharp.Skottie" Version="4.152.0" />
+    <!-- Host-free tests only (never in a package): SkiaSharp's Linux native library, for tests that render on the host. -->
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.152.0" />
+    <PackageVersion Include="HarfBuzzSharp" Version="14.2.1.200" />
     <PackageVersion Include="HarfBuzzSharp.NativeAssets.Android" Version="14.2.1.200" />
   </ItemGroup>
 
@@ -66,6 +71,10 @@
     <!-- The Graphics3DGL add-in Core renders through this managed OpenGL binding (self-produced, not a CodeBrix.Platform
          repository package; the version the pinned Platform build declares). -->
     <PackageVersion Include="CodeBrix.Platform.OpenGL.MitLicenseForever" Version="1.0.252.16" />
+    <!-- The TerminalView add-in Core (AP7-B): the VT engine (self-produced) and the terminal font, at the versions the
+         pinned Platform build's TerminalView package declares. -->
+    <PackageVersion Include="CodeBrix.Terminal.MitLicenseForever" Version="1.0.262.971" />
+    <PackageVersion Include="CodeBrix.Platform.Fonts.RobotoMono.OflLicenseForever" Version="1.0.248.1223" />
   </ItemGroup>
 
   <!--
@@ -85,6 +94,9 @@
   <!-- Build tooling -->
   <ItemGroup>
     <PackageVersion Include="CodeBrix.AssemblyTools.MitLicenseForever" Version="1.0.252.4" />
+    <!-- The CBAND analyzer (src/CodeBrix.Android.Analyzers) and its tests: the compiler API of the first .NET 10 SDK, so
+         every .NET 10 SDK can load the analyzer (a newer version would not load in an older compiler: CS8032). -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
   </ItemGroup>
 
   <!-- Tests -->

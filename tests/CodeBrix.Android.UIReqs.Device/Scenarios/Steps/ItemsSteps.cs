@@ -113,6 +113,29 @@ public sealed class ItemsSteps
 	/// </summary>
 	public static readonly TimeSpan FlipViewSnapSettle = TimeSpan.FromSeconds(2);
 
+	/// <summary>
+	/// How long a SwipeControl is left alone after the finger lifts. On release the control works out where the
+	/// content comes to rest - beside its revealed items, or back over them - and animates it there; an Execute set
+	/// then invokes its item, holds the fully open look for a quarter of a second and animates closed again. The
+	/// requirement is about where it rests, so this waits well past all of that.
+	/// </summary>
+	public static readonly TimeSpan SwipeSettleDelay = TimeSpan.FromSeconds(2);
+
+	/// <summary>How far inside its left edge a finger starts a swipe on a SwipeControl, in logical pixels.</summary>
+	public const int SwipeStartInset = 30;
+
+	/// <summary>
+	/// How wide the strip at a SwipeControl's left edge is that a requirement looks at, in logical pixels. It is
+	/// narrower than the item a Reveal swipe uncovers there (68), so an open control shows only the item in it.
+	/// </summary>
+	public const int SwipeEdgeStripWidth = 40;
+
+	/// <summary>How many moves the flick back at the end of a swipe is delivered in.</summary>
+	public const int FlickBackSteps = 2;
+
+	/// <summary>How long the panel is given between the moves of a flick back: a flick is fast.</summary>
+	public static readonly TimeSpan FlickBackStepDelay = TimeSpan.FromMilliseconds(16);
+
 	private const int PointerId = 0;
 
 	private readonly ScenarioContext _scenarioContext;
@@ -707,6 +730,139 @@ public sealed class ItemsSteps
 		var now = new Region(after.Frame, before.Part, $"that same place in capture \"{toCapture}\"");
 		now.DiffersFrom(was);
 	}
+
+	// ------------------------------------------------------------ swiping
+
+	/// <summary>
+	/// Shows a SwipeControl whose content is a panel of a known colour and whose left side hides one item of another
+	/// colour, which a finger swiping the content to the right uncovers. Every invocation of the item is counted.
+	/// </summary>
+	/// <param name="name">The name the scenario refers to the SwipeControl by.</param>
+	/// <param name="width">The control's width in logical pixels.</param>
+	/// <param name="height">The control's height in logical pixels.</param>
+	/// <param name="contentColor">The colour the content is painted.</param>
+	/// <param name="mode">How the item set behaves: Reveal or Execute.</param>
+	/// <param name="itemName">The name the scenario refers to the item by.</param>
+	/// <param name="itemColor">The colour the item is painted.</param>
+	/// <returns>A task that completes once the SwipeControl is in the tree.</returns>
+	[Given("the application shows a SwipeControl named {string} {int} by {int} painted {string} with a/an {word} item named {string} painted {string}")]
+	public async Task Given_the_application_shows_a_SwipeControl(string name, int width, int height,
+		Color contentColor, string mode, string itemName, Color itemColor)
+	{
+		var swipeMode = Enum.Parse<SwipeMode>(mode, ignoreCase: false);
+
+		SwipeControl swipe = null!;
+		await TestTargetFixture.RunOnUIThreadAsync(() =>
+		{
+			var item = new SwipeItem { Background = new SolidColorBrush(itemColor) };
+			item.Invoked += (_, _) => EventRecorder.Record(itemName, "Invoked");
+
+			var items = new SwipeItems { Mode = swipeMode };
+			items.Add(item);
+
+			swipe = new SwipeControl
+			{
+				Name = name,
+				Width = width,
+				Height = height,
+				LeftItems = items,
+				Content = new Border { Background = new SolidColorBrush(contentColor) },
+			};
+			ElementRegistry.Register(name, swipe);
+		}).ConfigureAwait(false);
+
+		await TestTargetFixture.SetContentAsync(swipe).ConfigureAwait(false);
+	}
+
+	/// <summary>
+	/// Swipes a SwipeControl's content to the right by a distance, starting just inside its left edge, and lets it
+	/// come to rest.
+	/// </summary>
+	/// <param name="name">The Gherkin name of the SwipeControl.</param>
+	/// <param name="distance">How far the finger travels, in device pixels.</param>
+	/// <returns>A task that completes once the finger has been lifted and the control is still.</returns>
+	[When("the SwipeControl {string} is swiped {int} pixels to the right")]
+	public async Task When_the_SwipeControl_is_swiped_to_the_right(string name, int distance)
+	{
+		var bounds = await DeviceRect.OfAsync(ElementRegistry.Resolve(name)).ConfigureAwait(false);
+		var (_, y) = bounds.Center;
+		await DragAsync(bounds.X + SwipeStartInset, y, distance, 0, SwipeSettleDelay).ConfigureAwait(false);
+	}
+
+	/// <summary>
+	/// Swipes a SwipeControl's content from just inside its left edge all the way to its right edge - far past the
+	/// items it hides - and lets it come to rest.
+	/// </summary>
+	/// <param name="name">The Gherkin name of the SwipeControl.</param>
+	/// <returns>A task that completes once the finger has been lifted and the control is still.</returns>
+	[When("the SwipeControl {string} is swiped to its far edge")]
+	public async Task When_the_SwipeControl_is_swiped_to_its_far_edge(string name)
+	{
+		var bounds = await DeviceRect.OfAsync(ElementRegistry.Resolve(name)).ConfigureAwait(false);
+		var (_, y) = bounds.Center;
+		var startX = bounds.X + SwipeStartInset;
+		var endX = bounds.X + bounds.Width - SwipeStartInset;
+		await DragAsync(startX, y, endX - startX, 0, SwipeSettleDelay).ConfigureAwait(false);
+	}
+
+	/// <summary>
+	/// Swipes a SwipeControl's content to the right, then flicks the finger quickly back towards where it started
+	/// and lifts it while it is still moving back - how a person changes their mind - and lets the control come to rest.
+	/// </summary>
+	/// <param name="name">The Gherkin name of the SwipeControl.</param>
+	/// <param name="distance">How far the finger first travels to the right, in device pixels.</param>
+	/// <param name="back">How far the flick takes it back, in device pixels.</param>
+	/// <returns>A task that completes once the finger has been lifted and the control is still.</returns>
+	[When("the SwipeControl {string} is swiped {int} pixels to the right and flicked back {int} pixels")]
+	public async Task When_the_SwipeControl_is_swiped_and_flicked_back(string name, int distance, int back)
+	{
+		var bounds = await DeviceRect.OfAsync(ElementRegistry.Resolve(name)).ConfigureAwait(false);
+		var (_, y) = bounds.Center;
+		var startX = bounds.X + SwipeStartInset;
+
+		TestTargetFixture.Session.TouchPress(PointerId, startX, y);
+		await DelayAsync(DragPressDelay).ConfigureAwait(false);
+
+		for (var step = 1; step <= DragSteps; step++)
+		{
+			TestTargetFixture.Session.TouchMove(PointerId, startX + (int) Math.Round(distance * (step / (double) DragSteps)), y);
+			await DelayAsync(DragStepDelay).ConfigureAwait(false);
+		}
+
+		var farX = startX + distance;
+		for (var step = 1; step <= FlickBackSteps; step++)
+		{
+			TestTargetFixture.Session.TouchMove(PointerId, farX - (int) Math.Round(back * (step / (double) FlickBackSteps)), y);
+			await DelayAsync(FlickBackStepDelay).ConfigureAwait(false);
+		}
+
+		TestTargetFixture.Session.TouchRelease(PointerId, farX - back, y);
+		await SettleAsync(SwipeSettleDelay).ConfigureAwait(false);
+	}
+
+	/// <summary>
+	/// Asserts the colour of the strip at a SwipeControl's left edge: the item's colour while the control is open
+	/// (the content has moved aside), the content's colour while it is closed.
+	/// </summary>
+	/// <param name="name">The Gherkin name of the SwipeControl.</param>
+	/// <param name="color">The colour the strip must be.</param>
+	/// <returns>A task that completes when the assertion has been made.</returns>
+	[Then("the left edge of the SwipeControl {string} is uniformly {string}")]
+	public async Task Then_the_left_edge_of_the_SwipeControl_is_uniformly(string name, Color color)
+	{
+		var bounds = await DeviceRect.OfAsync(ElementRegistry.Resolve(name)).ConfigureAwait(false);
+		var strip = new DeviceRect(bounds.X, bounds.Y, Math.Min(SwipeEdgeStripWidth, bounds.Width), bounds.Height);
+		new Region(ScenarioFrames.Current(_scenarioContext), strip, $"the left edge of \"{name}\"").IsUniformly(color);
+	}
+
+	/// <summary>Asserts how often a SwipeItem was invoked.</summary>
+	/// <param name="itemName">The Gherkin name of the item.</param>
+	/// <param name="times">How often it must have been invoked.</param>
+	[Then("the SwipeItem {string} was invoked {int} time(s)")]
+	public void Then_the_SwipeItem_was_invoked(string itemName, int times) =>
+		EventRecorder.Count(itemName, "Invoked").Should().Be(times,
+			"the SwipeItem \"{0}\" was asserted; the scenario recorded [{1}]",
+			itemName, string.Join(", ", EventRecorder.Recorded));
 
 	// -------------------------------------------------------- drop-downs
 

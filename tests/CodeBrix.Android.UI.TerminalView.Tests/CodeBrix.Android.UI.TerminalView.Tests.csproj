@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Host-free tests (net10.0) of the Android side of the TerminalView add-in (AP7-B):
+    - Core/: the contract the Android assembly implements and relies on, read from the pinned TerminalView Core's
+      metadata (the grants to the Android assembly name, the by-name load, the canvas-supply contract, the engine entry
+      types, the SoftwareKeyboardFocus seam of UI.Core the soft keyboard is driven through);
+    - Input/: what a soft keyboard types reaching the Core's terminal: the keystrokes CodeBrix.Android.UI's text-input
+      connection makes of the keyboard's text (Portable/TextInput, its net10.0 flavor) fed through the Core's OWN key
+      mapping and VT encoder (Input/VirtualKeyMapper, Engine/TerminalInputEncoder) exactly as TerminalControl.OnKeyDown
+      feeds them - plus the hardware-key chords (Ctrl, Alt, Shift+PageUp/Down, Ctrl+Shift+C/V) through the same engine.
+    The canvas element, its native view, the painting and the real keyboards run on the emulator (the TerminalView
+    UIReqs group, the AndroidTerminal fences and the sample gate).
+
+    AssemblyName = the name CodeBrix.Platform.UI.TerminalView.Core grants InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>CodeBrix.Android.UI.TerminalView.Tests</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.TerminalView.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\CodeBrix.Android.UI\CodeBrix.Android.UI.csproj" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)build/intake/CodeBrix.Android.Intake.proj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\CoreMetadata.cs" Link="Shared\CoreMetadata.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Read as metadata only (PEReader), never loaded. -->
+    <AssemblyMetadata Include="CodeBrix.Android.Tests.CoreLib" Value="$(CodeBrixPlatformIntakeLibDir)" />
+    <!-- The input tests load the TerminalView Core (its key mapper and encoder name no XAML element) and UI.Core (VirtualKey). -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.TerminalView.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Foundation.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Core.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CodeBrix.Terminal.MitLicenseForever" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="SilverAssertions.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

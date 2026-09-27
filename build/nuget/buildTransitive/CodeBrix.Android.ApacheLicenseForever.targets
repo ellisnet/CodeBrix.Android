@@ -101,6 +101,23 @@
   </ItemGroup>
 
   <!--
+    CBAND diagnostics (AP8-T; plan 2026-09-23 section 3.3, decision D-P12): the package's analyzer
+    (analyzers/dotnet/cs/CodeBrix.Android.Analyzers.dll) reports, as WARNINGS, the CodeBrix.Platform constructs Android
+    accepts and ignores - in C# (CbandCSharpAnalyzer) and in the XAML (CbandXamlAnalyzer, over the Page and
+    ApplicationDefinition items the XAML generator passes to the compiler as additional files). They are never
+    errors: the ids are added to WarningsNotAsErrors, so an app built with TreatWarningsAsErrors still builds and the
+    diagnostics are counted. CodeBrixAndroidXamlScan=false turns the XAML scan off; NoWarn silences an id as usual.
+  -->
+  <PropertyGroup>
+    <CodeBrixAndroidCbandIds>CBAND0001;CBAND0002;CBAND0003;CBAND0004;CBAND0005;CBAND0006;CBAND0007;CBAND0008</CodeBrixAndroidCbandIds>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);$(CodeBrixAndroidCbandIds)</WarningsNotAsErrors>
+    <CodeBrixAndroidXamlScan Condition="'$(CodeBrixAndroidXamlScan)' == ''">true</CodeBrixAndroidXamlScan>
+  </PropertyGroup>
+  <ItemGroup>
+    <CompilerVisibleProperty Include="CodeBrixAndroidXamlScan" />
+  </ItemGroup>
+
+  <!--
     Compile constants: the family constants a CodeBrix.Platform head defines, minus the
     Skia ones (no HAS_CODEBRIX_SKIA, no __CODEBRIX_SKIA__, no __DESKTOP__), plus the
     Android pair.

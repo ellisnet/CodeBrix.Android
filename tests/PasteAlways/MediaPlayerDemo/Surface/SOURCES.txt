@@ -1,0 +1,2 @@
+Surface/MediaPlayerDemo.Core/Helpers/HostHelper.cs  <- CodeBrix.Samples/MediaPlayerDemo/src/MediaPlayerDemo.Core/Helpers/HostHelper.cs  (verbatim)
+Surface/MediaPlayerDemo.Core/ViewModels/MainViewModel.cs  <- CodeBrix.Samples/MediaPlayerDemo/src/MediaPlayerDemo.Core/ViewModels/MainViewModel.cs  (verbatim)

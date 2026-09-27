@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: MediaPlayerDemo (CodeBrix.Samples MediaPlayerDemo/src/MediaPlayerDemo.UI).
+    Pasted/ = the shared UI project's files, verbatim. Surface/ = the page's view model and host helper
+    (MediaPlayerDemo.Core), verbatim. MediaPlayerElement comes from the framework's Core; its Android
+    flavor is the real MediaPlayer add-in. See Surface/SOURCES.txt.
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.mediaplayerdemo</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>MediaPlayerDemo.PasteAlways</RootNamespace>
+    <AssemblyName>MediaPlayerDemo.PasteAlways</AssemblyName>
+    <CodeBrixAndroidInRepoAddIns>MediaPlayer</CodeBrixAndroidInRepoAddIns>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,10 @@
+<Project>
+
+  <!--
+    The analyzer is not a CodeBrix.Android runtime assembly: it compiles for the compiler host (netstandard2.0)
+    and must NOT get src/Directory.Build.props (the re-shipped Core references, the intake build order). It takes
+    the repository-wide settings only.
+  -->
+  <Import Project="$(MSBuildThisFileDirectory)../../Directory.Build.props" />
+
+</Project>

@@ -166,6 +166,18 @@ internal static class WindowSizeClassMonitor
         return state.Current;
     }
 
+    /// <summary>
+    /// The width in dp of the current window (the size-class override while one is set, else the window of the
+    /// current activity), or NaN when there is none: the form part of AnalyticsInfo.DeviceForm / DeviceFamily
+    /// (decision D2), read at query time.
+    /// </summary>
+    /// <returns>The width in dp, or NaN.</returns>
+    internal static double CurrentWindowWidthDp()
+    {
+        var current = AdaptivePolicy.Override ?? (ActivityRegistry.Current is { IsDestroyed: false } activity ? Current(activity) : WindowSizeClass.Unknown);
+        return current.WidthDp > 0 ? current.WidthDp : double.NaN;
+    }
+
     /// <summary>The activity showing an element's window, or null.</summary>
     /// <param name="element">The element.</param>
     /// <returns>The activity.</returns>

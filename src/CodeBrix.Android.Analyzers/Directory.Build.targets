@@ -1,0 +1,8 @@
+<Project>
+
+  <!--
+    The analyzer is not trimmed into an app (the compiler loads it), so it does not take src/Directory.Build.targets
+    (the embedded ILLink descriptor of the runtime assemblies).
+  -->
+
+</Project>

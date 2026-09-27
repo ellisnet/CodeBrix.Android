@@ -1,0 +1,86 @@
+<Page
+    x:Class="PicoScope.Brix.Views.MainPage"
+    xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+    xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:PicoScope.Brix.ViewModels;assembly=PicoScope.Brix.Core"
+    xmlns:plot="clr-namespace:CodeBrix.Platform.UI.PlotterView;assembly=CodeBrix.Platform.UI.PlotterView"
+    xmlns:local="using:PicoScope.Brix.Views"
+    FontFamily="{StaticResource RobotoFont}"
+    Background="#1E1E24">
+
+    <Page.DataContext>
+        <vm:MainViewModel />
+    </Page.DataContext>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
+            <TextBlock Text="PicoScope.Brix" FontSize="22" FontWeight="SemiBold" Foreground="#F0F0F5" />
+            <TextBlock Text="{d:Binding DeviceText}" FontSize="13" Foreground="#9A9AA8"
+                       VerticalAlignment="Bottom" Margin="12,0,0,3" />
+        </StackPanel>
+
+        <TextBlock Grid.Row="1" Text="{d:Binding CapabilityText}" FontSize="11" Foreground="#7A7A88"
+                   Margin="0,0,0,10" TextWrapping="Wrap" />
+
+        <!-- Acquisition controls -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8" Spacing="8">
+            <Button Content="Single capture" Command="{d:Binding CaptureCommand}" MinWidth="110" />
+            <Button Content="Start streaming" Command="{d:Binding StartStreamingCommand}" MinWidth="110" />
+            <Button Content="Stop" Command="{d:Binding StopStreamingCommand}" MinWidth="80" />
+
+            <TextBlock Text="Range" Foreground="#C0C0CC" VerticalAlignment="Center" Margin="12,0,0,0" />
+            <ComboBox ItemsSource="{d:Binding AvailableRanges}"
+                      SelectedItem="{d:Binding SelectedRangeOption, Mode=TwoWay}"
+                      MinWidth="110" VerticalAlignment="Center" />
+
+            <!-- Chart-only visibility: both channels keep acquiring -->
+            <TextBlock Text="Show" Foreground="#C0C0CC" VerticalAlignment="Center" Margin="12,0,0,0" />
+            <CheckBox Content="A" IsChecked="{d:Binding ShowChannelA, Mode=TwoWay}" Foreground="#E6C828"
+                      VerticalAlignment="Center" MinWidth="0" />
+            <CheckBox Content="B" IsChecked="{d:Binding ShowChannelB, Mode=TwoWay}" Foreground="#4696EB"
+                      VerticalAlignment="Center" MinWidth="0" />
+        </StackPanel>
+
+        <!-- Signal generator and device controls -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10" Spacing="8">
+            <TextBlock Text="Generator" Foreground="#C0C0CC" VerticalAlignment="Center" />
+            <ComboBox ItemsSource="{d:Binding AvailableWaveTypes}"
+                      SelectedItem="{d:Binding SelectedWaveType, Mode=TwoWay}"
+                      MinWidth="110" VerticalAlignment="Center" />
+            <TextBox Text="{d:Binding GeneratorFrequencyText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     MinWidth="80" VerticalAlignment="Center" />
+            <TextBlock Text="Hz" Foreground="#C0C0CC" VerticalAlignment="Center" />
+            <Button Content="Toggle" Command="{d:Binding SignalGeneratorCommand}" MinWidth="70" />
+
+            <Button Content="Flash LED" Command="{d:Binding FlashLedCommand}" MinWidth="90" Margin="12,0,0,0" />
+        </StackPanel>
+
+        <!-- The chart. A bounded star cell, so the control has a real size to render into. -->
+        <Border Grid.Row="4" BorderBrush="#3A3A46" BorderThickness="1">
+            <plot:PlotterControl x:Name="Plotter" Model="{d:Binding Plot.Model}" />
+        </Border>
+
+        <!-- Status -->
+        <Grid Grid.Row="5" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="{d:Binding StatusText}" Foreground="#C0C0CC"
+                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            <TextBlock Grid.Column="1" Text="{d:Binding SimulatedBadge}" Foreground="#E0A030"
+                       FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0,0,0" />
+        </Grid>
+    </Grid>
+</Page>

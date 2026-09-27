@@ -390,6 +390,87 @@ public sealed class PopupSteps
 		await TestTargetFixture.SetContentAsync(popup).ConfigureAwait(false);
 	}
 
+	/// <summary>
+	/// Shows a page, read from XAML markup, that declares a Popup open: <c>IsOpen="True"</c> is set while the markup
+	/// is read, before the Popup is anywhere near the live tree, and the page is shown afterwards. The Popup's child is
+	/// one panel of a known colour.
+	/// </summary>
+	/// <param name="name">The name the scenario refers to the Popup by.</param>
+	/// <param name="panelName">The name the scenario refers to the Popup's child by.</param>
+	/// <param name="width">The child's width in logical pixels.</param>
+	/// <param name="height">The child's height in logical pixels.</param>
+	/// <param name="color">The colour the child is painted.</param>
+	/// <returns>A task that completes once the page is in the tree.</returns>
+	[Given("the application shows a page whose XAML declares an open Popup named {string} with a panel named {string} {int} by {int} painted {string}")]
+	public async Task Given_the_application_shows_a_page_declaring_an_open_Popup(string name, string panelName,
+		int width, int height, Color color)
+	{
+		Grid page = null!;
+		await TestTargetFixture.RunOnUIThreadAsync(() =>
+		{
+			var xaml = string.Create(CultureInfo.InvariantCulture,
+				$"""
+				<Grid xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+				      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+				  <Popup x:Name="{name}" IsOpen="True" HorizontalAlignment="Center" VerticalAlignment="Center">
+				    <Border x:Name="{panelName}" Width="{width}" Height="{height}" Background="{Colors.Describe(color)}" />
+				  </Popup>
+				</Grid>
+				""");
+			page = (Grid)Microsoft.UI.Xaml.Markup.XamlReader.Load(xaml);
+
+			var popup = page.Children.OfType<Popup>().Single();
+			popup.IsOpen.Should().BeTrue("the markup declares the Popup open before the page is shown");
+			ElementRegistry.Register(name, popup);
+			ElementRegistry.Register(panelName, (FrameworkElement)popup.Child);
+		}).ConfigureAwait(false);
+
+		await TestTargetFixture.SetContentAsync(page).ConfigureAwait(false);
+	}
+
+	/// <summary>
+	/// Builds a Popup whose child is one panel of a known colour and opens it in code while it has no parent and no
+	/// XamlRoot - before the application has it anywhere. The scenario adds it to the application afterwards.
+	/// </summary>
+	/// <param name="name">The name the scenario refers to the Popup by.</param>
+	/// <param name="panelName">The name the scenario refers to the Popup's child by.</param>
+	/// <param name="width">The child's width in logical pixels.</param>
+	/// <param name="height">The child's height in logical pixels.</param>
+	/// <param name="color">The colour the child is painted.</param>
+	/// <returns>A task that completes once the Popup has been opened.</returns>
+	[Given("a Popup named {string} with a panel named {string} {int} by {int} painted {string} is opened before the application has it")]
+	public async Task Given_a_Popup_is_opened_before_the_application_has_it(string name, string panelName,
+		int width, int height, Color color)
+	{
+		await TestTargetFixture.RunOnUIThreadAsync(() =>
+		{
+			var popup = BuildPopup(name, panelName, width, height, color);
+			popup.IsOpen = true;
+			popup.XamlRoot.Should().BeNull("the Popup is opened before it has anywhere to open in");
+		}).ConfigureAwait(false);
+	}
+
+	/// <summary>Adds a Popup the scenario built to the application, as its content.</summary>
+	/// <param name="name">The Gherkin name of the Popup.</param>
+	/// <returns>A task that completes once the Popup is in the tree.</returns>
+	[When("the Popup {string} is added to the application")]
+	public async Task When_the_Popup_is_added_to_the_application(string name) =>
+		await TestTargetFixture.SetContentAsync(PopupNamed(name)).ConfigureAwait(false);
+
+	/// <summary>
+	/// Gives a parentless Popup the application's XamlRoot - what an application does for a Popup it never adds to
+	/// a panel - and lets the panel settle.
+	/// </summary>
+	/// <param name="name">The Gherkin name of the Popup.</param>
+	/// <returns>A task that completes once the XamlRoot is set and the UI thread is idle.</returns>
+	[When("the XamlRoot of the Popup {string} is set to the application's")]
+	public async Task When_the_XamlRoot_of_the_Popup_is_set_to_the_applications(string name)
+	{
+		await TestTargetFixture.RunOnUIThreadAsync(() =>
+			PopupNamed(name).XamlRoot = VirtualApplication.Instance.Root.XamlRoot).ConfigureAwait(false);
+		await TestTargetFixture.WaitForIdleAsync().ConfigureAwait(false);
+	}
+
 	/// <summary>Asserts that a bare Popup reports itself open.</summary>
 	/// <param name="name">The Gherkin name of the Popup.</param>
 	/// <returns>A task that completes when the assertion has been made.</returns>
@@ -712,6 +793,32 @@ public sealed class PopupSteps
 		var flyout = Flyout(flyoutName);
 		await TestTargetFixture.RunOnUIThreadAsync(() => open = flyout.IsOpen).ConfigureAwait(false);
 		return open;
+	}
+
+	private static Popup PopupNamed(string name) =>
+		ElementRegistry.Resolve(name) as Popup
+			?? throw new NotSupportedException($"\"{name}\" is not a Popup.");
+
+	private static Popup BuildPopup(string name, string panelName, int width, int height, Color color)
+	{
+		var panel = new Border
+		{
+			Name = panelName,
+			Width = width,
+			Height = height,
+			Background = new SolidColorBrush(color),
+		};
+		ElementRegistry.Register(panelName, panel);
+
+		var popup = new Popup
+		{
+			Name = name,
+			Child = panel,
+			HorizontalAlignment = HorizontalAlignment.Center,
+			VerticalAlignment = VerticalAlignment.Center,
+		};
+		ElementRegistry.Register(name, popup);
+		return popup;
 	}
 
 	private static async Task<bool> IsPopupOpenAsync(string name)

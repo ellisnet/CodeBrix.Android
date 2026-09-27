@@ -21,9 +21,11 @@
     <RootNamespace>CodeBrix.Android.UIReqs.Device</RootNamespace>
     <AssemblyName>CodeBrix.Android.UIReqs.Device</AssemblyName>
     <Nullable>enable</Nullable>
-    <!-- Uno0007: the Platform analyzer asks for the Lottie add-in package wherever ProgressRing is
-         used (Scenarios/Support/RangeElements.cs). The Android Lottie add-in is AP7; the Range
-         scenarios that need it stay pending until then. -->
+    <!-- Uno0007: the Platform analyzer asks for the Lottie add-in wherever ProgressRing is used
+         (Scenarios/Support/RangeElements.cs, the Lottie group's LottieProgressRing scenarios) and recognizes
+         only the Skia twin's assembly name (CodeBrix.Platform.UI.Lottie). This app references the Android
+         Lottie add-in (AP7-B; CodeBrixAndroidInRepoAddIns), and on Android the ProgressRing is a native
+         Material indicator that needs no animation source, so the warning does not apply here. -->
     <NoWarn>$(NoWarn);Uno0007</NoWarn>
     <!-- The copied Graphics3DGL fixtures hand the GL binding vertex-attribute offsets as raw pointers (as the
          Platform's own Graphics3DGL UIReqs project does). -->
@@ -38,6 +40,15 @@
          native behaviour that the copied, injector-driven scenarios cannot show. -->
     <None Remove="AndroidFeatures/**" />
     <None Include="AndroidFeatures/**/*.feature" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The Lottie group's two animation documents, verbatim (Scenarios/AddIns/Lottie/Assets), as resources of this
+         assembly: the copied fixtures name them with embedded:// URIs (ANDROID PORT (f), PORTING.txt). -->
+    <EmbeddedResource Include="Scenarios/AddIns/Lottie/Assets/*.json" LogicalName="UIReqs.Lottie.%(Filename)%(Extension)" />
+    <!-- The same pulse document as an app asset at ms-appx:///Assets/LottieFence/pulse.json, for the AndroidNative fence of
+         ms-appx Lottie sources (pending: FIXLIST [AP7-B Lottie]). -->
+    <Content Include="Scenarios/AddIns/Lottie/Assets/pulse.json" Link="Assets/LottieFence/pulse.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

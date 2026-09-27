@@ -1,0 +1,3 @@
+Surface/WebcamViewer.Core/Helpers/HostHelper.cs  <- CodeBrix.Samples/WebcamViewer/src/WebcamViewer.Core/Helpers/HostHelper.cs  (verbatim)
+Surface/WebcamViewer.Core/Video/VideoCanvas.cs  <- CodeBrix.Samples/WebcamViewer/src/WebcamViewer.Core/Video/VideoCanvas.cs  (verbatim)
+Surface/WebcamViewer.Core/ViewModels/MainViewModel.cs  <- CodeBrix.Samples/WebcamViewer/src/WebcamViewer.Core/ViewModels/MainViewModel.cs  (verbatim)

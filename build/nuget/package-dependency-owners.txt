@@ -1,0 +1,18 @@
+# Package gate (c) input: the package ids a CodeBrix.Android package may depend on, by owner.
+#
+# Every dependency declared by a produced .nupkg must match one line (a trailing '*' matches any rest of
+# the id; matching ignores case). The owner column documents why the id is allowed; it is not read.
+# The policy (plan section 1.1): nuget.org packages owned by Microsoft / Xamarin / dotnetframework,
+# self-produced CodeBrix.* packages, and SQLitePCLRaw as the one accepted third-party exception (reached
+# through CodeBrix.Sqlite). Anything else needs Jeremy's approval before it is added here - the default
+# answer is to vendor. Gate (a) separately refuses every id the CodeBrix.Platform repository produces
+# (build/platform-repo-package-ids.txt), although those ids also match CodeBrix.* below.
+#
+# pattern                   owner on nuget.org
+Xamarin.*                   Microsoft (Xamarin)
+Microsoft.*                 Microsoft
+System.*                    Microsoft (dotnetframework)
+SkiaSharp*                  Microsoft (mono)
+HarfBuzzSharp*              Microsoft (mono)
+CodeBrix.*                  Jeremy Ellis (self-produced)
+SQLitePCLRaw.*              accepted exception (Jeremy, 2026-09-23)

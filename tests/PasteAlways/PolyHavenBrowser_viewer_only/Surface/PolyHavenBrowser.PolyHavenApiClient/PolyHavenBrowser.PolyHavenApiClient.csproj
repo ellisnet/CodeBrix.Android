@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Surface library for the PolyHavenBrowser_viewer_only paste-always head: PolyHavenBrowser.PolyHavenApiClient
+    (CodeBrix.Samples PolyHavenBrowser_viewer_only/src/libs/PolyHavenBrowser.PolyHavenApiClient), built as its own
+    assembly with the source library's own settings (nullable, implicit usings). Verbatim copies: see ../SOURCES.txt.
+  -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>PolyHavenBrowser.PolyHavenApiClient</RootNamespace>
+    <AssemblyName>PolyHavenBrowser.PolyHavenApiClient</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+
+</Project>

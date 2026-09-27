@@ -3,6 +3,17 @@
   <!-- The in-repository CodeBrix.Android consumer wiring (targets half). -->
   <Import Project="$(CodeBrixAndroidRepoRoot)build/inrepo/CodeBrix.Android.InRepo.targets" />
 
+  <!--
+    Every head: no XML documentation file (GenerateDocumentationFile=false in the props). The Android SDK's
+    Xamarin.Android.Bindings.Core.targets sets DocumentationFile for every Android project AFTER the SDK has cleared it
+    for GenerateDocumentationFile=false, so the compiler would still get -doc: and report documentation-comment
+    warnings (CS1574 ...) of verbatim sample sources that no desktop build reports. Removing the doc item keeps the
+    compile in the desktop builds' mode. (AP8-T; replaces a head-level NoWarn CS1574.)
+  -->
+  <ItemGroup Condition="'$(GenerateDocumentationFile)' != 'true'">
+    <DocFileItem Remove="@(DocFileItem)" />
+  </ItemGroup>
+
   <!-- Every head: the pasted XAML is the only XAML; the MSBuild item shapes follow the source apps' .projitems. -->
   <ItemGroup>
     <None Remove="**\*.xaml" />

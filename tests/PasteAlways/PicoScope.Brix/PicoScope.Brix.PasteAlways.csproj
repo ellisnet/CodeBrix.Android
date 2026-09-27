@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: PicoScope.Brix (CodeBrix.Samples PicoScope.Brix/src/PicoScope.Brix.UI).
+    Pasted/ = the shared UI project's files, verbatim. Surface/ = the page's view model, chart model and
+    host helper (PicoScope.Brix.Core) and the device-agnostic ScopeData library, verbatim (the Ps2000
+    driver library is referenced only by the desktop heads and is not needed). The chart element
+    (PlotterControl) is the real PlotterView add-in Core from the intake, referenced directly; the
+    PlotterView add-in has no Android twin yet (runtime pending -> AP7-C). See Surface/SOURCES.txt.
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.picoscopebrix</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>PicoScope.Brix.PasteAlways</RootNamespace>
+    <AssemblyName>PicoScope.Brix.PasteAlways</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The PlotterView add-in Core (PlotterControl); not listed by CodeBrix.Android.InRepo.targets. -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.PlotterView.Core.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="CodeBrix.Platform.Fonts.Roboto.OflLicenseForever" />
+    <!-- The chart engine (PlotModel, series, axes) the Core's ScopePlot builds and PlotterControl renders. -->
+    <PackageReference Include="CodeBrix.Plotter.MitLicenseForever" />
+  </ItemGroup>
+
+</Project>

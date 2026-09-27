@@ -7,18 +7,18 @@ Android: the **JustBetweenUs** main page (text encryption) and the **PdfSideBySi
 libraries behind them are the samples' own files; the app around them is a CodeBrix.Android
 head.
 
-In this phase CodeBrix.Android has no per-control handlers yet, so the pages are shown by the
-**projection viewer**: after every layout pass the window's visual tree is mirrored as native
-Android views at the positions the CodeBrix.Platform layout computed. TextBlock text, TextBox
-text and FontIcon glyphs are real text views in the page's fonts; backgrounds and borders are
-drawn as boxes; every other control is a labelled placeholder box (type name and key values),
-and images are crossed placeholder boxes. Nothing is interactive yet.
+Every element of both pages is shown with a native Android view by the CodeBrix.Android element
+handlers, placed where the CodeBrix.Platform layout put it: TextBlocks are native text views,
+the buttons, text boxes and toggles are Material Components widgets, the image buttons draw their
+SVG icons through the Svg add-in, the star animation plays through the Lottie add-in, and backgrounds, borders and shapes are drawn natively. The
+pages are interactive with touch, mouse and keyboard (the JustBetweenUs page encrypts and
+decrypts text end to end).
 
 ## Projects
 
 | Project | Target frameworks | What it is |
 |---|---|---|
-| `HelloPaste.Android` | net10.0-android36.1 | The Android head: `MainApplication : CodeBrixApplication`, `MainActivity : CodeBrixActivity`, the app's `App.xaml` (the union of the two source apps' resources), the two pasted pages under `Pages/`, and the on-device self-check (`SelfCheck/`). It uses the Svg add-in, which draws the JustBetweenUs page's SVG icons. |
+| `HelloPaste.Android` | net10.0-android36.1 | The Android head: `MainApplication : CodeBrixApplication`, `MainActivity : CodeBrixActivity`, the app's `App.xaml` (the union of the two source apps' resources), the two pasted pages under `Pages/`, and the on-device self-check (`SelfCheck/`). It uses the Svg add-in, which draws the JustBetweenUs page's SVG icons, and the Lottie add-in, which plays its star animation. |
 | `JustBetweenUs.Core` | net10.0; net10.0-android36.1 | The JustBetweenUs view model, image button controls and embedded assets, multi-targeted so the desktop heads and the Android head share one library. |
 | `JustBetweenUs.Encryption` | net10.0 | The encryption services (a UI-free library an Android app uses as is). |
 | `PdfSideBySide.Core` | net10.0; net10.0-android36.1 | The PdfSideBySide view models, multi-targeted like JustBetweenUs.Core. |
@@ -40,7 +40,7 @@ The `page` extra picks the start page (`jbu`, the default, or `pdf`). A Release 
 trimmed. The app writes its visual tree to logcat after each layout change and runs a
 self-check 1.5 seconds after it starts: one `SELFCHECK <name> PASS|FAIL <detail>` line per check
 (platform contracts, App.xaml resources, Frame navigation to the other page and back,
-bindings, commands, the startup dialog, the projected native views) and a final
+bindings, commands, the startup dialog, the native views) and a final
 `SELFCHECK SUMMARY pass=N fail=M`.
 
 `build/test-scripts/device-smoke.sh` does all of it unattended: it starts the emulator,
@@ -71,10 +71,8 @@ centrally in the repository's `Directory.Packages.props`). `App.xaml`, `App.xaml
 Replaced by stubs with the same public surface (each file says so in its first lines):
 
 - `PdfSideBySide.PdfRender/Rendering/PageRenderer.cs` - the original rasterizes pages with the
-  PDFium natives, which this sample does not ship for Android; the stub renders nothing (no
-  document can be opened on Android yet: there is no file picker).
-- `HelloPaste.Android/Stubs/Lottie/LottieVisualSource.cs` - the Lottie add-in has no Android
-  flavor yet; the animation player on the JustBetweenUs page stays empty.
+  PDFium natives, which this sample does not ship for Android; the stub renders nothing, so a
+  picked document shows no pages.
 
 The JustBetweenUs application is based on, and was inspired by, a code sample provided by
 Paul Ainsworth.

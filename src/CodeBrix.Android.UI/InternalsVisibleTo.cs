@@ -3,6 +3,14 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("CodeBrix.Android.UI.Tests")]
 [assembly: InternalsVisibleTo("CodeBrix.Android.UIReqs.Device")]
 
+// AP7-B: the TriPaneView handler's portable plan is tested host-free against the Toolkit Core's engine, which grants its
+// internals only to the Toolkit names.
+[assembly: InternalsVisibleTo("CodeBrix.Android.UI.Toolkit.Tests")]
+
+// AP7-B: the soft keyboard's keystrokes (Portable/TextInput) are fed host-free through the TerminalView Core's own key
+// mapping and encoder, which grants its internals only to the TerminalView names.
+[assembly: InternalsVisibleTo("CodeBrix.Android.UI.TerminalView.Tests")]
+
 // The in-repo sample app's on-device self-check (samples/HelloPaste) reads Overlay.PlatformOverlays.
 [assembly: InternalsVisibleTo("HelloPaste")]
 

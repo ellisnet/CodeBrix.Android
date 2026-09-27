@@ -1,0 +1,5 @@
+Surface/GameEngineMusicDemo.Core/Helpers/HostHelper.cs  <- CodeBrix.Samples/GameEngineMusicDemo/src/GameEngineMusicDemo.Core/Helpers/HostHelper.cs  (verbatim)
+Surface/GameEngineMusicDemo.Core/ViewModels/MainViewModel.cs  <- CodeBrix.Samples/GameEngineMusicDemo/src/GameEngineMusicDemo.Core/ViewModels/MainViewModel.cs  (verbatim)
+Surface/Stubs/GameEngine/GameSurfaceCanvas.cs  <- CodeBrix.Platform.GameEngine.MitLicenseForever (package) CodeBrix.Platform.GameEngine.Host.Rendering.GameSurfaceCanvas / FirstStartedEventHandler / FirstStartedEventArgs  (stub)
+Surface/Stubs/GameEngine/Audio.cs  <- CodeBrix.Platform.GameEngine.MitLicenseForever (package) CodeBrix.Platform.GameEngine.Audio.AudioMixer / MusicTransitionQuantize / MusicStemSet / MusicStem / MidiMusicTrack  (stub)
+Surface/Stubs/GameEngineMusicDemo.Game/GameEngineMusicDemoGame.cs  <- CodeBrix.Samples/GameEngineMusicDemo/src/libs/GameEngineMusicDemo.Game/GameEngineMusicDemoGame.cs  (stub)

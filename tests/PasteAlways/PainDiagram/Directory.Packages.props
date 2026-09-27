@@ -1,0 +1,13 @@
+<Project>
+
+  <!--
+    PainDiagram paste-always head: the repository's central pins, plus the self-produced CodeBrix package the
+    verbatim Surface/ copy of the sample's PainDiagram.Core uses, at the version the sample pins.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <PackageVersion Include="CodeBrix.Imaging.Drawing.ApacheLicenseForever" Version="1.0.252.351" />
+  </ItemGroup>
+
+</Project>

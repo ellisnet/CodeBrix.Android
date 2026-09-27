@@ -41,8 +41,8 @@ REPOSITORY LAYOUT
                                 README.md, THIRD-PARTY-NOTICES.txt. Folders:
                                 Build (the intake), Build/inrepo (in-repo
                                 consumer wiring), Build/nuget (consumer
-                                build logic), Build/test-scripts, Samples,
-                                Tests.
+                                build logic and packaging), Build/test-scripts,
+                                Samples, Templates, Tests.
     global.json                 selects the Microsoft.Testing.Platform test
                                 runner. Does NOT pin an SDK version.
     Directory.Build.props       family settings (NRT off, no implicit usings,
@@ -63,12 +63,18 @@ REPOSITORY LAYOUT
       nuget/buildTransitive/    CodeBrix.Android.ApacheLicenseForever.props /
                                 .targets: the consumer build logic shipped in
                                 the package (see CONSUMER BUILD LOGIC).
+      nuget/                    the packaging: CodeBrix.Android.Pack.proj (the
+                                pack driver), the framework package's nuspec,
+                                CodeBrix.Android.PackInfo.targets, pack-shim/,
+                                package-dependency-owners.txt (see PACKAGING /
+                                PUBLISHING).
+      pack.sh                   build, pack and gate every package (Linux).
       inrepo/                   CodeBrix.Android.InRepo.props / .targets: make
                                 an in-repo app or app library consume the repo
                                 exactly as a package consumer would (see
                                 IN-REPO APPS).
-      test-scripts/             paste-always-compile.sh, device-smoke.sh (see
-                                TESTING).
+      test-scripts/             paste-always-compile.sh, parity-score.sh,
+                                device-smoke.sh (see TESTING).
     src/                        the CodeBrix.Android assemblies (one folder per
                                 assembly; sub-folders per area; see SOURCE
                                 LAYOUT). src/Directory.Build.props adds the
@@ -76,10 +82,17 @@ REPOSITORY LAYOUT
                                 reference and XML doc generation.
     tests/                      test projects; tests/PasteAlways/ holds the
                                 paste-always compile heads (not in the slnx).
+    tools/                      repository tools: UIReqsFrameCompare and
+                                CodeBrix.Android.ParityScore (see TESTING).
     samples/                    HelloPaste (in the slnx); SimpleDebugApp_API_36/
                                 _37 are standalone (see EXTRAS-README.txt).
+    templates/                  the Android head of the CodeBrix.Platform
+                                application template (AndroidHead/) and
+                                TEMPLATE_INTEGRATION.md: what CodeBrix.Develop's
+                                template and the application skill need.
     artifacts/                  build output of the intake, the paste-always
-                                and device-smoke logs (git-ignored).
+                                and device-smoke logs, the parity reports
+                                (artifacts/parity/<pin>/<config>/; git-ignored).
 
 The two standalone samples are excluded from Directory.Build.props and
 Directory.Packages.props by a path test at the top of Directory.Build.props
@@ -193,7 +206,10 @@ name):
                                      android.graphics.Path composition geometry;
                                      multi-targets net10.0 (the inert platform,
                                      Portable/ and HostFree/ only).
-    CodeBrix.Android.UI.Toolkit      IElevationPlatform (stub until handlers).
+    CodeBrix.Android.UI.Toolkit      IElevationPlatform (stub until handlers);
+                                     TriPaneViewEntryPoints: the door into the
+                                     TriPaneView engine's drag entry points
+                                     (used by UI's Handlers/Toolkit).
     CodeBrix.Android.UI              the bootstrap chain, hosting, logging, the
                                      UI contracts, the ELEMENT HANDLERS, the
                                      (diagnostic) projection viewer;
@@ -341,6 +357,24 @@ handler (parent first) and its native view:
                    Policy/Portable/ compiles for net10.0 too.
   Handlers/Composed/ (AP6) Expander, ColorPicker, the Material date and time
                    pickers - see SHAPES AND COMPOSED CONTROLS below.
+  Handlers/Toolkit/ (AP7-B) TriPaneViewHandler: the Toolkit TriPaneView keeps its
+                   template and Core's engine; the handler applies the adaptive
+                   form (AdaptivePolicy.TriPane: one pane / side + one stacked /
+                   three panes) THROUGH the engine's weights - Portable/TriPanePlan
+                   zeroes the regions the window has no room for (the engine then
+                   minimizes them with their restore grips; a grip tap switches
+                   panes and the plan closes the sibling) and writes the saved
+                   weights back when the window widens - and takes a finger or
+                   stylus within the 48-dp touch target of a divider natively
+                   (TriPaneViewLayout.OnInterceptTouchEvent; Core gets a cancel),
+                   driving TriPaneView.Start/Update/CompleteDividerDrag through
+                   CodeBrix.Android.UI.Toolkit's TriPaneViewEntryPoints (only the
+                   Toolkit names get Toolkit.Core's internals; UI.Toolkit cannot
+                   reference UI, so the handler lives here). A mouse stays Core's.
+                   Switch: AdaptivePolicy.AdaptiveTriPaneView (AppContext
+                   CodeBrix.Android.UI.AdaptiveTriPaneView). Host-free tests:
+                   tests/CodeBrix.Android.UI.Toolkit.Tests (the plan against the
+                   Core engine); device: the AndroidToolkit UIReqs group.
 The window's root element (XamlIslandRoot) gets no handler (Core connects it as
 the visual root); AndroidXamlRootHost owns the root view group that shows its
 children's views and keeps it in the activity's content layer.
@@ -425,6 +459,34 @@ StateHidden unless the app's activity declares a visibility): it shows for a
 text box focused by touch, as WinUI's touch keyboard. Pointer icons follow
 Core's cursor (PointerIcons). Core drops a wheel event from a mouse it has not
 seen hover: real mice always hover first.
+CodeBrixRootLayout has DefaultFocusHighlightEnabled = false: it holds the Android focus for Core-focused elements,
+and out of touch mode (after a navigation key through the system) Android would draw its grey focus highlight over
+the whole window (AP7-B TerminalView fix; fence AndroidTerminal). The same holds for the root view group
+TextBoxHandler.ParkFocus hands the focus to, and for any future view that takes the Android focus for Core.
+Pointer positions are measured from the content layer's position relative to the
+DECOR VIEW (the activity receives decor-view coordinates): with the soft keyboard up
+on a window that shows the status bar, Android lays the decor view out below the
+status bar inside the window (AP7-B TerminalView fix; fence AndroidTerminal).
+CUSTOM TEXT-ENTRY CONTROLS (Input/TextInput/, AP7-B): the Core controls that are
+typed into but are not a TextBox (TerminalView, AdvancedTextEdit) report their focus
+through CodeBrix.Platform's SoftwareKeyboardFocus seam; CoreTextInputController (the
+registered ITextInputFocusNotificationsSingleton) then opens a session on the
+activity's CoreTextInputView (a 1x1 view in the root layout's FocusLayer that takes
+the Android focus and is an editor while a session is open) and shows the keyboard.
+Its CoreTextInputConnection (a BaseInputConnection over one editable the view owns)
+turns committed text, a finished composition and "delete surrounding text" into
+KEY PRESSES raised in Core through the window's keyboard source
+(AndroidKeyboardInputSource.InjectSoftwareKey; Portable/TextInput/TextInputKeystrokes:
+the Platform software keyboard's key table, one Enter per line break, Backspace/Delete
+per deleted character); keys the IME sends as key events take the ordinary key path.
+A composition stays in the editable until committed. An add-in registers its
+control's CoreTextInputProfile (EditorInfo: suggestions or not, multi-line or not)
+with CoreTextInput.RegisterProfile from its module initializer; the default profile is
+a multi-line text editor with suggestions. Hardware keys never pass through the view
+(Core gets every key first; the view is not a native editor for ActivityInputRouter).
+Unfocus (or the focused control's Unloaded) closes the session on the next looper turn unless another custom control
+took the focus; the same control focused again does not re-summon a dismissed keyboard, a
+finger/pen press on it does (a mouse press does not).
 Register or replace a handler with CodeBrixHandlers.Register<TElement, THandler>()
 before the first element of that type goes live (internal in v1: D-O1).
 
@@ -463,8 +525,22 @@ and Toolkit bootstraps (reached through each assembly's InternalsVisibleTo
 grant to CodeBrix.Android.UI), then registers the UI contracts (since pin
 1.0.268.12 also IAnimationSettingsPlatform: UISettings.AnimationsEnabled
 follows the animator duration scale; the WinRT bootstrap registers
-IDeviceFamilyPlatform: DeviceFamily "Android.<form>", PROVISIONAL - decision
-D2, one constant in Android/DeviceFamilyAndroidPlatform) and sets the
+IDeviceFamilyPlatform: DeviceFamily "Android.<form>" - decision D2, ruled by
+Jeremy 2026-09-26: the form comes from the window width size class - Compact
+"Android.Mobile", Medium "Android.Tablet", Expanded "Android.Desktop" (the
+television / car / watch / VR-headset UI mode types keep those forms; desk mode
+and the PC feature no longer force Desktop) - and is read at query time:
+Portable/DeviceFormClassifier maps it, Android/AnalyticsInfoAndroidExtension
+asks the size-class service (WindowSizeClassMonitor.CurrentWindowWidthDp,
+override-aware, installed by the UI bootstrap) and falls back to
+Configuration.ScreenWidthDp. AnalyticsInfo.DeviceForm is therefore live on a
+docked phone. VersionInfo.DeviceFamily is NOT live yet: Core composes it ONCE
+(AnalyticsInfo's Lazy AnalyticsVersionInfo reads OperatingSystemFamily and the
+form on the first read), so it keeps the form of that first read - a Platform
+change, reported in the FIXLIST [AP1.11]; its UIReqs scenario (AndroidPolicy,
+"The device family names the form of the window's current size class") is
+pending until then. CodeBrix.Mobile will use "AppleMobile.<form>" on Apple
+devices; Android/DeviceFamilyAndroidPlatform) and sets the
 FeatureConfiguration platform defaults (Popup.ConstrainByVisibleBounds,
 Frame.UseWinUIBehavior, ToolTip.UseToolTips = true). CodeBrixApplication.OnCreate
 calls it explicitly: the framework Cores resolve contracts through
@@ -491,6 +567,13 @@ in a Compact window, < 600 dp); every button / item still runs Core's path
 (RaiseButtonFromPlatform, MenuFlyoutItem.Invoke) and the platform window closes only
 when Core closes the overlay. Everything else (XAML dialog content, Flyout content,
 Popup, TeachingTip, rich ToolTips) stays in Core's PopupRoot (tier 1).
+Since pin 1.0.268.65 (WPE1-6) Core opens a Popup that was set open before it could
+reach a XamlRoot (IsOpen="True" in XAML, opened and then added, or parentless with a
+late XamlRoot) when it loads or when its XamlRoot is assigned; Opened is raised when
+it is shown. No Android code re-toggles IsOpen, defers it to Loaded or sets XamlRoot
+to force an open. A parentless Popup still needs its XamlRoot set (it stays closed
+and logs one warning otherwise; D12 is the owner's). Fenced by the copied
+Popups/Popup.feature scenarios 4-6.
 OverlayPresentation switches the Material forms off (the UIReqs device app does so
 for every scenario not tagged @native-overlays); PlatformOverlays lists what is shown
 natively - INTERNAL (no new public API before D-O1), read by the UIReqs device app and
@@ -642,6 +725,51 @@ initializer (Android/AndroidPlatformBootstrap) registers its contracts and handl
     SkiaSharp typefaces from the APK assets by the font rule of FONTS above; process-wide
     cache), registered from its module initializer (TextLayout.Core and PlotterView.Core
     load CodeBrix.Android.UI.TextLayout by name). SkiaSharp + HarfBuzzSharp native assets.
+    AP7-B: the engine itself needs nothing else from Android. Its first layout loads the
+    device's ICU (API 31+: the NDK-stable libicu.so of the i18n module, whose exports are
+    versioned, e.g. ICU 78 on the API 37 agent AVD) and binds bidi + line breaking to it;
+    Android/TextEngineProbe (diagnostics, UIReqs fences) lays text out through the public
+    TextLayoutEngine and reads the engine's ICU state (Portable/TextEngineIcu names the Core's
+    private members; a host-free test pins them against the intake's TextLayout.Core). Fences:
+    the copied TextLayout group (Scenarios/Features/TextLayout, 15 scenarios) and
+    AndroidNative/EngineContracts "The text engine finds the device's ICU ...".
+  Lottie (AP7-B): the Core (CodeBrix.Platform.UI.Lottie.Core) is the whole player - the
+    animation sources, JSON loading, and the engine (Engine/LottiePlayer over Skottie: play
+    state, stopwatch frame clock, segments/loop, stretch, colour theming), ticked by the
+    Core's own DispatcherQueue timer (Internal/DispatcherQueueTickSource; the sources name it
+    directly, so no platform tick source is taken - Android's DispatcherQueue drives it). The
+    Android side is only the CANVAS SUPPLY, ILottieCanvasPlatform
+    (Android/LottieCanvasAndroidPlatform), registered from the module initializer (Lottie.Core
+    loads CodeBrix.Android.UI.Lottie by name): Android/LottieCanvasElement is a leaf element whose
+    visual comes from the SkiaSharp.Views canvas-host factory (SKCanvasVisualBaseFactory, as the
+    seam element does; no Graphics2DSK dependency), shown by that add-in's SkiaCanvasElementHandler
+    (a native SkiaCanvasView that runs the Core's render callback on each draw); PaintCount is
+    for fences. The animation-source provider (ILottieVisualSourceProvider) is NOT registered
+    here: the Core declares it with an ApiExtension attribute and an app's generated App code
+    registers it (a second registration throws); Android's ProgressRing is native and does not
+    use it. Package: SkiaSharp.Skottie (native code in SkiaSharp's library). An ms-appx:///
+    document does not load (Core resolves it to a file under Package.InstalledPath; FIXLIST
+    [AP7-B Lottie], pending fence in AndroidNative/EngineContracts). Fences: the copied Lottie
+    group (Scenarios/Features/Lottie; its two ProgressRing scenarios are pending: the native ring)
+    and AndroidNative/EngineContracts "A Lottie animation is drawn on the Android canvas supply".
+  TerminalView (AP7-B): the Core (CodeBrix.Platform.UI.TerminalView.Core) is the whole terminal -
+    TerminalControl (its code-built template, scroll bar, context menu, timers, focus, clipboard)
+    over the engine (Engine/TerminalRenderer: the CodeBrix.Terminal buffer, selection, palette,
+    font, blink, Paint(SKCanvas), fit/measure, hit test, gestures; Engine/TerminalInputEncoder: the
+    modifier tracking, the chords and the VT encoding). The Android side is the CANVAS SUPPLY,
+    IRenderCanvasPlatform (Android/RenderCanvasAndroidPlatform), registered from the module
+    initializer (TerminalView.Core loads CodeBrix.Android.UI.TerminalView by name), plus the
+    terminal's soft-keyboard profile (CoreTextInputProfile.Terminal: visible-password layout, no
+    suggestions, no full-screen editor; see INPUT, CUSTOM TEXT-ENTRY CONTROLS).
+    Android/TerminalCanvasElement is a childless Canvas (the Skia heads' RenderCanvas is a Canvas
+    and the copied steps find the surface by that type) shown by Android/TerminalCanvasHandler: a
+    leaf SkiaCanvasView of the SkiaSharp.Views add-in that runs the paint handlers on each draw
+    (one unit = one DIP, clipped), redrawn on Invalidate (any thread: PostInvalidate) and on every
+    re-arrange; PaintCount/InvalidateCount are for fences. Packages: CodeBrix.Terminal and the
+    RobotoMono fonts (the Platform package's versions); it references the TextLayout add-in (the
+    cell is measured and the runs laid out with its engine). Fences: the copied TerminalView group
+    (Scenarios/Features/TerminalView, 14 scenarios) and the Android-only AndroidTerminal group (the
+    canvas supply, the soft-keyboard session and connection, the keyboard-up touch mapping).
   UIReqs: each add-in's group is copied (tests/CodeBrix.Android.UIReqs.Device/PORTING.txt,
   ADD-IN GROUPS).
 
@@ -696,7 +824,8 @@ Status/, MenuButtons/, Icons/, Scroller/, ColorParts/; Status/Portable/ tested h
     AppendToMapping on ButtonHandler.Mapper that touches only DropDownButtons).
   Icons/: BitmapIcon mirrors Core's Grid+Image and tints the ImageView (SrcIn) with
     Foreground when ShowAsMonochrome. PathIcon / AnimatedIcon need nothing (Core composes a
-    Path / the fallback icon; an AnimatedIcon's animation source waits for the Lottie add-in).
+    Path / the fallback icon; Core never builds a visual from an AnimatedIcon's Source - the
+    Lottie add-in does not change that).
   Scroller/: ScrollView keeps its template; its ScrollPresenter's view is CodeBrixScrollView;
     native scrolling is reported through ScrollPresenter.ScrollTo (no animation), Core
     scrolls (ViewChanged) move the view. ColorParts/: a stand-alone ColorSpectrum is AP6's
@@ -705,7 +834,7 @@ Status/, MenuButtons/, Icons/, Scroller/, ColorParts/; Status/Portable/ tested h
   RichEditBox (every member), Block / Paragraph / Glyphs / InlineUIContainer, Hub,
   HubSection, SemanticZoom, ParallaxView, AnnotatedScrollBar, MapControl, SwapChainPanel,
   SwapChainBackgroundPanel, the legacy WebView. Not in the packages: Popover, MapPresenter.
-  MidiPlayer is the AudioPlayer add-in's (AP7-B). SKSwapChainPanel keeps the refusal
+  MidiPlayer is the AudioPlayer add-in's (AP7-C). SKSwapChainPanel keeps the refusal
   contract (AP7-A). UIReqs: AndroidFeatures/AndroidElements10B.
 
 LANE RULES (parallel work packages in this repository). Lanes own DISJOINT
@@ -761,6 +890,23 @@ build/nuget/buildTransitive/CodeBrix.Android.ApacheLicenseForever.props and
   * set CodeBrix.Platform.RootSkiaPlatformAssemblies=false (the Core descriptors
     would root the Skia twins an Android app does not ship: IL2007); XAML
     resource trimming stays off (decision D10);
+  * report the CBAND diagnostics (plan section 3.3, decision D-P12): the
+    package's analyzer (analyzers/dotnet/cs/CodeBrix.Android.Analyzers.dll,
+    src/CodeBrix.Android.Analyzers; netstandard2.0, Microsoft.CodeAnalysis.CSharp
+    5.0.0 so every .NET 10 SDK loads it) reports, as WARNINGS, the constructs
+    Android accepts and ignores: CbandCSharpAnalyzer in hand-written C#,
+    CbandXamlAnalyzer in the Page / ApplicationDefinition XAML (the additional
+    files the XAML generator's build logic passes to the compiler), at the XAML
+    file and line. CBAND0001 template on a native control, 0002 template members
+    on a native control, 0003 composition / backdrops / ThemeShadow, 0004 3-D
+    projection, 0005 ScrollViewer zoom, 0006 PasswordChar not one character,
+    0007 frame-buffer head options, 0008 acrylic / Mica. The ids are appended to
+    WarningsNotAsErrors (CodeBrixAndroidCbandIds), so they never fail a build
+    with TreatWarningsAsErrors; CodeBrixAndroidXamlScan=false turns the XAML scan
+    off. The native-control list the rules use (AndroidSurface.NativeControls)
+    follows the native registrations (CodeBrixHandlers.cs and the add-ins);
+    keep them in step. In the repo, build/inrepo/CodeBrix.Android.InRepo.targets
+    references the analyzer project (as the package's analyzers/ folder would);
   * never import the Platform head, runtime-replace, single-project,
     cross-runtime or WinAppSDK targets.
 
@@ -799,10 +945,15 @@ CODEBRIX_ANDROID_BUILD_LOCK: when set, builds and emulator start/stop run under
         (the corpus page's App.xaml, App.xaml.cs, MainPage.xaml(.cs) and page
         partials, VERBATIM, checked against <App>/pasted-files.sha256; what they
         reference comes from <App>/Surface/, verbatim or stub) and reports one
-        line per page; PASS = unchanged files, 0 warnings, 0 errors. Heads: the
-        eight corpus pages, PdfSideBySide (HelloPaste's second page), and
-        WikipediaPublisher (the WebView add-in) and PolyHavenBrowser (the
-        Graphics3DGL add-in). An add-in with an Android flavor is the real
+        line per app; PASS = unchanged files, 0 warnings other than CBAND, 0
+        errors. CBAND warnings are counted, never failures: the CBAND column,
+        <log dir>/cband-counts.tsv (per app and id) and cband-findings.txt (file
+        and line of each). Heads: every page of the 21 Apache CodeBrix.Samples
+        corpus apps (one head per app; PolyHavenBrowser_viewer_only has its own).
+        The heads never write an XML doc file (tests/PasteAlways/
+        Directory.Build.targets removes the doc item the Android SDK's
+        Bindings.Core.targets adds after GenerateDocumentationFile=false), so
+        verbatim sample sources are compiled as the desktop builds compile them. An add-in with an Android flavor is the real
         add-in in every head that uses it (CodeBrixAndroidInRepoAddIns); a
         Surface/ library that needs an add-in's Core sets the same property
         (e.g. KenneyAssetBrowser.Rendering / PolyHavenBrowser.Rendering:
@@ -858,6 +1009,26 @@ CODEBRIX_ANDROID_BUILD_LOCK: when set, builds and emulator start/stop run under
         what it proves is the geometry audit (logcat tag UIReqs.Geometry, and no
         "Layout replay:" failure).
 
+    build/test-scripts/parity-score.sh [-c Debug|Release]
+        The parity score, published per build (run it after the solution build):
+        tools/CodeBrix.Android.ParityScore (written on CodeBrix.AssemblyTools;
+        static IL reading, nothing is loaded) reads artifacts/intake/<pin>/lib/
+        *.Core.dll and src/**/bin/<config>/net10.0-android36.1/CodeBrix.Android*.dll
+        and writes artifacts/parity/<pin>/<config>/: parity-summary.txt (both
+        scores on one page), parity-notimplemented(.tsv, -members.tsv) = (a) the
+        NotImplemented members per public Core type (marked NotImplemented for
+        the Core, or a body that throws NotImplementedException or raises
+        ApiInformation.TryRaiseNotImplemented), parity-declined(.tsv,
+        -properties.tsv) = (b) per native (element, handler): the public
+        DependencyProperties declared on the element below FrameworkElement that
+        the handler's mapper (with its chain, helpers and the policy layer's
+        Append/Modify/ReplaceMapping calls) maps, that
+        tools/CodeBrix.Android.ParityScore/declined-explained.tsv explains, and
+        the rest = declined; the UIElement + FrameworkElement properties once, in a
+        base row; parity-templated.tsv = registrations served only by the
+        templated fallback or Core. Add an explained line only for a true,
+        written policy; a newly mapped property simply counts as mapped.
+
     build/test-scripts/compare-uireqs-frames.sh <baseline-frames> <current-frames> [--report FILE]
         The copied Platform frame-compare tool (tools/UIReqsFrameCompare, managed
         PNG codec instead of SkiaSharp): every frame byte/pixel compared, diff
@@ -881,7 +1052,10 @@ PORTING.txt: source commit, every adaptation). Two halves:
       element factory and canvas vocabulary; Runtime/StepServer listens on
       localhost:47300 and runs each step the host sends IN the app (matched
       against the copied step definitions: cucumber expressions, context
-      injection, hooks). Touch goes through Core's own InputInjector; keys are
+      injection, hooks). Touch goes through Core's own InputInjector (since pin
+      1.0.269.982 a point injected with TimeOffsetInMilliseconds 0 carries the
+      real time, so an injected drag ends with its real release velocity and
+      flings/flicks behave as a finger's do); keys are
       REAL Android KeyEvents dispatched to the activity (Core's keyboard
       injection is a stub in the pinned build); a captured frame is requested
       from the host; after every frame the GEOMETRY AUDIT checks each named
@@ -924,6 +1098,13 @@ PORTING.txt: source commit, every adaptation). Two halves:
       hides a soft keyboard a scenario left up (logcat UIReqs.Keyboard). (The
       AP7-M FrameworkBrushGuard is gone: pin 1.0.268.12 fixes the shared-brush
       animation leak in Core, fenced by the copied ProgressBar scenario.)
+      Rendering carry-over (AP1.10): after the AndroidElements10A calendars
+      feature, strict frames drawn later IN THE SAME APP SESSION can differ from
+      the baseline by 1-5/255 on single edge rows/columns (state inside the
+      emulator's rendering pipeline; no view, window or composition property
+      differs; FIXLIST [AP1.10]). Stability triples therefore run PER GROUP
+      (--group "<the 28 group names>": the runner restarts the app for every
+      group). A single-session run is still useful for leak hunting.
       The harness waits until the content a step shows IsLoaded before the
       next step (VirtualApplication.SetContentAsync, PORTING.txt (8)).
   tests/CodeBrix.Android.UIReqs          (net10.0, xunit.v3 + Reqnroll, MTP)
@@ -966,12 +1147,106 @@ per-assembly types after it; the paste-always heads use <App>.PasteAlways).
 
 PACKAGING / PUBLISHING
 ======================
-Every package id carries the .ApacheLicenseForever suffix. Packages are packed
-from nuspecs (a csproj pack would turn project references into package
-dependencies). Package gates: no dependency on an id in
-build/platform-repo-package-ids.txt; every assembly in the TFM folder an
-Android app selects; dependency diff reviewed. The packable projects carry the
-family's date-stamped version block. Jeremy publishes.
+    build/pack.sh [-c Release|Debug] [--no-build] [--version 1.x.y.z]
+
+Builds CodeBrix.Android.slnx, then runs the pack driver
+build/nuget/CodeBrix.Android.Pack.proj (`dotnet build
+build/nuget/CodeBrix.Android.Pack.proj -c Release` after a solution build does
+the same), which writes every package and the gate report to
+artifacts/packages/<Configuration>/<version>/ (git-ignored). The driver is not
+part of the solution build. On the Android track, set
+CODEBRIX_ANDROID_BUILD_LOCK=~/ClaudeHome/android-buildout-work/build.lock so each
+dotnet command runs under the track's build lock. Jeremy publishes; nothing in
+the repository pushes a package.
+
+THE PACKAGES. Every id carries the .ApacheLicenseForever suffix (decision D-O13
+is Jeremy's; built to the recommendation: the suffix for every package,
+MediaPlayer and SkiaSharp.Views included, whose CodeBrix.Platform counterparts
+are LGPL / MIT; the MIT notice of the SkiaSharp.Views Core is kept in that
+package's notices/ folder).
+  CodeBrix.Android.ApacheLicenseForever (the framework), from the hand-written
+  build/nuget/CodeBrix.Android.ApacheLicenseForever.nuspec:
+    lib/net10.0-android36.1/  CodeBrix.Android, .UI (+ its .aar: the Android
+                              resources), .UI.Composition, .UI.Dispatching,
+                              .UI.Toolkit (dll, xml, pdb) and the re-shipped
+                              framework Cores + CodeBrix.Platform.Xaml (every lib/
+                              file the intake took from the CodeBrix.Platform
+                              framework package)
+    analyzers/dotnet/cs/      the re-shipped XAML source generator, its parser
+                              and analyzers, and CodeBrix.Android.Analyzers (CBAND)
+    buildTransitive/          CodeBrix.Android.ApacheLicenseForever.props/.targets
+                              and, beside them, the re-shipped Platform build files
+    notices/                  the CodeBrix.Platform package's
+                              THIRD-PARTY-NOTICES.txt and the intake manifest
+                              (the SHA-256 of every re-shipped file)
+    README.md, AGENT-README.txt, THIRD-PARTY-NOTICES.txt, icon-codebrix-128.png
+    dependencies: Material Components, AndroidX SwipeRefreshLayout, the
+    Microsoft.Extensions packages and CodeBrix.ServiceLocator the Cores need,
+    and the Fluent symbols font package.
+  CodeBrix.Android.<AddIn>.ApacheLicenseForever, one per add-in project, from a
+  nuspec the driver GENERATES from the project (never hand-edited): the add-in
+  assembly (dll, xml, pdb, aar when present) and the Core(s) it owns = the Core
+  references of the project, minus the framework Cores, minus the Cores its add-in
+  dependencies ship (CommandBar ships CommandBar.Core; Svg ships Svg.Core;
+  SkiaSharp.Views ships SkiaSharp.Views.Core), plus the CodeBrix.Platform notices
+  of each owned Core. Dependencies: the framework package and every add-in
+  project it references, at exactly the run's version ([v]); each
+  PackageReference it passes on that the framework does not bring.
+  <AddIn> is the project folder without "CodeBrix.Android." and a leading "UI." /
+  "WinUI." - the CodeBrix.Platform add-in package's name.
+The net10.0 flavors of the multi-targeted projects are never packed (tests only).
+
+VERSIONS. One date-stamped version per pack run, stamped on every package: the
+family's canonical formula 1.<years since 2026>.<day of year>.<minute of day>
+(UTC), computed once in the driver as in the CodeBrix.Platform pack driver
+(-p:BuildVersion / --version re-packs an existing version). The assemblies are
+not re-stamped (the pack takes the built outputs). Dependency versions are never
+written by hand: the nuspecs use $dep_<Package_Id>$ tokens that the driver fills
+from Directory.Packages.props, and the driver stops when the framework nuspec
+lacks a dependency the framework projects reference.
+
+THE PACKAGE GATES (build/intake/CodeBrix.Android.IntakeGate, "packages" mode;
+run by the driver after packing; any error fails the run; report
+package-gates.txt beside the packages, which also lists every package's
+dependencies and lib/ files for the dependency review):
+  (a) CBAP0001  no dependency on an id in build/platform-repo-package-ids.txt
+                (Constraint 1)
+  (b) CBAP0002  no Skia twin of a Core in any package (no assembly named like a
+                Core without ".Core", no non-Core CodeBrix.Platform assembly under
+                lib/, no codebrix-platform-runtime/ folder, no lib/ assembly that
+                references a twin); every lib/ file in lib/net10.0-android36.1/;
+                every lib/ assembly in exactly one package
+  (c) CBAP0003  every dependency id matches build/nuget/package-dependency-owners.txt
+                (Microsoft / Xamarin / dotnetframework, CodeBrix.*, SQLitePCLRaw)
+Tests: tests/CodeBrix.Android.IntakeGate.Tests/Packages/.
+
+ADDING A PACKAGE
+  * An add-in: create src/AddIns/CodeBrix.Android.<AddIn>/ as ADD-INS describes,
+    then add ONE line to build/nuget/CodeBrix.Android.Pack.proj:
+        <CodeBrixAndroidAddIn Include="CodeBrix.Android.<AddIn>" />
+    (optional metadata: PackageName, Description). The driver stops on an add-in
+    folder that is neither listed nor in CodeBrixAndroidAddInNotPacked (with a
+    reason). Add the package to AGENT-README.txt (ADD-INS ON ANDROID).
+  * A new dependency: pin it in Directory.Packages.props; the generated nuspecs
+    pick it up; for the framework, add a <dependency> with its $dep_...$ token to
+    the framework nuspec (the driver checks). An id outside the owner list needs
+    Jeremy's approval before package-dependency-owners.txt gets a line.
+  * A new framework assembly: add its files to the framework nuspec.
+  * At the first publish, move the CBAND ids from
+    src/CodeBrix.Android.Analyzers/AnalyzerReleases.Unshipped.md to Shipped.md.
+
+APPLICATION TEMPLATE. templates/AndroidHead/ is the Android head of the
+CodeBrix.Platform application template (token TemplateApp, as in the template
+archive) and templates/TEMPLATE_INTEGRATION.md lists what CodeBrix.Develop's
+template and the codebrix-create-new-application skill need to offer it; both
+live outside this repository and are changed by their owner. Debugging (decision
+D-O15, Jeremy's): no debugger is named as a requirement; CodeBrix.Develop debugs
+.NET 11 Android apps, and a .NET 10 Android app is debugged as .NET 10 Android
+apps are today.
+
+HANDLER-AUTHORING API. CodeBrixHandlers.Register and the handler base classes
+stay INTERNAL (decision D-O1, Jeremy's): apps cannot register native handlers in
+this version.
 
 
 CODING CONVENTIONS

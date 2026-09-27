@@ -6,7 +6,8 @@ Feature: Android window size classes and the adaptive table
 	orientations; Compact and Medium come from REAL resizes of the window (the host runs "wm density" for the
 	scenario and puts it back afterwards), and one scenario checks that the size-class override re-maps as a real
 	resize does. A native NavigationView absorbs the system bars it overlaps (the harness hides them; those
-	scenarios show them).
+	scenarios show them). Decision D2: AnalyticsInfo.DeviceForm and the form part of DeviceFamily ("Android.<form>")
+	are the window's width size class - Compact = Mobile, Medium = Tablet, Expanded = Desktop - read at query time.
 
 Scenario: The window's size classes come from its size in dp
 	Then the window size classes are computed from the window's own size
@@ -132,3 +133,23 @@ Scenario: A native modal-drawer NavigationView keeps its top bar and its page cl
 	And the destinations of "nav" are clear of the system bars
 	And the page "page" is clear of the system bars
 	And the page "page" is laid out beside the "ModalDrawer" of "nav"
+
+Scenario: The device form is the window's width size class, read at query time
+	Then AnalyticsInfo.DeviceForm is "Desktop"
+	When the real window is resized to 400 dp wide
+	Then the window is "Compact" wide
+	And AnalyticsInfo.DeviceForm is "Mobile"
+	When the real window is resized to 700 dp wide
+	Then the window is "Medium" wide
+	And AnalyticsInfo.DeviceForm is "Tablet"
+	When the real window size is restored
+	Then the window is "Expanded" wide
+	And AnalyticsInfo.DeviceForm is "Desktop"
+
+Scenario: The device family names the form of the window's current size class
+	Then AnalyticsInfo.VersionInfo.DeviceFamily is "Android.Desktop"
+	When the real window is resized to 400 dp wide
+	Then the window is "Compact" wide
+	And AnalyticsInfo.VersionInfo.DeviceFamily is "Android.Mobile"
+	When the real window size is restored
+	Then AnalyticsInfo.VersionInfo.DeviceFamily is "Android.Desktop"

@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android pack shim: an SDK project that exists only so the .NET SDK packer can pack one
+    .nuspec (the family pattern of the CodeBrix.Platform pack driver). Never built on its own, never in
+    the solution, never a package itself: build/nuget/CodeBrix.Android.Pack.proj runs
+    `dotnet pack` on it once per package, passing
+
+      CbaNuspec            absolute path of the .nuspec to pack
+      CbaNuspecBasePath    the folder the nuspec's relative <file src> paths resolve against (the repo root)
+      CbaNuspecPropsFile   a generated .props file that sets NuspecProperties (the shared date-stamped
+                           version, the configuration, the pinned CodeBrix.Platform build and one
+                           dep_<Package_Id> token per centrally pinned package)
+      -o <folder>          where the .nupkg is written
+
+    NU5100 (an assembly outside lib/) is expected: the re-shipped CodeBrix.Platform MSBuild task
+    assemblies live under buildTransitive/, where the build logic loads them from. NU5128 is the SDK
+    packer's note about a nuspec whose TFM groups it cannot compare with this empty project.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <IsPackable>true</IsPackable>
+    <NoWarn>$(NoWarn);NU5100;NU5128;CS2008</NoWarn>
+    <NuspecFile>$(CbaNuspec)</NuspecFile>
+    <NuspecBasePath>$(CbaNuspecBasePath)</NuspecBasePath>
+  </PropertyGroup>
+
+  <Import Project="$(CbaNuspecPropsFile)" Condition="'$(CbaNuspecPropsFile)' != '' and Exists('$(CbaNuspecPropsFile)')" />
+
+</Project>

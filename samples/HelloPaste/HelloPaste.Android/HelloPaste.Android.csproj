@@ -22,8 +22,9 @@
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <RootNamespace>HelloPaste</RootNamespace>
     <AssemblyName>HelloPaste</AssemblyName>
-    <!-- The Svg add-in draws the JustBetweenUs page's SVG icons (SvgImageSource in its image buttons). -->
-    <CodeBrixAndroidInRepoAddIns>Svg</CodeBrixAndroidInRepoAddIns>
+    <!-- The Svg add-in draws the JustBetweenUs page's SVG icons (SvgImageSource in its image buttons); the Lottie
+         add-in plays the star animation of its AnimatedVisualPlayer. -->
+    <CodeBrixAndroidInRepoAddIns>Svg;Lottie</CodeBrixAndroidInRepoAddIns>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">

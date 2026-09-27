@@ -17,7 +17,35 @@ BUILD TOOLING
 The CodeBrix.Platform intake: downloads the pinned CodeBrix.Platform build,
 extracts the assemblies and build files CodeBrix.Android re-ships, writes a
 manifest and runs the intake gates. The gate tool is a small console program
-used only by the intake project. See MAINTAINER-README.txt (INTAKE).
+used by the intake project and, in its "packages" mode, by the pack driver (the
+package gates). See MAINTAINER-README.txt (INTAKE, PACKAGING / PUBLISHING).
+
+
+PACKAGING TOOLING
+=================
+    build/pack.sh
+    build/nuget/CodeBrix.Android.Pack.proj
+    build/nuget/CodeBrix.Android.PackInfo.targets
+    build/nuget/pack-shim/
+    build/nuget/package-dependency-owners.txt
+
+The pack driver and its helpers: build/pack.sh builds the solution and packs
+every package (the framework nuspec build/nuget/CodeBrix.Android.ApacheLicenseForever.nuspec
+and one generated nuspec per add-in) into artifacts/packages/, then runs the
+three package gates (the gate tool's "packages" mode). See MAINTAINER-README.txt
+(PACKAGING / PUBLISHING). The consumer build logic under build/nuget/buildTransitive/
+IS shipped, inside the framework package.
+
+
+APPLICATION TEMPLATE HEAD
+=========================
+    templates/AndroidHead/
+    templates/TEMPLATE_INTEGRATION.md
+
+The Android head of the CodeBrix.Platform application template (the files a new
+application's src/<Name>.Android/ gets, plus the two-target-framework .Core
+project) and the list of what CodeBrix.Develop's template and the application
+skill need to offer it. Not built by the solution.
 
 
 TEST PROJECTS AND SCRIPTS
@@ -27,20 +55,33 @@ TEST PROJECTS AND SCRIPTS
     tests/PasteAlways/
     tests/CodeBrix.Android.UIReqs.Device/
     tests/CodeBrix.Android.UIReqs/
+    tests/CodeBrix.Android.Analyzers.Tests/
+    tests/CodeBrix.Android.ParityScore.Tests/
     tools/UIReqsFrameCompare/
+    tools/CodeBrix.Android.ParityScore/
     build/test-scripts/paste-always-compile.sh
+    build/test-scripts/parity-score.sh
     build/test-scripts/device-smoke.sh
     build/test-scripts/android-uireqs-avd.sh
     build/test-scripts/android-uireqs-run.sh
     build/test-scripts/compare-uireqs-frames.sh
 
 xUnit v3 tests of the intake gate tool and of CodeBrix.Android (host-free); the
-paste-always compile heads (one throw-away Android head per corpus page, built
-by paste-always-compile.sh); the device smoke test (device-smoke.sh); the
+paste-always compile heads (one throw-away Android head per corpus app, every
+page, built by paste-always-compile.sh, which also counts the CBAND warnings);
+the parity-score tool and its tests (parity-score.sh; the report goes to
+artifacts/parity/); the tests of the CBAND analyzer; the device smoke test (device-smoke.sh); the
 UIReqs suite on an Android emulator (the CodeBrix.Platform UIReqs scenarios,
 copied: a scenario app on the emulator plus a Reqnroll host runner, run by
 android-uireqs-run.sh, frames compared by compare-uireqs-frames.sh). See
 MAINTAINER-README.txt (TESTING, UIREQS).
+
+
+SAMPLES
+=======
+    samples/README.md
+
+The samples folder's map (the samples below).
 
 
 HELLOPASTE SAMPLE

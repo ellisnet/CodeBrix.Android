@@ -1,8 +1,8 @@
 THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
 
 CodeBrix.Android runs CodeBrix.Platform applications on Android with native
-Android and Material Components views. It incorporates, or will incorporate as
-the work proceeds, material from the projects listed below (collectively,
+Android and Material Components views. It incorporates material from the
+projects listed below (collectively,
 "Third Party Code"). Jeremy Ellis and contributors are not the original
 author(s) of the Third Party Code. The original copyright notices and the
 licenses under which Jeremy Ellis and contributors received such Third Party
@@ -222,7 +222,17 @@ https://github.com/ellisnet/CodeBrix.Android/issues
     the XAML source generator, analyzers and MSBuild tasks of a pinned
     CodeBrix.Platform build. Their provenance and third-party notices are the
     THIRD-PARTY-NOTICES.txt files of the CodeBrix.Platform packages they come
-    from, which are redistributed with them.
+    from, which are redistributed with them: each CodeBrix.Android package
+    carries, under notices/<CodeBrix.Platform package id>/, the notices file of
+    every CodeBrix.Platform package whose assemblies it re-ships, and the
+    framework package carries the intake manifest (notices/intake-manifest.tsv:
+    the source package and SHA-256 of every re-shipped file).
+
+    The CodeBrix.Android.SkiaSharp.Views package re-ships
+    CodeBrix.Platform.SkiaSharp.Views.Core.dll from the MIT-licensed package
+    CodeBrix.Platform.SkiaSharp.Views.MitLicenseForever. That assembly remains
+    under the MIT License; its notice (the notices file of that package) is
+    kept in the CodeBrix.Android.SkiaSharp.Views package.
 
 ================================================================================
  4. Material Components for Android and AndroidX
@@ -234,6 +244,12 @@ https://github.com/ellisnet/CodeBrix.Android/issues
     license and notice files (MIT for the bindings, Apache License, Version 2.0
     for the Java libraries). No source from them is included in this
     repository.
+
+    The add-in packages likewise reference, without incorporating their source,
+    SkiaSharp and HarfBuzzSharp (MIT), AndroidX Media3 and AndroidX WebKit
+    (.NET bindings: MIT; Java libraries: Apache License, Version 2.0) and the
+    self-produced CodeBrix.SkiaSvg, CodeBrix.Sqlite and CodeBrix.Platform.OpenGL
+    packages; each carries its own license and notice files.
 
 ================================================================================
  5. CodeBrix.Samples (sample and test code only - not in any package)

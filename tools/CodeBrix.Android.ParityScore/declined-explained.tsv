@@ -1,0 +1,81 @@
+# The explained list of the CodeBrix.Android parity score (tools/CodeBrix.Android.ParityScore).
+#
+# A public DependencyProperty that no native handler maps is "declined" unless a line below explains it: Core itself,
+# the policy layer or the platform answers for it, so a handler has nothing to map. Every line is a written policy
+# decision; add one only when the reason is true of the code today, and remove it when a handler starts mapping the
+# property (the report then counts it as mapped anyway).
+#
+# Format: four tab-separated fields
+#   declaring type (full name, or * for any type) | property member name | category | reason (one sentence)
+# Categories:
+#   core-layout   Core measures and arranges every element; the native views replay Core's slots.
+#   core-tree     Object-model state Core keeps (names, data context, resources, styles); nothing native shows it.
+#   core-input    Core's input regime owns hit testing, focus navigation, drag and manipulation; native views forward input.
+#   core-template Core applies templates and visual states; a native handler does not use them (AP6 C6, CBAND0001).
+#   policy        The policy layer answers for it (theme bridge, size classes, type scale, motion).
+#   platform      The Android platform supplies the behaviour (system focus visuals, IME, accessibility).
+
+# --- UIElement / FrameworkElement: layout (Core measures and arranges; the view groups replay the slots) -------------
+Microsoft.UI.Xaml.FrameworkElement	WidthProperty	core-layout	Core measures the element; its view receives Core's slot.
+Microsoft.UI.Xaml.FrameworkElement	HeightProperty	core-layout	Core measures the element; its view receives Core's slot.
+Microsoft.UI.Xaml.FrameworkElement	MinWidthProperty	core-layout	Core measures the element; its view receives Core's slot.
+Microsoft.UI.Xaml.FrameworkElement	MinHeightProperty	core-layout	Core measures the element; its view receives Core's slot.
+Microsoft.UI.Xaml.FrameworkElement	MaxWidthProperty	core-layout	Core measures the element; its view receives Core's slot.
+Microsoft.UI.Xaml.FrameworkElement	MaxHeightProperty	core-layout	Core measures the element; its view receives Core's slot.
+Microsoft.UI.Xaml.FrameworkElement	MarginProperty	core-layout	Core arranges the element inside its margin; its view receives Core's slot.
+Microsoft.UI.Xaml.FrameworkElement	HorizontalAlignmentProperty	core-layout	Core arranges the element; its view receives Core's slot.
+Microsoft.UI.Xaml.FrameworkElement	VerticalAlignmentProperty	core-layout	Core arranges the element; its view receives Core's slot.
+Microsoft.UI.Xaml.UIElement	UseLayoutRoundingProperty	core-layout	Core rounds its layout; the view groups replay Core's rounded slots in pixels.
+
+# --- UIElement / FrameworkElement: object-model state ----------------------------------------------------------------
+Microsoft.UI.Xaml.FrameworkElement	NameProperty	core-tree	x:Name is object-model state (FindName, bindings); nothing native shows it.
+Microsoft.UI.Xaml.FrameworkElement	TagProperty	core-tree	Application data kept by Core; nothing native shows it.
+Microsoft.UI.Xaml.FrameworkElement	DataContextProperty	core-tree	Core's binding engine consumes it; handlers map the bound results.
+Microsoft.UI.Xaml.FrameworkElement	StyleProperty	core-tree	Core applies the style's setters; handlers map the resulting property values.
+Microsoft.UI.Xaml.FrameworkElement	LanguageProperty	core-tree	Core's text and resource lookups consume it.
+Microsoft.UI.Xaml.UIElement	TransitionsProperty	core-tree	Theme transitions are Core's (composition is inert on Android); the motion policy covers native animations.
+
+# --- UIElement / FrameworkElement: input and focus (Core's input regime; native views forward input) -------------------
+Microsoft.UI.Xaml.UIElement	IsHitTestVisibleProperty	core-input	Core's hit test decides who gets input; native views forward touches to Core.
+Microsoft.UI.Xaml.UIElement	AllowDropProperty	core-input	Drag and drop runs through Core's input regime.
+Microsoft.UI.Xaml.UIElement	CanDragProperty	core-input	Drag and drop runs through Core's input regime.
+Microsoft.UI.Xaml.UIElement	ManipulationModeProperty	core-input	Manipulations are Core's gesture recognisers over forwarded input.
+Microsoft.UI.Xaml.UIElement	PointerCapturesProperty	core-input	Pointer capture is Core state.
+Microsoft.UI.Xaml.UIElement	TabFocusNavigationProperty	core-input	Keyboard focus navigation is Core's; the focus mirror follows it.
+Microsoft.UI.Xaml.UIElement	XYFocusKeyboardNavigationProperty	core-input	Directional focus navigation is Core's; the focus mirror follows it.
+Microsoft.UI.Xaml.UIElement	XYFocusDownProperty	core-input	Directional focus navigation is Core's; the focus mirror follows it.
+Microsoft.UI.Xaml.UIElement	XYFocusUpProperty	core-input	Directional focus navigation is Core's; the focus mirror follows it.
+Microsoft.UI.Xaml.UIElement	XYFocusLeftProperty	core-input	Directional focus navigation is Core's; the focus mirror follows it.
+Microsoft.UI.Xaml.UIElement	XYFocusRightProperty	core-input	Directional focus navigation is Core's; the focus mirror follows it.
+Microsoft.UI.Xaml.UIElement	XYFocusDownNavigationStrategyProperty	core-input	Directional focus navigation is Core's; the focus mirror follows it.
+Microsoft.UI.Xaml.UIElement	XYFocusUpNavigationStrategyProperty	core-input	Directional focus navigation is Core's; the focus mirror follows it.
+Microsoft.UI.Xaml.UIElement	XYFocusLeftNavigationStrategyProperty	core-input	Directional focus navigation is Core's; the focus mirror follows it.
+Microsoft.UI.Xaml.UIElement	XYFocusRightNavigationStrategyProperty	core-input	Directional focus navigation is Core's; the focus mirror follows it.
+Microsoft.UI.Xaml.UIElement	TabIndexProperty	core-input	Tab order is Core's focus manager; the focus mirror follows it.
+Microsoft.UI.Xaml.UIElement	KeyboardAcceleratorPlacementModeProperty	core-input	Keyboard accelerators are dispatched by Core from forwarded keys.
+Microsoft.UI.Xaml.UIElement	KeyboardAcceleratorPlacementTargetProperty	core-input	Keyboard accelerators are dispatched by Core from forwarded keys.
+Microsoft.UI.Xaml.UIElement	AllowFocusOnInteractionProperty	core-input	Focus on interaction is decided by Core's focus manager.
+Microsoft.UI.Xaml.UIElement	AllowFocusWhenDisabledProperty	core-input	Focus eligibility is decided by Core's focus manager.
+Microsoft.UI.Xaml.UIElement	FocusStateProperty	core-input	Focus state is Core's; the focus mirror follows it.
+
+# --- Focus visuals: Android draws its own focus highlight --------------------------------------------------------------
+Microsoft.UI.Xaml.FrameworkElement	FocusVisualMarginProperty	platform	Android draws the system focus highlight on native views.
+Microsoft.UI.Xaml.FrameworkElement	FocusVisualPrimaryBrushProperty	platform	Android draws the system focus highlight on native views.
+Microsoft.UI.Xaml.FrameworkElement	FocusVisualPrimaryThicknessProperty	platform	Android draws the system focus highlight on native views.
+Microsoft.UI.Xaml.FrameworkElement	FocusVisualSecondaryBrushProperty	platform	Android draws the system focus highlight on native views.
+Microsoft.UI.Xaml.FrameworkElement	FocusVisualSecondaryThicknessProperty	platform	Android draws the system focus highlight on native views.
+Microsoft.UI.Xaml.UIElement	UseSystemFocusVisualsProperty	platform	Android draws the system focus highlight on native views.
+
+# --- Theme ---------------------------------------------------------------------------------------------------------------
+Microsoft.UI.Xaml.FrameworkElement	RequestedThemeProperty	policy	The theme bridge resolves theme resources (Material roles into the Fluent keys); handlers map the resolved brushes.
+
+# --- Control: template and state (Core's; not used by native handlers) ----------------------------------------------------
+Microsoft.UI.Xaml.Controls.Control	TemplateProperty	core-template	A native handler does not use the template (a control with an app template keeps the templated path: AP6 C6, CBAND0001).
+Microsoft.UI.Xaml.Controls.Control	DefaultStyleKeyProperty	core-template	Core's default-style lookup; the native-control policy reads it to choose native or templated.
+Microsoft.UI.Xaml.Controls.Control	IsTemplateFocusTargetProperty	core-template	Template focus targets are template parts; not used by native handlers.
+Microsoft.UI.Xaml.Controls.Control	IsTemplateKeyTipTargetProperty	core-template	Template key-tip targets are template parts; not used by native handlers.
+Microsoft.UI.Xaml.Controls.Control	TabNavigationProperty	core-input	Tab navigation is Core's focus manager; the focus mirror follows it.
+Microsoft.UI.Xaml.Controls.Control	IsFocusEngagementEnabledProperty	core-input	Focus engagement (gamepad) is Core's focus manager.
+Microsoft.UI.Xaml.Controls.Control	IsFocusEngagedProperty	core-input	Focus engagement (gamepad) is Core's focus manager.
+Microsoft.UI.Xaml.Controls.Control	RequiresPointerProperty	core-input	Pointer mode is Core's input regime.
+Microsoft.UI.Xaml.Controls.Control	ElementSoundModeProperty	platform	Android plays the system click sounds of native widgets.

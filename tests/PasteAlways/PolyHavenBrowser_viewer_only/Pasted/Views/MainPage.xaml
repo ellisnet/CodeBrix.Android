@@ -1,0 +1,62 @@
+<Page
+    x:Class="PolyHavenBrowser.Views.MainPage"
+    xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+    xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:PolyHavenBrowser.Views"
+    xmlns:vm="clr-namespace:PolyHavenBrowser.ViewModels;assembly=PolyHavenBrowser.Core"
+    xmlns:conv="clr-namespace:PolyHavenBrowser.Converters;assembly=PolyHavenBrowser.Core"
+    xmlns:skia="clr-namespace:SkiaSharp.Views.Windows;assembly=CodeBrix.Platform.SkiaSharp.Views"
+    FontFamily="{StaticResource RobotoFont}"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.DataContext>
+        <vm:MainViewModel />
+    </Page.DataContext>
+
+    <Page.Resources>
+        <conv:BoolToAccentStyleConverter x:Key="SelectedButtonStyle" />
+    </Page.Resources>
+
+    <Grid Padding="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Sample selector: the active button is highlighted with the accent style. To its
+             right, the rendering-engine dropdown (OpenGL/Vulkan) - hidden in HDRI mode, whose
+             CPU panorama renderer is unaffected by the engine choice -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,10">
+            <Button Content="Sample Texture" Command="{d:Binding SelectTextureCommand}" MinWidth="140"
+                    Style="{d:Binding IsTextureSelected, Converter={StaticResource SelectedButtonStyle}}" />
+            <Button Content="Sample HDRI" Command="{d:Binding SelectHdriCommand}" MinWidth="140"
+                    Style="{d:Binding IsHdriSelected, Converter={StaticResource SelectedButtonStyle}}" />
+            <Button Content="Sample Model" Command="{d:Binding SelectModelCommand}" MinWidth="140"
+                    Style="{d:Binding IsModelSelected, Converter={StaticResource SelectedButtonStyle}}" />
+            <TextBlock Text="Rendering engine:" VerticalAlignment="Center" Margin="12,0,0,0"
+                       Visibility="{d:Binding EngineSelectorVisibility}" />
+            <ComboBox Width="130" Height="36" VerticalAlignment="Center"
+                      ItemsSource="{d:Binding RenderEngineKinds}"
+                      SelectedItem="{d:Binding SelectedRenderEngine, Mode=TwoWay}"
+                      IsEnabled="{d:Binding IsNotBusy}"
+                      Visibility="{d:Binding EngineSelectorVisibility}" />
+        </StackPanel>
+
+        <!-- The rendering/display canvas, with a thin border between it and the window edge -->
+        <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="1">
+            <skia:SKXamlCanvas x:Name="DisplayCanvas" />
+        </Border>
+
+        <!-- Busy indicator: an indeterminate bar across the top of the canvas while an asset
+             is downloading/loading, so clicking a sample button visibly does something -->
+        <ProgressBar Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Stretch"
+                     Height="6" Margin="1"
+                     IsIndeterminate="True"
+                     Visibility="{d:Binding BusyVisibility}" />
+
+        <TextBlock Grid.Row="2" Text="{d:Binding StatusText}" Margin="0,8,0,0"
+                   TextWrapping="Wrap" Opacity="0.75" />
+    </Grid>
+</Page>

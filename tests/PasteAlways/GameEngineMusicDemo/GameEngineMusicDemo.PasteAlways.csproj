@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: GameEngineMusicDemo (CodeBrix.Samples
+    GameEngineMusicDemo/src/GameEngineMusicDemo.UI). Pasted/ = the shared UI project's files,
+    verbatim. Surface/ = the page's view model and host helper (GameEngineMusicDemo.Core), verbatim,
+    plus stubs of the GameEngine types the page names and of the app's GameEngineMusicDemo.Game
+    library: the CodeBrix.Platform.GameEngine package depends on CodeBrix.Platform repo packages, so
+    it cannot be referenced (and GameEngine is a D-O14 NotSupported item on Android). See
+    Surface/SOURCES.txt.
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.gameenginemusicdemo</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>GameEngineMusicDemo.PasteAlways</RootNamespace>
+    <AssemblyName>GameEngineMusicDemo.PasteAlways</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+  </ItemGroup>
+
+</Project>

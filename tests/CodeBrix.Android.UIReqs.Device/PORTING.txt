@@ -39,6 +39,18 @@ SOURCE
   path, as CanvasAssert.TryInkColor) and the ShowPaused property in Support/RangeElements.cs. A later re-copy from
   the Platform should replace both with the Platform's own files.
 
+  AP1.10 (pin 1.0.268.65, WPE1-6: a Popup opened before it reaches a XamlRoot opens when it loads or when its
+  XamlRoot is assigned) - four files taken VERBATIM from CodeBrix.Platform commit e8d56d1f90bff48f4413235f97237d622d7e92ec
+  (src/UIReqs/Platform.UI.Core, clean at that commit; read, never built there). Against the previous copies each
+  Platform file was a pure addition, so the copies are byte-identical to the Platform's:
+    Features/Popups/Popup.feature        + Scenarios 4-6: declared open in XAML; opened before it is added; parentless,
+                                           opened before its XamlRoot is set (pins "stays closed until then")
+    Features/Items/SwipeControl.feature  NEW (4 scenarios: short swipe, long swipe, Execute, flick back)
+    Steps/PopupSteps.cs                  + the four steps and the PopupNamed / BuildPopup helpers
+    Steps/ItemsSteps.cs                  + the "swiping" section and its constants (SwipeSettleDelay, SwipeStartInset,
+                                           SwipeEdgeStripWidth, FlickBackSteps, FlickBackStepDelay)
+  No ANDROID PORT adaptation was needed in any of them.
+
 ADAPTATIONS (each marked "ANDROID PORT" in the file)
   (1) `using CodeBrix.Platform.UI.Runtime.Skia.Linux.FrameBuffer.Emulated.TestTarget;` ->
       `using CodeBrix.Android.UIReqs.Device.TestTarget;` (host: CodeBrix.Android.UIReqs.TestTarget): the
@@ -132,12 +144,25 @@ ANDROID-ONLY GROUPS (not copies; AP2.5/AP2.6)
       NativePopupBase on the native popup layer, HyperlinkButton, DropDownButton (@native-overlays: its flyout as a
       Material menu), BitmapIcon / PathIcon / AnimatedIcon, ScrollView (native scrolling both ways), ColorSpectrum,
       ColorPickerSlider, the shapes, and the Platform's NotImplemented / absent elements. The MidiPlayer scenario is
-      PENDING (AP7-B, uireqs-pending.txt).
+      PENDING (AP7-C, uireqs-pending.txt).
+  AndroidToolkit (AP7-B TriPaneView, TriPaneViewSteps.cs): the Toolkit TriPaneView's Android handler - three panes in
+      the Expanded window, finger drags on both dividers inside the 48-dp touch target and none outside it, drag-to-
+      minimize and a tap on the restore grip, a mouse left to Core's own divider, the Compact form (one pane; real taps
+      on the grips switch panes) and the Medium form (side pane + one stacked) by REAL resizes, the exact weights back
+      when the window widens, and the switch AdaptivePolicy.AdaptiveTriPaneView off. The Platform's src/UIReqs has no
+      TriPaneView group, so there is nothing to copy for this add-in; this Android-only group is its UIReqs coverage.
+  AndroidTerminal (AP7-B TerminalView, TerminalViewAndroidSteps.cs): what Android adds to the copied TerminalView group -
+      the terminal drawn on the add-in's canvas supply (TerminalCanvasElement / TerminalCanvasHandler / SkiaCanvasView),
+      the soft-keyboard session a focused terminal opens (CodeBrix.Android.UI Input/TextInput: the terminal profile's
+      EditorInfo), the input connection driven as an input method drives it (commit, compose + finish, delete-surrounding
+      as DEL, key events, non-ASCII text), the session closing when the focus moves away, a dismissed keyboard brought
+      back by a real finger (not by a mouse), and - with the status bar shown - a real finger landing where it touches
+      while the keyboard is up (the ActivityInputRouter decor-offset fix).
 
 ADD-IN GROUPS (AP7-A; copies, like the core groups)
   Source: the same CodeBrix.Platform commit 8272e48e45ac98c91073bd4ede1428c7af86d639, src/UIReqs/Platform.UI.AddIn.<Group>/
   (files only; pristine snapshot ~/ClaudeHome/android-buildout-work/uireqs-source-ap7a/, SOURCE.txt). Groups:
-  SkiaSharpViews, Svg, Graphics2DSK, CommandBar, FlexPanel, WebView, MediaPlayer, Graphics3DGL.
+  SkiaSharpViews, Svg, Graphics2DSK, CommandBar, FlexPanel, WebView, MediaPlayer, Graphics3DGL (AP7-B: + TextLayout, Lottie, below).
     Features/<Group>/*.feature                 -> Scenarios/Features/<Group>/        VERBATIM
     Steps/**, Support/**, Registration.cs      -> Scenarios/AddIns/<Group>/          verbatim except (a)-(d)
     Assets/** (artwork, pages, clips)          -> inlined by (b)
@@ -158,6 +183,38 @@ ADD-IN GROUPS (AP7-A; copies, like the core groups)
   (d) prerequisite probes: WebView checks the device's system WebView package instead of three Linux libraries;
       MediaPlayer has no native library to preload (Media3 is managed + Java); Graphics3DGL probes libEGL.so
       (the Android system library) instead of Debian's libEGL.so.1.
+  (e) the Android harness's ColorMatch.ToSkia returns its PixelColor stand-in (adaptation (2)); where an add-in hands
+      the colour to a real SkiaSharp API it is rebuilt as an SKColor from the same four channels (TextLayout).
+  (f) an add-in document named by ms-appx:/// that the add-in opens with StorageFile.GetFileFromApplicationUriAsync
+      cannot load on Android (the pinned Core resolves ms-appx to a FILE under Package.InstalledPath; APK assets are
+      not files - FIXLIST [AP7-B Lottie]); the same files, verbatim under Scenarios/AddIns/<Group>/Assets/, are
+      EmbeddedResources of this assembly and the fixture names them with embedded:// (Lottie).
+  (g) a poll that captured a frame on every look before reading the state it waits for: on Android the element
+      draws on every display frame, not when a frame is captured, so the captured frame could predate the state
+      change the look then saw. The poll reads the state only and the frame is captured once afterwards (Lottie
+      "the player ... stops playing within ..."; the Platform's known flake of that scenario).
+
+  AP7-B (TextLayout): src/UIReqs/Platform.UI.AddIn.TextLayout (+ .Portrait) copied from CodeBrix.Platform commit
+  e8d56d1f90bff48f4413235f97237d622d7e92ec (the folders were clean at that commit; pristine snapshot
+  ~/ClaudeHome/android-buildout-work/uireqs-source-ap7b-tl/, SOURCE.txt): Features/TextLayout/*.feature VERBATIM
+  (2 files, 15 scenarios); Steps/TextLayoutSteps.cs and Support/{TextLayoutSurface,TextSamples}.cs ->
+  Scenarios/AddIns/TextLayout/ verbatim except (e) (one line of TextLayoutSteps). No Registration.cs (the add-in has
+  no element; TextLayoutSurface is an SKXamlCanvas of the SkiaSharp.Views add-in).
+
+  AP7-B (Lottie): src/UIReqs/Platform.UI.AddIn.Lottie (+ .Portrait) copied from CodeBrix.Platform commit
+  e8d56d1f90bff48f4413235f97237d622d7e92ec (the folders were clean at that commit; pristine snapshot
+  ~/ClaudeHome/android-buildout-work/uireqs-source-ap7b-lo/, SOURCE.txt): Features/Lottie/*.feature VERBATIM (3 files,
+  14 scenarios); Steps/LottieSteps.cs, Support/LottieFixtures.cs, Registration.cs and Assets/{pulse,themed}.json ->
+  Scenarios/AddIns/Lottie/ verbatim except (a) (Registration.cs), (f) (LottieFixtures.cs) and (g) (one step of
+  LottieSteps.cs). The two LottieProgressRing scenarios are PENDING (uireqs-pending.txt): on Android the framework's
+  ProgressRing is the native Material indicator, not a Lottie animation.
+
+  AP7-B (TerminalView): src/UIReqs/Platform.UI.AddIn.TerminalView (+ .Portrait) copied from CodeBrix.Platform commit
+  e8d56d1f90bff48f4413235f97237d622d7e92ec (the folders were clean at that commit; pristine snapshot
+  ~/ClaudeHome/android-buildout-work/uireqs-source-ap7b-tv/, SOURCE.txt): Features/TerminalView/*.feature VERBATIM (2 files,
+  14 scenarios); Steps/TerminalViewSteps.cs and Support/TerminalScripts.cs -> Scenarios/AddIns/TerminalView/ VERBATIM (no
+  adaptation). No Registration.cs (the control builds its own template; the Android add-in registers its canvas supply from
+  its module initializer). The steps find the drawing surface as a Canvas: the Android surface is a Canvas for that reason.
 
 PENDING SCENARIOS
   tests/CodeBrix.Android.UIReqs/uireqs-pending.txt lists scenarios that need a control or service a later

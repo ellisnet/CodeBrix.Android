@@ -27,6 +27,8 @@
   <ItemGroup>
     <!-- Read as metadata only (PEReader), never loaded. -->
     <AssemblyMetadata Include="CodeBrix.Android.Tests.CoreLib" Value="$(CodeBrixPlatformIntakeLibDir)" />
+    <!-- The repository root: the package-closure fence reads the Android add-in's project file (AP7-B TerminalView). -->
+    <AssemblyMetadata Include="CodeBrix.Android.Tests.RepoRoot" Value="$(CodeBrixAndroidRepoRoot)" />
   </ItemGroup>
 
   <ItemGroup>

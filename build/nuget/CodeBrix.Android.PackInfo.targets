@@ -1,0 +1,48 @@
+<Project>
+
+  <!--
+    Pack information of one CodeBrix.Android project (read by build/nuget/CodeBrix.Android.Pack.proj).
+
+    Never imported by a project file: the pack driver evaluates each packed project with
+    CustomAfterMicrosoftCommonTargets pointing at this file, so the projects themselves (and every
+    other build in the repository) are untouched. Nothing is built; the targets only report items.
+
+    CodeBrixAndroidPackInfo returns, for the android flavor of the project:
+      Kind=Project     the project itself: AssemblyName, OutputDir (bin/<Configuration>/<tfm>/)
+      Kind=Core        each re-shipped Core assembly it references (Reference items under the intake lib/)
+      Kind=AddIn       each add-in project it references (src/AddIns/), for the add-in package dependencies
+      Kind=Package     each PackageReference that flows to a consumer (PrivateAssets is not "all")
+    CodeBrixAndroidPackCores returns the Core references of the project and, recursively, of the add-in
+    projects it references (a Core an add-in dependency already ships is not shipped again).
+  -->
+
+  <Target Name="CodeBrixAndroidPackInfo" Returns="@(_CodeBrixAndroidPackInfo)">
+    <ItemGroup>
+      <_CodeBrixAndroidPackInfo Include="$(MSBuildProjectFullPath)" Kind="Project" AssemblyName="$(AssemblyName)"
+                                OutputDir="$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(OutputPath)'))" />
+      <_CodeBrixAndroidPackInfo Include="@(Reference)" Kind="Core"
+                                Condition="$([System.String]::Copy('%(Reference.Identity)').StartsWith('$(CodeBrixPlatformIntakeLibDir)'))" />
+      <_CodeBrixAndroidPackInfo Include="@(ProjectReference->'%(FullPath)')" Kind="AddIn"
+                                Condition="$([System.String]::Copy('%(ProjectReference.FullPath)').Replace('\', '/').Contains('/src/AddIns/'))" />
+      <_CodeBrixAndroidPackInfo Include="@(PackageReference)" Kind="Package"
+                                Condition="'%(PackageReference.PrivateAssets)' != 'all' and '%(PackageReference.IsImplicitlyDefined)' != 'true'" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CodeBrixAndroidPackCores" Returns="@(_CodeBrixAndroidPackCores)">
+    <ItemGroup>
+      <_CodeBrixAndroidPackAddInRefs Include="@(ProjectReference->'%(FullPath)')"
+                                     Condition="$([System.String]::Copy('%(ProjectReference.FullPath)').Replace('\', '/').Contains('/src/AddIns/'))" />
+    </ItemGroup>
+    <MSBuild Projects="@(_CodeBrixAndroidPackAddInRefs)" Targets="CodeBrixAndroidPackCores"
+             Properties="TargetFramework=$(TargetFramework);Configuration=$(Configuration);CustomAfterMicrosoftCommonTargets=$(MSBuildThisFileFullPath)"
+             Condition="'@(_CodeBrixAndroidPackAddInRefs)' != ''">
+      <Output TaskParameter="TargetOutputs" ItemName="_CodeBrixAndroidPackCores" />
+    </MSBuild>
+    <ItemGroup>
+      <_CodeBrixAndroidPackCores Include="@(Reference)"
+                                 Condition="$([System.String]::Copy('%(Reference.Identity)').StartsWith('$(CodeBrixPlatformIntakeLibDir)'))" />
+    </ItemGroup>
+  </Target>
+
+</Project>

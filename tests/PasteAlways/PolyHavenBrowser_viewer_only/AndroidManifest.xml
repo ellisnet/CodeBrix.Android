@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application android:label="PolyHavenBrowserViewerOnly.PasteAlways"></application>
+  <!-- The page's sample assets come from the Poly Haven API over https. -->
+  <uses-permission android:name="android.permission.INTERNET" />
+</manifest>

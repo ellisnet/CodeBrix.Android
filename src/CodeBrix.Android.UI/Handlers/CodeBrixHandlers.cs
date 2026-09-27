@@ -171,6 +171,12 @@ internal static class CodeBrixHandlers
         registry.Register<Microsoft.UI.Xaml.Controls.Primitives.ScrollPresenter>(_ => new ScrollPresenterHandler());
         registry.Register<Microsoft.UI.Xaml.Controls.Primitives.ColorSpectrum>(ColorSpectrumHandler.Create);
         // END AP10B
+
+        // AP7-B (the engine-backed add-ins; TriPaneView lives in the framework's Toolkit): TriPaneView keeps its template
+        // and Core's engine; its handler applies the adaptive form by window size class through the engine's weights and
+        // takes finger drags on the dividers through the control's drag entry points (Handlers/Toolkit).
+        registry.Register<CodeBrix.Platform.UI.Toolkit.TriPaneView>(TriPaneViewHandler.Create);
+        // END AP7-B
         return registry;
     }
 }

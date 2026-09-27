@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: SimpleCbxVideoPlayer (CodeBrix.Samples
+    SimpleCbxVideoPlayer/src/SimpleCbxVideoPlayer.UI). Pasted/ = the shared UI project's files,
+    verbatim. Surface/ = the page's view models and helpers (SimpleCbxVideoPlayer.Core) and its
+    SkiaVideo library, verbatim (same language settings as the head). SKXamlCanvas and
+    SkiaGLCanvasElement are the real SkiaSharpViews and Graphics3DGL Android add-ins. See
+    Surface/SOURCES.txt.
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.simplecbxvideoplayer</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>SimpleCbxVideoPlayer.PasteAlways</RootNamespace>
+    <AssemblyName>SimpleCbxVideoPlayer.PasteAlways</AssemblyName>
+    <CodeBrixAndroidInRepoAddIns>SkiaSharpViews;Graphics3DGL</CodeBrixAndroidInRepoAddIns>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="CodeBrix.VideoPlayback.MitLicenseForever" />
+    <PackageReference Include="CodeBrix.VideoPlayback.Skia.MitLicenseForever" />
+    <!--
+      This head only compiles (it never runs): the packages' native assets are excluded. They ship
+      linux-x64 natives that an android-x64 build would pick up through the RID fallback (XA0141).
+    -->
+    <PackageReference Include="CodeBrix.VideoPlayback.Dav1d.BsdLicenseForever" ExcludeAssets="native" />
+    <PackageReference Include="CodeBrix.Audio.MitLicenseForever" ExcludeAssets="native" />
+    <PackageReference Include="CodeBrix.Audio.Opus.BsdLicenseForever" />
+  </ItemGroup>
+
+</Project>

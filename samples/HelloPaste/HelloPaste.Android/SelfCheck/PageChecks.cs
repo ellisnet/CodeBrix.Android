@@ -59,6 +59,7 @@ internal static class PageChecks
         if (isJbu)
         {
             await CheckJustBetweenUsAsync(page);
+            await CheckStarAnimationAsync(page);
         }
         else
         {
@@ -122,6 +123,20 @@ internal static class PageChecks
 
         await WaitForAsync(() => OpenDialogs().Count == 0, 3000);
         await SettleAsync();
+    }
+
+    /// <summary>
+    /// The star of the JustBetweenUs page: an AnimatedVisualPlayer (AutoPlay) whose LottieVisualSource names an
+    /// embedded:// Bodymovin document of JustBetweenUs.Core; the Lottie add-in loads it and plays it.
+    /// </summary>
+    private static async Task CheckStarAnimationAsync(Page page)
+    {
+        var player = Descendants(page).OfType<AnimatedVisualPlayer>().FirstOrDefault();
+        var loaded = player != null && await WaitForAsync(() => player.IsAnimatedVisualLoaded, 10000);
+        Report("lottie.star", loaded && player.Duration > TimeSpan.Zero && player.IsPlaying,
+            player == null
+                ? "no AnimatedVisualPlayer on the page"
+                : $"{player.Source?.GetType().Name} loaded={player.IsAnimatedVisualLoaded} duration={player.Duration.TotalMilliseconds:0} ms playing={player.IsPlaying}");
     }
 
     private static async Task CheckJustBetweenUsAsync(Page page)

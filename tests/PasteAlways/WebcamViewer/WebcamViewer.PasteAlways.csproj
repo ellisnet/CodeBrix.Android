@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: WebcamViewer (CodeBrix.Samples WebcamViewer/src/WebcamViewer.UI).
+    Pasted/ = the shared UI project's files, verbatim. Surface/ = the page's view model, host helper
+    and video canvas (WebcamViewer.Core), verbatim. VideoCanvas derives from the real SkiaSharpViews
+    add-in's SKXamlCanvas. The camera and its audio monitor (CodeBrix.Webcam) are a D-O14
+    NotSupported item on Android: the managed package compiles here, it has no Android back end.
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.webcamviewer</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>WebcamViewer.PasteAlways</RootNamespace>
+    <AssemblyName>WebcamViewer.PasteAlways</AssemblyName>
+    <CodeBrixAndroidInRepoAddIns>SkiaSharpViews</CodeBrixAndroidInRepoAddIns>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="CodeBrix.Platform.Fonts.OpenSans.ApacheLicenseForever" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="CodeBrix.Webcam.LgplLicenseForever" />
+    <PackageReference Include="CodeBrix.Imaging.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

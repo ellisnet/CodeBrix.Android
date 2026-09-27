@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: PalmVisualizer (CodeBrix.Samples PalmVisualizer/src/PalmVisualizer.UI).
+    Pasted/ = the shared UI project's files, verbatim. Surface/ = the app's PalmVisualizer.Core and its Camera /
+    Vision / Rendering libraries, compiled here (verbatim where they compile; stubs where they need the webcam,
+    OpenCV or the game engine), and a stub of the GameEngine's GameSurfaceCanvas element (GameEngine and camera
+    capture: D-O14 NotSupported). CameraCanvas derives from the real SkiaSharp.Views add-in's SKXamlCanvas.
+    See Surface/SOURCES.txt.
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.palmvisualizer</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>PalmVisualizer.PasteAlways</RootNamespace>
+    <AssemblyName>PalmVisualizer.PasteAlways</AssemblyName>
+    <CodeBrixAndroidInRepoAddIns>SkiaSharpViews</CodeBrixAndroidInRepoAddIns>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="CodeBrix.Platform.Fonts.Roboto.OflLicenseForever" />
+    <PackageReference Include="SkiaSharp" />
+  </ItemGroup>
+
+</Project>

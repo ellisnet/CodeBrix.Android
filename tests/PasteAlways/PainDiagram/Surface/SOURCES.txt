@@ -1,0 +1,9 @@
+# Surface/ of the PainDiagram paste-always head: every file, with its CodeBrix.Samples source.
+# (verbatim) = an unedited copy. No stubs: DrawingCanvas derives from the real SkiaSharp.Views add-in's SKXamlCanvas.
+Surface/PainDiagram.Core/Drawing/DrawingCanvas.cs  <- CodeBrix.Samples/PainDiagram/Shared/Drawing/DrawingCanvas.cs  (verbatim)
+Surface/PainDiagram.Core/Drawing/DrawingCanvasBinder.cs  <- CodeBrix.Samples/PainDiagram/Shared/Drawing/DrawingCanvasBinder.cs  (verbatim)
+Surface/PainDiagram.Core/Helpers/FileDialogHelper.cs  <- CodeBrix.Samples/PainDiagram/Shared/Helpers/FileDialogHelper.cs  (verbatim)
+Surface/PainDiagram.Core/Helpers/HostHelper.cs  <- CodeBrix.Samples/PainDiagram/Shared/Helpers/HostHelper.cs  (verbatim)
+Surface/PainDiagram.Core/ViewModels/MainViewModel.cs  <- CodeBrix.Samples/PainDiagram/Shared/ViewModels/MainViewModel.cs  (verbatim)
+Surface/PainDiagram.Core/Assets/body_map_master.png  <- CodeBrix.Samples/PainDiagram/Shared/Assets/body_map_master.png  (verbatim)
+Surface/PainDiagram.Core/PainDiagram.Core.csproj  <- (Surface project, not a copy; stands for CodeBrix.Samples/PainDiagram/CodeBrixPlatform/PainDiagram.Core/PainDiagram.Core.csproj, which links the Shared/ files above)

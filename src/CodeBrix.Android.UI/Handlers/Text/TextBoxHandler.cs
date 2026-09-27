@@ -766,6 +766,10 @@ internal class TextBoxHandler : ViewHandler<TextBox, TextBoxView>, INativeTextEd
             // Local workaround (COORDINATOR CHANGE requested): the root view group should be focusable in touch mode.
             root.Focusable = true;
             root.FocusableInTouchMode = true;
+
+            // Out of touch mode Android would draw its default focus highlight (translucent grey) over the whole window
+            // view group while it holds the parked focus (AP7-B TerminalView fix, FIXLIST).
+            root.DefaultFocusHighlightEnabled = false;
             if (root.RequestFocus())
             {
                 return;

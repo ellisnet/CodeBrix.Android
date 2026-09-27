@@ -18,6 +18,7 @@
     <File Path="build/platform-repo-package-ids.txt" />
     <Project Path="build/intake/CodeBrix.Android.Intake.proj" Type="13b669be-bb05-4ddf-9536-439f39a36129" />
     <Project Path="build/intake/CodeBrix.Android.IntakeGate/CodeBrix.Android.IntakeGate.csproj" />
+    <File Path="build/pack.sh" />
   </Folder>
   <Folder Name="/Build/inrepo/">
     <File Path="build/inrepo/CodeBrix.Android.InRepo.props" />
@@ -26,16 +27,24 @@
   <Folder Name="/Build/nuget/">
     <File Path="build/nuget/buildTransitive/CodeBrix.Android.ApacheLicenseForever.props" />
     <File Path="build/nuget/buildTransitive/CodeBrix.Android.ApacheLicenseForever.targets" />
+    <File Path="build/nuget/CodeBrix.Android.ApacheLicenseForever.nuspec" />
+    <File Path="build/nuget/CodeBrix.Android.Pack.proj" />
+    <File Path="build/nuget/CodeBrix.Android.PackInfo.targets" />
+    <File Path="build/nuget/package-dependency-owners.txt" />
+    <File Path="build/nuget/pack-shim/CodeBrix.Android.PackShim.csproj" />
   </Folder>
   <Folder Name="/Build/test-scripts/">
     <File Path="build/test-scripts/android-uireqs-avd.sh" />
     <File Path="build/test-scripts/android-uireqs-run.sh" />
     <File Path="build/test-scripts/compare-uireqs-frames.sh" />
     <File Path="build/test-scripts/device-smoke.sh" />
+    <File Path="build/test-scripts/parity-score.sh" />
     <File Path="build/test-scripts/paste-always-compile.sh" />
     <File Path="build/test-scripts/uireqs-frame-compare.informational" />
   </Folder>
-  <Folder Name="/Samples/" />
+  <Folder Name="/Samples/">
+    <File Path="samples/README.md" />
+  </Folder>
   <Folder Name="/Samples/HelloPaste/">
     <File Path="samples/HelloPaste/Directory.Build.props" />
     <File Path="samples/HelloPaste/Directory.Build.targets" />
@@ -52,12 +61,23 @@
     </Project>
     <Project Path="samples/HelloPaste/PdfSideBySide.PdfRender/PdfSideBySide.PdfRender.csproj" />
   </Folder>
+  <Folder Name="/Templates/">
+    <File Path="templates/TEMPLATE_INTEGRATION.md" />
+  </Folder>
+  <Folder Name="/Templates/AndroidHead/">
+    <File Path="templates/AndroidHead/src/TemplateApp.Android/AndroidManifest.xml" />
+    <File Path="templates/AndroidHead/src/TemplateApp.Android/MainActivity.cs" />
+    <File Path="templates/AndroidHead/src/TemplateApp.Android/MainApplication.cs" />
+    <File Path="templates/AndroidHead/src/TemplateApp.Android/TemplateApp.Android.csproj" />
+    <File Path="templates/AndroidHead/src/TemplateApp.Core/TemplateApp.Core.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/CodeBrix.Android/CodeBrix.Android.csproj" />
     <Project Path="src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
     <Project Path="src/CodeBrix.Android.UI.Composition/CodeBrix.Android.UI.Composition.csproj" />
     <Project Path="src/CodeBrix.Android.UI.Dispatching/CodeBrix.Android.UI.Dispatching.csproj" />
     <Project Path="src/CodeBrix.Android.UI.Toolkit/CodeBrix.Android.UI.Toolkit.csproj" />
+    <Project Path="src/CodeBrix.Android.Analyzers/CodeBrix.Android.Analyzers.csproj" />
     <File Path="src/Directory.Build.props" />
   </Folder>
   <Folder Name="/src/AddIns/">
@@ -71,6 +91,8 @@
     <Project Path="src/AddIns/CodeBrix.Android.UI.MediaPlayer/CodeBrix.Android.UI.MediaPlayer.csproj" />
     <Project Path="src/AddIns/CodeBrix.Android.WinUI.Graphics3DGL/CodeBrix.Android.WinUI.Graphics3DGL.csproj" />
     <Project Path="src/AddIns/CodeBrix.Android.UI.TextLayout/CodeBrix.Android.UI.TextLayout.csproj" />
+    <Project Path="src/AddIns/CodeBrix.Android.UI.Lottie/CodeBrix.Android.UI.Lottie.csproj" />
+    <Project Path="src/AddIns/CodeBrix.Android.UI.TerminalView/CodeBrix.Android.UI.TerminalView.csproj" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="tests/CodeBrix.Android.IntakeGate.Tests/CodeBrix.Android.IntakeGate.Tests.csproj" />
@@ -85,6 +107,11 @@
     <Project Path="tests/CodeBrix.Android.UI.MediaPlayer.Tests/CodeBrix.Android.UI.MediaPlayer.Tests.csproj" />
     <Project Path="tests/CodeBrix.Android.WinUI.Graphics3DGL.Tests/CodeBrix.Android.WinUI.Graphics3DGL.Tests.csproj" />
     <Project Path="tests/CodeBrix.Android.UI.TextLayout.Tests/CodeBrix.Android.UI.TextLayout.Tests.csproj" />
+    <Project Path="tests/CodeBrix.Android.UI.Lottie.Tests/CodeBrix.Android.UI.Lottie.Tests.csproj" />
+    <Project Path="tests/CodeBrix.Android.UI.Toolkit.Tests/CodeBrix.Android.UI.Toolkit.Tests.csproj" />
+    <Project Path="tests/CodeBrix.Android.UI.TerminalView.Tests/CodeBrix.Android.UI.TerminalView.Tests.csproj" />
+    <Project Path="tests/CodeBrix.Android.Analyzers.Tests/CodeBrix.Android.Analyzers.Tests.csproj" />
+    <Project Path="tests/CodeBrix.Android.ParityScore.Tests/CodeBrix.Android.ParityScore.Tests.csproj" />
   </Folder>
   <Folder Name="/Tests/UIReqs/">
     <File Path="tests/CodeBrix.Android.UIReqs.Device/Directory.Build.props" />
@@ -97,6 +124,8 @@
   </Folder>
   <Folder Name="/Tools/">
     <Project Path="tools/UIReqsFrameCompare/UIReqsFrameCompare.csproj" />
+    <Project Path="tools/CodeBrix.Android.ParityScore/CodeBrix.Android.ParityScore.csproj" />
+    <File Path="tools/CodeBrix.Android.ParityScore/declined-explained.tsv" />
   </Folder>
   <Folder Name="/Tests/PasteAlways/">
     <File Path="tests/PasteAlways/Directory.Build.props" />

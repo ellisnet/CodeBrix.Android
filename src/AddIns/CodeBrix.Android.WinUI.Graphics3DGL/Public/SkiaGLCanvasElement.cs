@@ -32,7 +32,7 @@ public class SkiaGLCanvasElement : Grid
 
     /// <summary>Creates the element.</summary>
     /// <param name="getWindowFunc">Returns the element's window (its Closed event gives the GPU resources back); may be null.</param>
-    public SkiaGLCanvasElement(Func<Window> getWindowFunc)
+    public SkiaGLCanvasElement(Func<Window> getWindowFunc = null)
     {
         _getWindowFunc = getWindowFunc;
 

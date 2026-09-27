@@ -1,0 +1,22 @@
+<Page
+    x:Class="DRAKON.Brix.Views.MainPage"
+    xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+    xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:DRAKON.Brix.ViewModels;assembly=DRAKON.Brix.Core"
+    xmlns:local="using:DRAKON.Brix.Views"
+    xmlns:tkhost="clr-namespace:CodeBrix.Platform.TkCanvas.Hosting;assembly=CodeBrix.Platform.TkCanvas"
+    FontFamily="{StaticResource OpenSansFont}"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.DataContext>
+        <vm:MainViewModel />
+    </Page.DataContext>
+
+    <!-- The entire DRAKON Editor UI is built by its own (unmodified) Tcl
+         through the TkCanvas command bridge; this page only hosts the
+         single Tk surface. -->
+    <Grid>
+        <tkhost:TkHostView x:Name="TkHost" />
+    </Grid>
+</Page>

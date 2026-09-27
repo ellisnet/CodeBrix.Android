@@ -63,7 +63,7 @@ internal static class ContractChecks
 
         await CheckImagingAsync();
 
-        // AP1.9: the Android IDeviceFamilyPlatform (WPE1-5 B3; strings = decision D2, provisional "Android.<form>").
+        // AP1.9: the Android IDeviceFamilyPlatform (WPE1-5 B3); decision D2: "Android.<form>", the form = the window size class.
         Report("analyticsinfo.devicefamily", AnalyticsInfo.VersionInfo.DeviceFamily?.StartsWith("Android.", StringComparison.Ordinal) == true, AnalyticsInfo.VersionInfo.DeviceFamily);
 
         var display = DisplayInformation.GetForCurrentView();
@@ -103,10 +103,14 @@ internal static class ContractChecks
 
     private static void CheckOnPage(Page page)
     {
+        // This self-check proves the inert composition platform on purpose, so the CBAND0003 warning (composition is
+        // accepted and ignored on Android) is expected here and silenced for these lines only.
+#pragma warning disable CBAND0003
         var visual = ElementCompositionPreview.GetElementVisual(page);
         var sprite = visual.Compositor.CreateSpriteVisual();
         sprite.Size = new System.Numerics.Vector2(10, 10);
         sprite.Brush = visual.Compositor.CreateColorBrush(Colors.Red);
+#pragma warning restore CBAND0003
         Report("composition.inert", visual != null, "page visual " + visual.GetType().Name + ", sprite + color brush created");
 
         var measured = Descendants(page).OfType<TextBlock>().Where(t => !string.IsNullOrEmpty(t.Text) && t.Visibility == Visibility.Visible).ToList();

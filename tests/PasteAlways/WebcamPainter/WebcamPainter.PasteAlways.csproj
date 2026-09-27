@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Paste-always compile head: WebcamPainter (CodeBrix.Samples WebcamPainter/src/WebcamPainter.UI).
+    Pasted/ = the shared UI project's files, verbatim. Surface/ = the page's view models, converter,
+    bridges and helpers (WebcamPainter.Core) and its Webcam, Painting and Vision libraries, verbatim
+    (the Vision library's two embedded hand-model files are not embedded: this head only compiles).
+    The PaintCanvas / CameraCanvas elements derive from the real SkiaSharpViews add-in's SKXamlCanvas.
+    The camera itself (CodeBrix.Webcam) is a D-O14 NotSupported item on Android: its managed package
+    compiles here, it has no Android capture back end.
+  -->
+  <PropertyGroup>
+    <ApplicationId>com.codebrix.pastealways.webcampainter</ApplicationId>
+    <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
+    <RootNamespace>WebcamPainter.PasteAlways</RootNamespace>
+    <AssemblyName>WebcamPainter.PasteAlways</AssemblyName>
+    <CodeBrixAndroidInRepoAddIns>SkiaSharpViews</CodeBrixAndroidInRepoAddIns>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Pasted\App.xaml" />
+    <Page Include="Pasted\Views\MainPage.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="CodeBrix.Platform.Fonts.Roboto.OflLicenseForever" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="CodeBrix.Imaging.Drawing.ApacheLicenseForever" />
+    <PackageReference Include="CodeBrix.Webcam.LgplLicenseForever" />
+    <PackageReference Include="CodeBrix.VideoProcessing.OpenCV5.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

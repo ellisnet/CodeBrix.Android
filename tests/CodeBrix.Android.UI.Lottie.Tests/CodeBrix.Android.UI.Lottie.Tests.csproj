@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Host-free tests (net10.0) of the CodeBrix.Android Lottie add-in:
+    - Core/: the contract the Android assembly implements, read from the pinned Lottie Core's metadata (the grants
+      the Android assembly name relies on, the by-name load, the canvas-supply contract);
+    - Engine/: the Core's engine driven the way the Android canvas supply drives it - frames rendered through the
+      object-typed render callback onto an SKCanvas, ticks from a tick source the TEST owns (deterministic: no
+      dispatcher, no timer), progress set to fixed points. SkiaSharp's Linux native library is a test-only
+      dependency here (never in a package).
+    The canvas element and its native view run on the emulator (the Lottie UIReqs group, AndroidNative fence).
+
+    AssemblyName = the name CodeBrix.Platform.UI.Lottie.Core grants InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>CodeBrix.Android.UI.Lottie.Tests</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.Lottie.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)build/intake/CodeBrix.Android.Intake.proj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\CoreMetadata.cs" Link="Shared\CoreMetadata.cs" />
+    <!-- The Lottie group's animation documents (the UIReqs copy, verbatim), read by the engine tests. -->
+    <EmbeddedResource Include="..\CodeBrix.Android.UIReqs.Device\Scenarios\AddIns\Lottie\Assets\*.json" LogicalName="Lottie.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Read as metadata only (PEReader), never loaded. -->
+    <AssemblyMetadata Include="CodeBrix.Android.Tests.CoreLib" Value="$(CodeBrixPlatformIntakeLibDir)" />
+    <!-- The engine tests load the Lottie Core itself (its engine names no XAML type, so nothing else of the framework loads). -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Lottie.Core.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp.Skottie" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="SilverAssertions.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

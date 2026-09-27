@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using CodeBrix.Android.IntakeGate.Gates;
 using CodeBrix.Android.IntakeGate.Manifest;
+using CodeBrix.Android.IntakeGate.Packages;
 
 namespace CodeBrix.Android.IntakeGate;
 
@@ -14,6 +16,12 @@ internal static class Program
 {
     private static int Main(string[] args)
     {
+        // "packages" mode: the package gates over produced .nupkg files (build/nuget/CodeBrix.Android.Pack.proj).
+        if (args.Length > 0 && args[0] == "packages")
+        {
+            return PackageGateRunner.Run(args.Skip(1).ToArray());
+        }
+
         IntakeOptions options;
         try
         {

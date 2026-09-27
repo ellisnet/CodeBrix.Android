@@ -1,0 +1,6 @@
+3b7a7de6802f41f886489b80190960bdea1be5f298d050c27ff52b8caf44bd33  Pasted/App.xaml  <- CodeBrix.Samples/PainDiagram/CodeBrixPlatform/PainDiagram.UI/App.xaml
+1a2ca30e839716fbe91b4501e4e15dbf6067a19ae0ec1e86fc3ce66c2ec76796  Pasted/App.xaml.cs  <- CodeBrix.Samples/PainDiagram/CodeBrixPlatform/PainDiagram.UI/App.xaml.cs
+efec7e42b5e07073a4f97ec9172282f3555c75e561531083d78bff8e5e09d95d  Pasted/Views/MainPage.xaml  <- CodeBrix.Samples/PainDiagram/CodeBrixPlatform/PainDiagram.UI/Views/MainPage.xaml
+e21e9776a02ec928ef538884eea92efd1572aeac6ac274bb7c62cc87133eed30  Pasted/Views/MainPage.xaml.cs  <- CodeBrix.Samples/PainDiagram/CodeBrixPlatform/PainDiagram.UI/Views/MainPage.xaml.cs
+a0f738e7bf6598dcfd8edb137d3a74bb94edaaecff7122e3d2b44dcd2f60a604  Pasted/Services/IFileSavePicker.cs  <- CodeBrix.Samples/PainDiagram/CodeBrixPlatform/PainDiagram.UI/Services/IFileSavePicker.cs
+28472db0b47a23dad6236b3c6156c590f13a1ffba1e59ef4a60bf26059bd0cb7  Pasted/Services/WinRtFileSavePicker.cs  <- CodeBrix.Samples/PainDiagram/CodeBrixPlatform/PainDiagram.UI/Services/WinRtFileSavePicker.cs

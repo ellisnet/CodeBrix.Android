@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The framework package. Packed by build/nuget/CodeBrix.Android.Pack.proj (see MAINTAINER-README.txt,
+  PACKAGING / PUBLISHING); never packed on its own. <file src> paths are relative to the repository root.
+  Tokens: $codebrixversion$ (the shared date-stamped version of the pack run), $configuration$,
+  $platformversion$ (the pinned CodeBrix.Platform build, build/PlatformPin.props) and $dep_<Package_Id>$
+  (the version Directory.Packages.props pins for that package - never authored here).
+  Constraint 1: no dependency on a package the CodeBrix.Platform repository produces
+  (build/platform-repo-package-ids.txt); its Core assemblies, XAML parser, source generator and tasks
+  are re-shipped below instead.
+-->
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata minClientVersion="5.0">
+    <id>CodeBrix.Android.ApacheLicenseForever</id>
+    <version>$codebrixversion$</version>
+    <title>CodeBrix.Android</title>
+    <authors>Jeremy Ellis</authors>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="expression">Apache-2.0</license>
+    <icon>icon-codebrix-128.png</icon>
+    <readme>README.md</readme>
+    <projectUrl>https://github.com/ellisnet/CodeBrix.Android</projectUrl>
+    <description>Native Android apps from CodeBrix.Platform C# and XAML: pages written for CodeBrix.Platform compile unchanged for Android and render with real Android and Material Components views, adapting to phone, tablet and desktop window sizes.</description>
+    <copyright>Copyright (c) 2026 Jeremy Ellis and contributors</copyright>
+    <tags>android;xaml;winui;material;native;desktop;CodeBrix</tags>
+    <repository type="git" url="https://github.com/ellisnet/CodeBrix.Android" />
+    <dependencies>
+      <group targetFramework="net10.0-android36.1">
+        <dependency id="Xamarin.Google.Android.Material" version="$dep_Xamarin_Google_Android_Material$" />
+        <dependency id="Xamarin.AndroidX.SwipeRefreshLayout" version="$dep_Xamarin_AndroidX_SwipeRefreshLayout$" />
+        <dependency id="Microsoft.Extensions.Logging" version="$dep_Microsoft_Extensions_Logging$" />
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="$dep_Microsoft_Extensions_Logging_Abstractions$" />
+        <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="$dep_Microsoft_Extensions_DependencyInjection_Abstractions$" />
+        <dependency id="Microsoft.Extensions.Hosting.Abstractions" version="$dep_Microsoft_Extensions_Hosting_Abstractions$" />
+        <dependency id="CodeBrix.ServiceLocator.MsplLicenseForever" version="$dep_CodeBrix_ServiceLocator_MsplLicenseForever$" />
+        <!-- The Fluent symbols font the Fluent theme's icons use (a font package, not a CodeBrix.Platform repository package). -->
+        <dependency id="CodeBrix.Platform.Fonts.Fluent.ApacheLicenseForever" version="$dep_CodeBrix_Platform_Fonts_Fluent_ApacheLicenseForever$" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="icon-codebrix-128.png" target="" />
+    <file src="README.md" target="" />
+    <file src="AGENT-README.txt" target="" />
+    <file src="THIRD-PARTY-NOTICES.txt" target="" />
+
+    <!-- The CodeBrix.Android assemblies (android flavor only: the net10.0 flavors exist for the host-free tests). -->
+    <file src="src/CodeBrix.Android/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.dll" target="lib/net10.0-android36.1" />
+    <file src="src/CodeBrix.Android/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.xml" target="lib/net10.0-android36.1" />
+    <file src="src/CodeBrix.Android/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.pdb" target="lib/net10.0-android36.1" />
+    <file src="src/CodeBrix.Android.UI/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.UI.dll" target="lib/net10.0-android36.1" />
+    <file src="src/CodeBrix.Android.UI/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.UI.xml" target="lib/net10.0-android36.1" />
+    <file src="src/CodeBrix.Android.UI/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.UI.pdb" target="lib/net10.0-android36.1" />
+    <!-- The Android resources of CodeBrix.Android.UI (the FileProvider paths), consumed by the app build beside the dll. -->
+    <file src="src/CodeBrix.Android.UI/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.UI.aar" target="lib/net10.0-android36.1" />
+    <file src="src/CodeBrix.Android.UI.Composition/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.UI.Composition.dll" target="lib/net10.0-android36.1" />
+    <file src="src/CodeBrix.Android.UI.Composition/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.UI.Composition.xml" target="lib/net10.0-android36.1" />
+    <file src="src/CodeBrix.Android.UI.Composition/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.UI.Composition.pdb" target="lib/net10.0-android36.1" />
+    <file src="src/CodeBrix.Android.UI.Dispatching/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.UI.Dispatching.dll" target="lib/net10.0-android36.1" />
+    <file src="src/CodeBrix.Android.UI.Dispatching/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.UI.Dispatching.xml" target="lib/net10.0-android36.1" />
+    <file src="src/CodeBrix.Android.UI.Dispatching/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.UI.Dispatching.pdb" target="lib/net10.0-android36.1" />
+    <file src="src/CodeBrix.Android.UI.Toolkit/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.UI.Toolkit.dll" target="lib/net10.0-android36.1" />
+    <file src="src/CodeBrix.Android.UI.Toolkit/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.UI.Toolkit.xml" target="lib/net10.0-android36.1" />
+    <file src="src/CodeBrix.Android.UI.Toolkit/bin/$configuration$/net10.0-android36.1/CodeBrix.Android.UI.Toolkit.pdb" target="lib/net10.0-android36.1" />
+
+    <!--
+      The re-shipped framework Core assemblies of the pinned CodeBrix.Platform build (every lib/ file the intake
+      extracted from the framework package CodeBrix.Platform.ApacheLicenseForever; the add-in Cores ship in the
+      add-in packages). Unmodified.
+    -->
+    <file src="artifacts/intake/$platformversion$/lib/CodeBrix.Platform.Core.*" target="lib/net10.0-android36.1" />
+    <file src="artifacts/intake/$platformversion$/lib/CodeBrix.Platform.Extensions.Logging.Core.*" target="lib/net10.0-android36.1" />
+    <file src="artifacts/intake/$platformversion$/lib/CodeBrix.Platform.Foundation.Core.*" target="lib/net10.0-android36.1" />
+    <file src="artifacts/intake/$platformversion$/lib/CodeBrix.Platform.Foundation.Logging.Core.*" target="lib/net10.0-android36.1" />
+    <file src="artifacts/intake/$platformversion$/lib/CodeBrix.Platform.UI.Adapter.Microsoft.Extensions.Logging.Core.*" target="lib/net10.0-android36.1" />
+    <file src="artifacts/intake/$platformversion$/lib/CodeBrix.Platform.UI.Composition.Core.*" target="lib/net10.0-android36.1" />
+    <file src="artifacts/intake/$platformversion$/lib/CodeBrix.Platform.UI.Core.*" target="lib/net10.0-android36.1" />
+    <file src="artifacts/intake/$platformversion$/lib/CodeBrix.Platform.UI.Dispatching.Core.*" target="lib/net10.0-android36.1" />
+    <file src="artifacts/intake/$platformversion$/lib/CodeBrix.Platform.UI.FluentTheme.Core.*" target="lib/net10.0-android36.1" />
+    <file src="artifacts/intake/$platformversion$/lib/CodeBrix.Platform.UI.FluentTheme.v1.Core.*" target="lib/net10.0-android36.1" />
+    <file src="artifacts/intake/$platformversion$/lib/CodeBrix.Platform.UI.FluentTheme.v2.Core.*" target="lib/net10.0-android36.1" />
+    <file src="artifacts/intake/$platformversion$/lib/CodeBrix.Platform.UI.Toolkit.Core.*" target="lib/net10.0-android36.1" />
+    <file src="artifacts/intake/$platformversion$/lib/CodeBrix.Platform.Xaml.*" target="lib/net10.0-android36.1" />
+
+    <!-- Analyzers: the re-shipped XAML source generator (+ its XAML parser and analyzers) and the CBAND analyzer. -->
+    <file src="artifacts/intake/$platformversion$/analyzers/dotnet/cs/*.*" target="analyzers/dotnet/cs" />
+    <file src="src/CodeBrix.Android.Analyzers/bin/$configuration$/netstandard2.0/CodeBrix.Android.Analyzers.dll" target="analyzers/dotnet/cs" />
+    <file src="src/CodeBrix.Android.Analyzers/bin/$configuration$/netstandard2.0/CodeBrix.Android.Analyzers.pdb" target="analyzers/dotnet/cs" />
+
+    <!-- Build logic: the CodeBrix.Android consumer props/targets and, beside them, the re-shipped Platform build files. -->
+    <file src="build/nuget/buildTransitive/CodeBrix.Android.ApacheLicenseForever.props" target="buildTransitive" />
+    <file src="build/nuget/buildTransitive/CodeBrix.Android.ApacheLicenseForever.targets" target="buildTransitive" />
+    <file src="artifacts/intake/$platformversion$/buildTransitive/**" target="buildTransitive" />
+
+    <!-- Provenance of the re-shipped CodeBrix.Platform files: their package's notices and the intake manifest (hashes). -->
+    <file src="artifacts/intake/$platformversion$/notices/CodeBrix.Platform.ApacheLicenseForever/THIRD-PARTY-NOTICES.txt" target="notices/CodeBrix.Platform.ApacheLicenseForever" />
+    <file src="artifacts/intake/$platformversion$/intake-manifest.tsv" target="notices" />
+  </files>
+</package>

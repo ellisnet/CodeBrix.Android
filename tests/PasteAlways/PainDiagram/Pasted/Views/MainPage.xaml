@@ -1,0 +1,55 @@
+<Page
+    x:Class="PainDiagram.Views.MainPage"
+    xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
+    xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:PainDiagram.Views"
+    xmlns:vm="clr-namespace:PainDiagram.ViewModels;assembly=PainDiagram.Core"
+    xmlns:drawing="clr-namespace:CodeBrix.Imaging.Drawing;assembly=PainDiagram.Core"
+    FontFamily="{StaticResource OpenSansFont}"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.DataContext>
+        <vm:MainViewModel />
+    </Page.DataContext>
+
+    <Grid Padding="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Pain Diagram" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,8" />
+
+        <!-- Each button is tinted with its layer's highlighter color (40% alpha, matching
+             the on-canvas ink): Pain = pink, Numbness = blue, Tingling = yellow-gold -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+            <Button Content="{d:Binding PainButtonText}" Command="{d:Binding SelectPainCommand}" MinWidth="110"
+                    Background="#66FF1EE6" />
+            <Button Content="{d:Binding NumbnessButtonText}" Command="{d:Binding SelectNumbnessCommand}" MinWidth="110"
+                    Background="#661E80CC" />
+            <Button Content="{d:Binding TinglingButtonText}" Command="{d:Binding SelectTinglingCommand}" MinWidth="110"
+                    Background="#66CCAA0A" />
+        </StackPanel>
+
+        <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="1">
+            <drawing:DrawingCanvas x:Name="DrawCanvas" />
+        </Border>
+
+        <Grid Grid.Row="3" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0" Content="Clear" Command="{d:Binding ClearCommand}" MinWidth="110" />
+            <TextBlock Grid.Column="1" Text="{d:Binding StatusText}" VerticalAlignment="Center"
+                       Margin="12,0" TextWrapping="Wrap" />
+            <Button Grid.Column="2" Content="Save" Command="{d:Binding SaveCommand}" MinWidth="110"
+                    Style="{ThemeResource AccentButtonStyle}" />
+        </Grid>
+    </Grid>
+</Page>

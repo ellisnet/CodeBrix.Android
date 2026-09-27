@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using CodeBrix.Android.UI.Overlay;
 using Microsoft.UI.Xaml.Controls;
@@ -129,7 +130,7 @@ internal enum ToolBarForm
 /// <summary>The Toolkit TriPaneView's form.</summary>
 internal enum TriPaneForm
 {
-    /// <summary>One pane visible; the side pane as a modal drawer or bottom sheet; upper/lower as tabs (Compact).</summary>
+    /// <summary>One pane visible (Compact); the restore grips switch panes (the drawer / bottom sheet / tab containers of the table are not done).</summary>
     OnePane,
 
     /// <summary>The side pane and one stacked pane, the lower one collapsible (Medium).</summary>
@@ -181,6 +182,17 @@ internal static class AdaptivePolicy
     /// <summary>True (default) to show a ContentDialog with XAML content full screen in a Compact window.</summary>
     internal static bool FullScreenDialogs { get; set; } = true;
 
+    /// <summary>The AppContext switch that turns the adaptive TriPaneView form off (on by default).</summary>
+    internal const string AdaptiveTriPaneViewSwitch = "CodeBrix.Android.UI.AdaptiveTriPaneView";
+
+    /// <summary>
+    /// True (default) to show a Toolkit TriPaneView in the form its window's width class asks for (one pane / side pane +
+    /// one stacked pane / three panes, Handlers/Toolkit/TriPaneViewHandler); false keeps the three panes at every size.
+    /// </summary>
+    internal static bool AdaptiveTriPaneView { get; set; } = DefaultAdaptiveTriPaneView;
+
+    private static bool DefaultAdaptiveTriPaneView => !AppContext.TryGetSwitch(AdaptiveTriPaneViewSwitch, out var on) || on;
+
     /// <summary>
     /// A size-class override for diagnostics and tests (null = the window's real classes): every consumer of the
     /// table sees these classes, and setting it re-maps live exactly as a window resize does.
@@ -194,7 +206,7 @@ internal static class AdaptivePolicy
         new AdaptiveRow("CommandBar (WinUI)", "BottomAppBar", "top MaterialToolbar + overflow", "top toolbar, SecondaryCommands in overflow", "accelerators listed in menus", "decision only: the native CommandBar is AP10 (templated until then)"),
         new AdaptiveRow("MenuBar", "toolbar overflow with submenus", "overflow", "overflow", "real menu bar row", "decision only: native MenuBar is AP10 (templated until then)"),
         new AdaptiveRow("ToolBar family (CommandBar add-in)", "scrolling icon strip + overflow", "full strip", "full strip, labels per LabelMode", "hover tooltips", "decision only: the CommandBar add-in is AP7.3"),
-        new AdaptiveRow("TriPaneView (Toolkit)", "one pane visible; side pane as drawer/bottom sheet; upper/lower as tabs", "side pane + one stacked pane", "three panes, draggable dividers", "resize cursor on dividers", "decision only: TriPaneView is AP7/AP10 (Core layout until then)"),
+        new AdaptiveRow("TriPaneView (Toolkit)", "one pane visible; side pane as drawer/bottom sheet; upper/lower as tabs", "side pane + one stacked pane", "three panes, draggable dividers", "resize cursor on dividers (Core)", "Handlers/Toolkit/TriPaneViewHandler (AP7-B): the form through Core's engine (a region the window has no room for gets weight 0 and its restore grip switches panes; its weight comes back when the window widens); a finger drags a divider through a 48-dp touch target; the drawer / bottom sheet / tab containers are not done"),
         new AdaptiveRow("SplitView", "declared mode; Inline/CompactInline degrade to Overlay", "declared mode", "declared mode", "-", "decision only: SplitView keeps Core's template (its DisplayMode is the app's); native SplitView is AP10"),
         new AdaptiveRow("ContentDialog", "full screen for non-text content", "basic", "basic", "Esc = Close, Enter = default button", "Policy/ContentDialogPolicy (AP5, Core dialogs) + Overlay/NativeContentDialog (AP4, text dialogs are always basic)"),
         new AdaptiveRow("Flyout / MenuFlyout / ContextFlyout", "bottom sheet", "anchored popup/menu", "anchored popup/menu", "right-click opens ContextFlyout at the pointer", "Overlay/NativeMenuFlyout (AP4: MenuFlyout); a Flyout with content stays Core's anchored popup at every size"),
@@ -335,6 +347,7 @@ internal static class AdaptivePolicy
     {
         AdaptiveNavigationView = true;
         FullScreenDialogs = true;
+        AdaptiveTriPaneView = DefaultAdaptiveTriPaneView;
         Override = null;
     }
 }

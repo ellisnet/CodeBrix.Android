@@ -1,5 +1,6 @@
 using System;
 using CodeBrix.Android.Portable;
+using CodeBrix.Android.UI.Overlay;
 using SilverAssertions;
 using Windows.Graphics.Imaging;
 using Xunit;
@@ -12,21 +13,69 @@ public class DeviceFormClassifierTests
     private const int NormalDay = 0x11;
 
     [Theory]
-    [InlineData(NormalDay, false, 411, "Mobile")]
-    [InlineData(NormalDay, false, 800, "Tablet")]
-    [InlineData(NormalDay, true, 411, "Desktop")]
-    [InlineData(0x12, false, 800, "Desktop")]
-    [InlineData(0x14, false, 960, "Television")]
-    [InlineData(0x13, false, 411, "Car")]
-    [InlineData(0x16, false, 200, "Watch")]
-    [InlineData(0x17, false, 411, "VirtualReality")]
-    public void Classify_uses_the_ui_mode_type_then_the_pc_feature_then_the_smallest_width(int uiMode, bool pc, int smallestWidthDp, string expected)
+    [InlineData(NormalDay, 411, "Mobile")]
+    [InlineData(NormalDay, 599.9, "Mobile")]
+    [InlineData(NormalDay, 600, "Tablet")]
+    [InlineData(NormalDay, 839.9, "Tablet")]
+    [InlineData(NormalDay, 840, "Desktop")]
+    [InlineData(NormalDay, 1920, "Desktop")]
+    [InlineData(0x12, 411, "Mobile")]
+    [InlineData(0x12, 1280, "Desktop")]
+    [InlineData(0x14, 960, "Television")]
+    [InlineData(0x13, 411, "Car")]
+    [InlineData(0x16, 200, "Watch")]
+    [InlineData(0x17, 411, "VirtualReality")]
+    public void Classify_uses_the_special_ui_mode_types_then_the_window_width_size_class(int uiMode, double windowWidthDp, string expected)
     {
         //Act
-        var form = DeviceFormClassifier.Classify(uiMode, pc, smallestWidthDp);
+        var form = DeviceFormClassifier.Classify(uiMode, windowWidthDp);
 
         //Assert
         form.ToString().Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(double.NaN)]
+    public void An_unknown_window_width_counts_as_expanded_and_gives_desktop(double windowWidthDp)
+    {
+        //Act
+        var form = DeviceFormClassifier.Classify(NormalDay, windowWidthDp);
+
+        //Assert
+        form.Should().Be(DeviceFormKind.Desktop);
+    }
+
+    [Theory]
+    [InlineData(400, "Android.Mobile")]
+    [InlineData(700, "Android.Tablet")]
+    [InlineData(1080, "Android.Desktop")]
+    public void The_device_family_of_each_width_size_class_is_Android_dot_the_form(double windowWidthDp, string expected)
+    {
+        //Act
+        var family = DeviceFormClassifier.DeviceFamilyOf(DeviceFormClassifier.FromWindowWidth(windowWidthDp));
+
+        //Assert
+        family.Should().Be(expected);
+    }
+
+    [Fact]
+    public void The_form_follows_the_size_class_services_width_class_at_every_width()
+    {
+        //Act + Assert (WindowSizeClasses is the size-class service's own classification, CodeBrix.Android.UI)
+        for (var widthDp = 0.0; widthDp <= 2000; widthDp += 0.5)
+        {
+            var expected = WindowSizeClasses.FromWidth(widthDp) switch
+            {
+                WindowWidthClass.Compact => DeviceFormKind.Mobile,
+                WindowWidthClass.Medium => DeviceFormKind.Tablet,
+                _ => DeviceFormKind.Desktop,
+            };
+            DeviceFormClassifier.FromWindowWidth(widthDp).Should().Be(expected, "the width {0} dp", widthDp);
+        }
+
+        DeviceFormClassifier.OperatingSystemFamily.Should().Be("Android");
     }
 
     [Fact]

@@ -1,0 +1,8 @@
+# Surface/ of the DRAKON.Brix paste-always head: every file, with its CodeBrix.Samples source.
+# (verbatim) = an unedited copy; (stub) = a compile stub (see its header).
+Surface/DRAKON.Brix.Core/Helpers/HostHelper.cs  <- CodeBrix.Samples/DRAKON.Brix/src/DRAKON.Brix.Core/Helpers/HostHelper.cs  (verbatim)
+Surface/DRAKON.Brix.Core/ViewModels/MainViewModel.cs  <- CodeBrix.Samples/DRAKON.Brix/src/DRAKON.Brix.Core/ViewModels/MainViewModel.cs  (verbatim)
+Surface/DRAKON.Brix.TclBridge/RuntimeHost.cs  <- CodeBrix.Samples/DRAKON.Brix/src/libs/DRAKON.Brix.TclBridge/RuntimeHost.cs  (stub: DrakonRuntime needs TclTk/TkCanvas)
+Surface/Stubs/TkCanvas/TkHostView.cs  <- (stub of CodeBrix.Platform.TkCanvas.Hosting.TkHostView, package CodeBrix.Platform.TkCanvas.BsdLicenseForever)
+# Not copied: DRAKON.Brix.TclBridge's DrakonRuntime.cs and Commands/*.cs (Tcl engine code; RuntimeHost is stubbed
+# instead), its InternalsVisibleTo.cs, and DRAKON.Brix.Core's Assets/ (the vendored Tcl tree).

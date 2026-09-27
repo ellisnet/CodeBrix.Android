@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UI.Lottie: the Android side of the CodeBrix.Platform Lottie add-in (AP7-B). Its Core
+    (CodeBrix.Platform.UI.Lottie.Core, re-shipped by the intake) is the whole player: the animation sources
+    (LottieVisualSource, ThemableLottieVisualSource), the JSON loading, and the engine (Engine/LottiePlayer over
+    Skottie: play state, frame clock, segments/loop, rendering with stretch, colour theming), ticked by its own
+    DispatcherQueue timer (Engine/ITickSource, Internal/DispatcherQueueTickSource). Every platform supplies only the
+    CANVAS the engine draws each frame on: the contract ILottieCanvasPlatform. This assembly registers the Android
+    canvas supply from its module initializer (Lottie.Core loads it BY NAME; the CodeBrix.Android.UI bootstrap also
+    loads it at start-up): an element painted through the Skia canvas-host factory of the SkiaSharp.Views add-in
+    (SKCanvasVisualBaseFactory), shown by that add-in's canvas-element handler as a native Skia view.
+    AssemblyName = the name CodeBrix.Platform.UI.Lottie.Core (and UI.Core) grant InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android.UI.Lottie</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.Lottie</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.SkiaSharp.Views/CodeBrix.Android.SkiaSharp.Views.csproj" />
+    <!-- The add-in Cores (re-shipped from the pinned Platform build by the intake): the Skia canvas-host seam the
+         Lottie Core is built on, and the Lottie Core itself. -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.SkiaSharp.Views.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Lottie.Core.dll" />
+    <!-- What the Lottie Core decodes and renders with (Microsoft; the family's locked SkiaSharp release): Skottie and
+         its scene graph. Their native code is in SkiaSharp's Android native library, which the SkiaSharp.Views
+         add-in already brings. -->
+    <PackageReference Include="SkiaSharp.Skottie" />
+  </ItemGroup>
+
+</Project>

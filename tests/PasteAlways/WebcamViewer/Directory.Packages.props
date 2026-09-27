@@ -1,0 +1,15 @@
+<Project>
+
+  <!--
+    Paste-always head WebcamViewer: the repository pins, plus the self-produced CodeBrix.* packages
+    (not CodeBrix.Platform repo packages; neither depends on one, neither ships native assets) the
+    app's verbatim Core sources (Surface/) use, at the versions CodeBrix.Samples WebcamViewer pins.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <PackageVersion Include="CodeBrix.Webcam.LgplLicenseForever" Version="3.0.252.10" />
+    <PackageVersion Include="CodeBrix.Imaging.ApacheLicenseForever" Version="1.0.248.1113" />
+  </ItemGroup>
+
+</Project>
