@@ -12,6 +12,13 @@ internal sealed class CoreTextInputProfile
     internal static readonly CoreTextInputProfile Default = new("text", suggestions: true, multiLine: true);
 
     /// <summary>
+    /// A document editor (a code or text editor control): suggestions and composition on, Enter types a line break. The
+    /// same keyboard as <see cref="Default"/>, named for the editors that register it together with a text target
+    /// (Input/TextInput/CoreTextInput.RegisterTarget), so the keyboard sees and edits the document itself.
+    /// </summary>
+    internal static readonly CoreTextInputProfile Editor = new("editor", suggestions: true, multiLine: true);
+
+    /// <summary>
     /// A terminal: every key the user presses reaches the control at once (no suggestions, no autocorrection, no
     /// composition held back in the keyboard; the keyboard shows its "visible password" layout, which has the digits
     /// and symbols a shell needs), Enter is a key, and the keyboard never goes full screen.

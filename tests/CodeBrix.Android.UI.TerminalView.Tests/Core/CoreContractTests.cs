@@ -123,4 +123,21 @@ public class CoreContractTests
         overrides.Should().Contain("OnGotFocus");
         overrides.Should().Contain("OnLostFocus");
     }
+
+    [Fact]
+    public void The_TerminalControl_exposes_its_caret_cell_and_its_changes_to_the_platform()
+    {
+        //Arrange
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+
+        //Act
+        var caret = typeof(TerminalControl).GetMethod("GetCaretRectForPlatform", flags, Type.EmptyTypes);
+        var changed = typeof(TerminalControl).GetEvent("CaretRectChangedForPlatform", flags);
+
+        //Assert
+        caret.Should().NotBeNull("the Android TerminalCaret reads the cursor cell through it (WPE1-18 seam)");
+        caret.ReturnType.Should().Be(typeof(Windows.Foundation.Rect));
+        changed.Should().NotBeNull("the Android TerminalCaret follows the cursor through it (WPE1-18 seam)");
+        changed.EventHandlerType.Should().Be(typeof(EventHandler));
+    }
 }

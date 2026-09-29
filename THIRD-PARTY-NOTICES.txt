@@ -63,6 +63,14 @@ https://github.com/ellisnet/CodeBrix.Android/issues
       src/Core/src/Platform/Android/SafeAreaExtensions.cs (the per-edge overlap), SafeAreaPadding.cs
                                                    -> src/CodeBrix.Android.UI/Portable/Layout/SafeAreaMath.cs
 
+      AP8-S item K (soft-keyboard adjust modes):
+      src/Controls/src/Core/PlatformConfiguration/AndroidSpecific/Application.cs (WindowSoftInputModeAdjust)
+                                                   -> src/CodeBrix.Android.UI/Portable/Input/SoftInputAdjust.cs
+      src/Controls/src/Core/Platform/Android/Extensions/ApplicationExtensions.cs (ToPlatform),
+      src/Core/src/Platform/Android/WindowExtensions.cs (UpdateWindowSoftInputModeAdjust),
+      src/Core/src/Platform/Android/SafeAreaExtensions.cs (keyboard inset unless the window pans)
+                                                   -> src/CodeBrix.Android.UI/Portable/Input/SoftInputModePolicy.cs
+
       AP3b (lists and tabs):
       src/Controls/src/Core/Handlers/Items/Android/ItemsSources/ObservableItemsSource.cs, ICollectionChangedNotifier.cs,
       IItemsViewSource.cs            -> src/CodeBrix.Android.UI/Platform/Recycler/ItemsSources/ (same file names)
@@ -234,6 +242,41 @@ https://github.com/ellisnet/CodeBrix.Android/issues
     under the MIT License; its notice (the notices file of that package) is
     kept in the CodeBrix.Android.SkiaSharp.Views package.
 
+    Source code ported from CodeBrix.Platform (same license, same copyright;
+    each file carries a "Ported from CodeBrix.Platform" header naming its
+    source file and the commit), with its Android changes marked
+    "ANDROID PORT":
+      src/AddIns/CodeBrix.Android.UI.AudioPlayer/ - the Skia-side output code
+        of the AudioPlayer add-in and its MidiPlayer element:
+          Android/AudioPlayerAndroidPlatform.cs
+          Android/AudioOutputAndroidPlatform.cs
+          Internal/AudioFailureExplanation.cs
+          Public/MidiPlayer.cs
+      src/AddIns/CodeBrix.Android.UI.VideoPlayer/ - the VideoPlayer element
+        with its presenter and render paths:
+          Public/VideoPlayer.cs, Public/IVideoLayer.cs,
+          Public/VideoComposingEventArgs.cs,
+          Public/VideoPlayerRenderPathChangedEventArgs.cs
+          Internal/VideoPresenter.cs, Internal/VideoRenderDriver.cs,
+          Internal/VideoRectangles.cs, Internal/VideoSurfaceElement.cs,
+          Internal/YuvSurfaceRenderer.cs, Internal/VideoFailureExplanation.cs
+        Parts of the presenter code came to CodeBrix.Platform from
+        CodeBrix.VideoPlayback.Skia (https://github.com/ellisnet/
+        CodeBrix.VideoPlayback, Copyright (c) 2026 Jeremy Ellis, MIT License
+        - the same author), as those files' own headers say. The MIT License
+        text is the one reproduced in item 1, with that copyright line.
+
+    Test code copied from CodeBrix.Platform (same license, same copyright; not
+    in any package): the UIReqs scenario suite - feature files, steps,
+    support, hooks, hosting and canvas code, with the test assets of the
+    add-in groups - under tests/CodeBrix.Android.UIReqs.Device/Scenarios/
+    (and the frame archive / review classes under
+    tests/CodeBrix.Android.UIReqs/Canvas/), the frame-compare tool
+    tools/UIReqsFrameCompare, and build/test-scripts/compare-uireqs-frames.sh
+    and uireqs-frame-compare.informational.
+    tests/CodeBrix.Android.UIReqs.Device/PORTING.txt names the source commit
+    and every adaptation (marked "ANDROID PORT" in the files).
+
 ================================================================================
  4. Material Components for Android and AndroidX
 ================================================================================
@@ -248,8 +291,11 @@ https://github.com/ellisnet/CodeBrix.Android/issues
     The add-in packages likewise reference, without incorporating their source,
     SkiaSharp and HarfBuzzSharp (MIT), AndroidX Media3 and AndroidX WebKit
     (.NET bindings: MIT; Java libraries: Apache License, Version 2.0) and the
-    self-produced CodeBrix.SkiaSvg, CodeBrix.Sqlite and CodeBrix.Platform.OpenGL
-    packages; each carries its own license and notice files.
+    self-produced CodeBrix packages the add-ins build on (CodeBrix.SkiaSvg,
+    CodeBrix.Sqlite, CodeBrix.Platform.OpenGL, CodeBrix.Terminal,
+    CodeBrix.Plotter, CodeBrix.VideoPlayback, CodeBrix.Audio.Android and the
+    CodeBrix.Platform RobotoMono font package); each carries its own license
+    and notice files.
 
 ================================================================================
  5. CodeBrix.Samples (sample and test code only - not in any package)

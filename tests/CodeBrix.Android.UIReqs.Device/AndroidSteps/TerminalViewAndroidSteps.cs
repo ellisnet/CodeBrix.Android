@@ -436,6 +436,14 @@ public sealed class TerminalViewAndroidSteps
     [AfterScenario(Order = -40)]
     public async Task Back_into_touch_mode_with_a_fresh_input_method()
     {
+        if (AppHost.PreserveDeviceConfiguration)
+        {
+            // Do not reset the selected input method or inject a system-wide corner tap in this mode.
+            // The normal soft-keyboard hook still hides our app's keyboard. Cross-scenario IME isolation
+            // must be reported as unverified by this run, rather than claiming the reset was performed.
+            return;
+        }
+
         // A scenario that opened a soft-keyboard session on a custom text control (this group, the copied TerminalView
         // group) leaves state in the input method (Gboard then shows itself for a later PasswordBox it did not show for
         // on a fresh device): the host resets the input method.
@@ -446,6 +454,7 @@ public sealed class TerminalViewAndroidSteps
             var (resetExit, resetOutput) = await HostChannel.ShellAsync("ime reset", TestContext.Current.CancellationToken).ConfigureAwait(false);
             resetExit.Should().Be(0, "the host must reset the input method ({0})", resetOutput);
             await Task.Delay(500).ConfigureAwait(false);
+            await WarmTheResetKeyboard().ConfigureAwait(false);
         }
 
         var inTouchMode = await OnUIThreadAsync(() => AppHost.Activity.Window.DecorView.IsInTouchMode).ConfigureAwait(false);
@@ -464,6 +473,127 @@ public sealed class TerminalViewAndroidSteps
 
         inTouchMode.Should().BeTrue("a real tap must put the display back into touch mode");
         await Settle().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// [AP7-B TerminalView RE-GATE] After an "ime reset" the input method cold-starts: its next appearance is slow and it
+    /// briefly shows a different bottom row (the spacebar language label). A later group's native editor would capture
+    /// that state (re-gate full pass: Text/PasswordBox and Text/TextBox keyboard frames). So the reset never leaks: a
+    /// scratch 1x1 editor on the decor view shows the keyboard, the harness waits until it is visible AND two captures
+    /// 300 ms apart show the same keyboard (bounded 4 s), then hides it, waits until hidden and settled, and removes the editor.
+    /// </summary>
+    private static async Task WarmTheResetKeyboard()
+    {
+        global::Android.Widget.EditText editor = null;
+        global::Android.Views.View previousFocus = null;
+        await TestTargetFixture.RunOnUIThreadAsync(() =>
+        {
+            var activity = AppHost.Activity;
+            if (activity?.Window?.DecorView is not global::Android.Views.ViewGroup decor)
+            {
+                return;
+            }
+
+            previousFocus = activity.CurrentFocus;
+            editor = new global::Android.Widget.EditText(activity) { Alpha = 0f };
+            decor.AddView(editor, new global::Android.Widget.FrameLayout.LayoutParams(1, 1));
+            editor.RequestFocus();
+            ((AInputMethodManager)activity.GetSystemService(AContext.InputMethodService))?.ShowSoftInput(editor, global::Android.Views.InputMethods.ShowFlags.Implicit);
+        }).ConfigureAwait(false);
+        if (editor == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var started = System.Diagnostics.Stopwatch.StartNew();
+            byte[] last = null;
+            while (started.ElapsedMilliseconds < 4000)
+            {
+                var (visible, top) = await OnUIThreadAsync(() => ImeState()).ConfigureAwait(false);
+                if (visible && top > 0)
+                {
+                    var frame = await HostChannel.CaptureAsync(-(++_warmCaptures), 0, TestContext.Current.CancellationToken).ConfigureAwait(false);
+                    var rows = KeyboardRows(frame, top);
+                    if (last != null && rows != null && rows.AsSpan().SequenceEqual(last))
+                    {
+                        break;
+                    }
+
+                    last = rows;
+                }
+
+                await Task.Delay(300).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            await TestTargetFixture.RunOnUIThreadAsync(() =>
+            {
+                var activity = AppHost.Activity;
+                ((AInputMethodManager)activity?.GetSystemService(AContext.InputMethodService))?.HideSoftInputFromWindow(editor.WindowToken, AHideSoftInputFlags.None);
+                editor.ClearFocus();
+                (editor.Parent as global::Android.Views.ViewGroup)?.RemoveView(editor);
+                previousFocus?.RequestFocus();
+            }).ConfigureAwait(false);
+            var hidden = System.Diagnostics.Stopwatch.StartNew();
+            while (hidden.ElapsedMilliseconds < 2000)
+            {
+                var (visible, _) = await OnUIThreadAsync(() => ImeState()).ConfigureAwait(false);
+                var animating = await OnUIThreadAsync(() => AppHost.Activity?.InsetsListener?.IsImeAnimating == true).ConfigureAwait(false);
+                if (!visible && !animating)
+                {
+                    break;
+                }
+
+                await Task.Delay(100).ConfigureAwait(false);
+            }
+
+            await Settle().ConfigureAwait(false);
+        }
+    }
+
+    private static int _warmCaptures;
+
+    /// <summary>The IME's visibility and its top edge in window pixels (0 when not shown).</summary>
+    private static (bool Visible, int Top) ImeState()
+    {
+        var decor = AppHost.Activity?.Window?.DecorView;
+        var insets = decor?.RootWindowInsets;
+        if (insets == null || !insets.IsVisible(AWindowInsets.Type.Ime()))
+        {
+            return (false, 0);
+        }
+
+        var bottom = insets.GetInsets(AWindowInsets.Type.Ime()).Bottom;
+        return (true, bottom > 0 ? decor.Height - bottom : 0);
+    }
+
+    /// <summary>The frame's pixel rows from <paramref name="top"/> to the bottom (the keyboard only: the content above
+    /// may blink a caret).</summary>
+    private static byte[] KeyboardRows(CodeBrix.Android.UIReqs.Device.TestTarget.TestFrame frame, int top)
+    {
+        if (frame == null || top <= 0 || top >= frame.Height)
+        {
+            return null;
+        }
+
+        var rows = new byte[(frame.Height - top) * frame.Width * 4];
+        var i = 0;
+        for (var y = top; y < frame.Height; y++)
+        {
+            for (var x = 0; x < frame.Width; x++)
+            {
+                var c = frame.GetPixel(x, y);
+                rows[i++] = c.Red;
+                rows[i++] = c.Green;
+                rows[i++] = c.Blue;
+                rows[i++] = c.Alpha;
+            }
+        }
+
+        return rows;
     }
 
     /// <summary>Hides the status bar again after a scenario that showed it.</summary>

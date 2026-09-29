@@ -110,3 +110,39 @@ Scenario: A Pivot's header row is a native Material tab strip and a real finger 
 	Then the SelectedIndex of the Pivot "sections" is 1
 	And the SelectionChanged of the Pivot "sections" was raised 1 times
 	And the region of "sections" contains "Navy"
+
+Scenario: A row scrolled partly out of a ListView is neither drawn nor hit outside the list
+	Given the application shows a Button named "above" above a native test ListView named "tall" 320 by 240 with 6 button rows 200 pixels tall
+	When a real finger drags the list "tall" 100 pixels up
+	And the frame is captured
+	Then the region of "above" contains at least 50 percent "Lime"
+	And the region of "above" does not contain "Orange"
+	When a real finger taps "above"
+	Then the Button above the list was clicked 1 time and no row of the list was
+
+# [AP8-S batch 2] KenneyAssetBrowser: the catalog's centred UniformGridLayout lost a column after a relayout (3 -> 2)
+# and packed its columns without the spacing; the native list now reports Core's extent and places Core's columns.
+Scenario: A centred ItemsRepeater with a UniformGridLayout in a ScrollViewer keeps Core's columns and spacing
+	Given the application shows a native test ItemsRepeater named "catalog" with 24 tiles 100 wide spaced 20 centred in a ScrollViewer 350 by 300
+	Then Core laid the repeater "catalog" out 340 wide
+	And tile 3 of the repeater "catalog" is to the right of tile 2
+	And tile 4 of the repeater "catalog" is below tile 1
+	And tile 2 of the repeater "catalog" starts 20 DIPs after tile 1 ends
+	When a real finger drags the list "catalog scroller" 150 pixels up
+	And the frame is captured
+	Then Core laid the repeater "catalog" out 340 wide
+	And tile 6 of the repeater "catalog" is to the right of tile 5
+	And tile 7 of the repeater "catalog" is below tile 4
+	And tile 5 of the repeater "catalog" starts 20 DIPs after tile 4 ends
+	And tile 6 of the repeater "catalog" starts 20 DIPs after tile 5 ends
+
+# [AP8-S batch 2] KenneyAssetBrowser: after the viewer had replaced the catalog and a bundle switch re-bound the cards,
+# their single-line trimmed titles were blank (text, size and clip right; the display list never re-recorded).
+Scenario: The trimmed titles of a re-bound catalog are drawn after the catalog was collapsed and shown again
+	Given the application shows a native test catalog named "shelf" with 6 trimmed titles "WWWW"
+	When the catalog "shelf" shows its viewer
+	And the catalog "shelf" shows its area
+	And the catalog "shelf" switches to 6 trimmed titles "MMMM"
+	And the title "MMMM 1" of the catalog "shelf" is named "shelf title"
+	And the frame is captured
+	Then the region of "shelf title" contains at least 2 percent "Lime"

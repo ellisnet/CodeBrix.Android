@@ -5,7 +5,9 @@
 #   build/test-scripts/compare-uireqs-frames.sh --self-test <baseline-folder> [--work <folder>]
 #
 # Runs tools/UIReqsFrameCompare. Every entry in uireqs-frame-compare.informational (next to this script) is
-# always passed as --informational: a whole group (<Group>) or one feature (<Group>/<feature>). Frames they
+# always passed as --informational: a whole group (<Group>), one feature (<Group>/<feature>) or one frame
+# (<Group>/<feature>/<frame without .png>), each optionally prefixed with an orientation (Landscape/...: that
+# orientation only). Frames they
 # cover are reported but never fail the run. Everything else is strict: pixel-identical (within --threshold,
 # default 0) and the same set of frames.
 # Diff images land under <current-folder>/_diff/. Exit code: 0 = pass, 1 = differences, 2 = usage error.

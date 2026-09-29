@@ -2,27 +2,42 @@ using CodeBrix.Android.UI.Handlers;
 using CodeBrix.Android.UI.Policy;
 using CodeBrix.Platform.UI.Toolkit;
 using CodeBrix.Platform.UI.Toolkit.Engine;
+using CodeBrix.Platform.UI.Toolkit.Internal;
 using SilverAssertions;
 using Xunit;
 
 namespace CodeBrix.Android.UI.Toolkit.Tests.Engine;
 
 /// <summary>
-/// The adaptive plan against the Toolkit Core's ENGINE (TriPaneLayoutState): the handler writes the plan's weights into the
-/// control's percent properties, whose change runs the engine's state pass; here a host keeps the weights in fields and
-/// the test runs that pass (OnWeightChanged) itself.
+/// The adaptive plan against the Toolkit Core's ENGINE (TriPaneLayoutState) through the engine's DISPLAY OVERRIDE (AP1.12,
+/// WPE1-13 ITriPaneDisplayOverride), wired exactly as TriPaneViewEntryPoints wires it for the handler: the engine asks the
+/// plan for the weights to lay out on every state pass and hands it the taps on a hidden region's grip. The host keeps the
+/// application's four weights in fields and COUNTS every write: the adaptive form must never write them.
 /// </summary>
 public class TriPanePlanEngineTests
 {
     private sealed class FieldHost : ITriPaneLayoutHost
     {
-        public double SidePanePercent { get; set; } = 33.3;
+        private double _side = 33.3;
+        private double _stack = 66.7;
+        private double _upper = 50;
+        private double _lower = 50;
 
-        public double StackPercent { get; set; } = 66.7;
+        public int Writes { get; private set; }
 
-        public double UpperPanePercent { get; set; } = 50;
+        public double SidePanePercent { get => _side; set { _side = value; Writes++; } }
 
-        public double LowerPanePercent { get; set; } = 50;
+        public double StackPercent { get => _stack; set { _stack = value; Writes++; } }
+
+        public double UpperPanePercent { get => _upper; set { _upper = value; Writes++; } }
+
+        public double LowerPanePercent { get => _lower; set { _lower = value; Writes++; } }
+
+        /// <summary>Sets the application's weights (the app itself, not the adaptive form; not counted).</summary>
+        public void SetApplicationWeights(double side, double stack, double upper, double lower)
+        {
+            (_side, _stack, _upper, _lower) = (side, stack, upper, lower);
+        }
 
         public TriPaneViewSidePanePlacement SidePanePlacement { get; set; } = TriPaneViewSidePanePlacement.Left;
 
@@ -50,6 +65,22 @@ public class TriPanePlanEngineTests
         public TriPaneWeights Weights => new(SidePanePercent, StackPercent, UpperPanePercent, LowerPanePercent);
     }
 
+    /// <summary>The Core display override over the plan (what TriPaneViewEntryPoints.SetDisplayOverride installs).</summary>
+    private sealed class PlanOverride : ITriPaneDisplayOverride
+    {
+        private readonly TriPanePlan _plan;
+
+        internal PlanOverride(TriPanePlan plan) => _plan = plan;
+
+        public TriPaneDisplayWeights GetDisplayWeights(TriPaneDisplayWeights applicationWeights)
+        {
+            var display = _plan.Display(new TriPaneWeights(applicationWeights.Side, applicationWeights.Stack, applicationWeights.Upper, applicationWeights.Lower));
+            return new TriPaneDisplayWeights(display.Side, display.Stack, display.Upper, display.Lower);
+        }
+
+        public bool RestoreRequested(TriPaneViewRegion region) => _plan.Restore((TriPaneRegion)(int)region);
+    }
+
     private sealed class Rig
     {
         internal FieldHost Host { get; } = new();
@@ -61,16 +92,15 @@ public class TriPanePlanEngineTests
         internal Rig()
         {
             Engine = new TriPaneLayoutState(Host);
+            Engine.DisplayOverride = new PlanOverride(Plan);
             Engine.UpdateState();
         }
 
-        /// <summary>What TriPaneViewHandler.Apply does: plan, write (opened regions first), observe.</summary>
+        /// <summary>What TriPaneViewHandler.Apply does on a new size class: set the form, refresh the override.</summary>
         internal void Apply(TriPaneForm form)
         {
-            var target = Plan.Apply(form, Host.Weights);
-            Write(target, open: true);
-            Write(target, open: false);
-            Plan.Observe(Host.Weights);
+            Plan.Form = form;
+            Engine.UpdateState();
         }
 
         /// <summary>A tap on a restore grip, through the engine's drag entry points (no movement).</summary>
@@ -79,27 +109,12 @@ public class TriPanePlanEngineTests
             Engine.StartDividerDrag(kind, 0, 1000);
             Engine.CompleteDividerDrag(kind, 0, canceled: false);
         }
-
-        private void Write(TriPaneWeights target, bool open)
-        {
-            void Set(double current, double wanted, System.Action<double> setter)
-            {
-                if (!current.Equals(wanted) && TriPaneWeights.IsClosed(wanted) != open)
-                {
-                    setter(wanted);
-                    Engine.OnWeightChanged();
-                }
-            }
-
-            Set(Host.SidePanePercent, target.Side, v => Host.SidePanePercent = v);
-            Set(Host.StackPercent, target.Stack, v => Host.StackPercent = v);
-            Set(Host.UpperPanePercent, target.Upper, v => Host.UpperPanePercent = v);
-            Set(Host.LowerPanePercent, target.Lower, v => Host.LowerPanePercent = v);
-        }
     }
 
+    private static readonly TriPaneWeights Default = new(33.3, 66.7, 50, 50);
+
     [Fact]
-    public void One_pane_form_leaves_the_upper_pane_alone_on_screen_with_both_dividers_as_restore_grips()
+    public void One_pane_form_lays_out_the_upper_pane_alone_with_both_dividers_as_restore_grips_and_writes_nothing()
     {
         //Arrange
         var rig = new Rig();
@@ -108,13 +123,15 @@ public class TriPanePlanEngineTests
         rig.Apply(TriPaneForm.OnePane);
 
         //Assert
-        rig.Host.Minimized.Should().Equal(true, false, false, true);
+        rig.Host.Minimized.Should().Equal(false, false, false, false);
         rig.Host.Layout.SideWeight.Should().Be(0);
         rig.Host.Layout.LowerWeight.Should().Be(0);
         rig.Host.Layout.IsSideGripVisible.Should().BeTrue();
         rig.Host.Layout.IsSideGripTowardStart.Should().BeTrue();
         rig.Host.Layout.IsStackGripVisible.Should().BeTrue();
         rig.Host.Layout.IsStackGripTowardStart.Should().BeFalse();
+        rig.Host.Weights.Should().Be(Default);
+        rig.Host.Writes.Should().Be(0);
     }
 
     [Fact]
@@ -127,14 +144,16 @@ public class TriPanePlanEngineTests
         rig.Apply(TriPaneForm.SidePaneAndOneStacked);
 
         //Assert
-        rig.Host.Minimized.Should().Equal(false, false, false, true);
+        rig.Host.Minimized.Should().Equal(false, false, false, false);
         rig.Host.Layout.IsSideDividerVisible.Should().BeTrue();
         rig.Host.Layout.IsSideGripVisible.Should().BeFalse();
         rig.Host.Layout.IsStackGripVisible.Should().BeTrue();
+        rig.Host.Layout.LowerWeight.Should().Be(0);
+        rig.Host.Writes.Should().Be(0);
     }
 
     [Fact]
-    public void Tapping_the_side_grip_in_one_pane_form_switches_to_the_side_pane_and_back()
+    public void Tapping_the_side_grip_in_one_pane_form_switches_to_the_side_pane_and_back_without_writing()
     {
         //Arrange
         var rig = new Rig();
@@ -142,18 +161,19 @@ public class TriPanePlanEngineTests
 
         //Act
         rig.TapGrip(TriPaneViewDividerKind.Side);
-        rig.Apply(TriPaneForm.OnePane);
-        var sideShown = rig.Host.Minimized;
-        var sideGrip = rig.Host.Layout;
+        var sideShown = rig.Host.Layout;
         rig.TapGrip(TriPaneViewDividerKind.Side);
-        rig.Apply(TriPaneForm.OnePane);
 
         //Assert
-        sideShown.Should().Equal(false, true, true, true);
-        sideGrip.IsSideGripVisible.Should().BeTrue();
-        sideGrip.IsSideGripTowardStart.Should().BeFalse();
-        rig.Host.Minimized.Should().Equal(true, false, false, true);
-        rig.Host.Weights.Should().Be(new TriPaneWeights(0, 66.7, 50, 0));
+        sideShown.SideWeight.Should().BeGreaterThan(0);
+        sideShown.StackWeight.Should().Be(0);
+        sideShown.IsSideGripVisible.Should().BeTrue();
+        sideShown.IsSideGripTowardStart.Should().BeFalse();
+        rig.Host.Layout.SideWeight.Should().Be(0);
+        rig.Host.Layout.UpperWeight.Should().BeGreaterThan(0);
+        rig.Host.Minimized.Should().Equal(false, false, false, false);
+        rig.Host.Weights.Should().Be(Default);
+        rig.Host.Writes.Should().Be(0);
     }
 
     [Fact]
@@ -165,44 +185,43 @@ public class TriPanePlanEngineTests
 
         //Act
         rig.TapGrip(TriPaneViewDividerKind.Stack);
-        rig.Apply(TriPaneForm.OnePane);
 
         //Assert
-        rig.Host.Minimized.Should().Equal(true, false, true, false);
+        rig.Host.Layout.UpperWeight.Should().Be(0);
+        rig.Host.Layout.LowerWeight.Should().BeGreaterThan(0);
         rig.Host.Layout.IsStackGripVisible.Should().BeTrue();
         rig.Host.Layout.IsStackGripTowardStart.Should().BeTrue();
+        rig.Host.Writes.Should().Be(0);
     }
 
     [Fact]
-    public void The_docked_phone_round_trip_gives_the_app_its_exact_weights_back()
+    public void The_docked_phone_round_trip_never_touches_the_app_weights()
     {
         //Arrange
         var rig = new Rig();
-        rig.Host.SidePanePercent = 27.5;
-        rig.Host.StackPercent = 72.5;
-        rig.Host.UpperPanePercent = 61;
-        rig.Host.LowerPanePercent = 39;
+        rig.Host.SetApplicationWeights(27.5, 72.5, 61, 39);
         rig.Engine.OnWeightChanged();
         rig.Apply(TriPaneForm.ThreePanes);
 
         //Act
         rig.Apply(TriPaneForm.OnePane);
         rig.TapGrip(TriPaneViewDividerKind.Side);
-        rig.Apply(TriPaneForm.OnePane);
         rig.TapGrip(TriPaneViewDividerKind.Side);
-        rig.Apply(TriPaneForm.OnePane);
         rig.Apply(TriPaneForm.SidePaneAndOneStacked);
         rig.Apply(TriPaneForm.ThreePanes);
 
         //Assert
         rig.Host.Weights.Should().Be(new TriPaneWeights(27.5, 72.5, 61, 39));
+        rig.Host.Writes.Should().Be(0);
         rig.Host.Minimized.Should().Equal(false, false, false, false);
         rig.Host.Layout.IsSideGripVisible.Should().BeFalse();
         rig.Host.Layout.IsStackGripVisible.Should().BeFalse();
+        rig.Host.Layout.LowerWeight.Should().BeGreaterThan(0);
+        rig.Host.Layout.SideWeight.Should().BeGreaterThan(0);
     }
 
     [Fact]
-    public void Under_restore_grip_mode_Never_the_closed_regions_have_no_grip_and_come_back_when_the_window_widens()
+    public void Under_restore_grip_mode_Never_the_hidden_regions_have_no_grip_and_come_back_when_the_window_widens()
     {
         //Arrange
         var rig = new Rig();
@@ -214,8 +233,27 @@ public class TriPanePlanEngineTests
         rig.Apply(TriPaneForm.ThreePanes);
 
         //Assert
-        compact.IsSideDividerVisible.Should().BeFalse();
-        compact.IsStackDividerVisible.Should().BeFalse();
+        compact.IsSideGripVisible.Should().BeFalse();
+        compact.IsStackGripVisible.Should().BeFalse();
         rig.Host.Minimized.Should().Equal(false, false, false, false);
+        rig.Host.Layout.SideWeight.Should().BeGreaterThan(0);
+        rig.Host.Layout.LowerWeight.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public void A_region_the_app_minimized_itself_stays_minimized_and_keeps_the_app_flags()
+    {
+        //Arrange
+        var rig = new Rig();
+        rig.Host.SetApplicationWeights(0, 100, 50, 50);
+        rig.Engine.OnWeightChanged();
+
+        //Act
+        rig.Apply(TriPaneForm.SidePaneAndOneStacked);
+
+        //Assert
+        rig.Host.Minimized[0].Should().BeTrue();
+        rig.Host.Layout.SideWeight.Should().Be(0);
+        rig.Host.Writes.Should().Be(0);
     }
 }

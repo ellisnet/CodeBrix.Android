@@ -11,12 +11,14 @@ using CodeBrix.Platform.UI.Core.UIReqs.Support;
 using CodeBrix.Platform.UI.TextLayout;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Media;
 using Reqnroll;
 using SilverAssertions;
 using SkiaSharp;
 using Windows.UI;
 using CellMetrics = CodeBrix.Platform.UI.TerminalView.Rendering.CellMetrics;
 using Colors = CodeBrix.Platform.UI.Core.UIReqs.Support.Colors;
+using MenuFlyoutItem = Microsoft.UI.Xaml.Controls.MenuFlyoutItem;
 using TerminalControlElement = CodeBrix.Platform.UI.TerminalView.TerminalControl;
 using TerminalPalette = CodeBrix.Terminal.Engine.Color;
 
@@ -302,6 +304,54 @@ public sealed class TerminalViewSteps
 				"A drag runs from one cell to a later one, so it ends further right than it started.");
 		}
 
+		await DragAlongRowAsync(from, to, to, row, name).ConfigureAwait(false);
+	}
+
+	/// <summary>
+	/// Drags one finger along a row of cells like the plain drag step, but lifts it further right
+	/// than the last cell it moved through: the finger moves one step per cell as far as one cell,
+	/// then comes up in a later one with no move in between. A touch can do this (its lift is
+	/// reported where the finger left the glass), which is why the selection must run to the cell
+	/// the finger LIFTS in, not the one it last moved to.
+	/// </summary>
+	/// <param name="from">The column the finger goes down in.</param>
+	/// <param name="lastMove">The column of the last move before the lift.</param>
+	/// <param name="release">The column it lifts in (further right than the last move).</param>
+	/// <param name="row">The row it runs along, counting from the top of the grid.</param>
+	/// <param name="name">The Gherkin name of the terminal.</param>
+	/// <returns>A task that completes once the whole gesture has been delivered.</returns>
+	[When("a finger drags from cell {int} as far as cell {int} and lifts in cell {int} along row {int} of {string}")]
+	public async Task When_a_finger_drags_from_cell_as_far_as_cell_and_lifts_in_cell_along_row_of(
+		int from, int lastMove, int release, int row, string name)
+	{
+		if (lastMove <= from)
+		{
+			throw new ArgumentOutOfRangeException(nameof(lastMove), lastMove,
+				"A drag runs from one cell to a later one, so its last move is further right than it started.");
+		}
+
+		if (release <= lastMove)
+		{
+			throw new ArgumentOutOfRangeException(nameof(release), release,
+				"This gesture lifts the finger beyond its last move, so it lifts further right than that.");
+		}
+
+		await DragAlongRowAsync(from, lastMove, release, row, name).ConfigureAwait(false);
+	}
+
+	/// <summary>
+	/// Delivers a one-finger drag along a row: down in the middle of one cell, one move per cell
+	/// to the middle of another, then up in the middle of a third (the same cell as the last move
+	/// for an ordinary drag).
+	/// </summary>
+	/// <param name="from">The column the finger goes down in.</param>
+	/// <param name="lastMove">The column of the last move.</param>
+	/// <param name="release">The column it lifts in.</param>
+	/// <param name="row">The row it runs along.</param>
+	/// <param name="name">The Gherkin name of the terminal.</param>
+	/// <returns>A task that completes once the whole gesture has been delivered.</returns>
+	private static async Task DragAlongRowAsync(int from, int lastMove, int release, int row, string name)
+	{
 		var cell = await MetricsAsync(name).ConfigureAwait(false);
 		var bounds = await DeviceRect.OfAsync(ElementRegistry.Resolve(name), inset: 0).ConfigureAwait(false);
 		var session = TestTargetFixture.Session;
@@ -312,14 +362,231 @@ public sealed class TerminalViewSteps
 		session.TouchPress(Finger.PointerId, At(from), y);
 		await TestTargetFixture.WaitForIdleAsync().ConfigureAwait(false);
 
-		for (var column = from + 1; column <= to; column++)
+		for (var column = from + 1; column <= lastMove; column++)
 		{
 			session.TouchMove(Finger.PointerId, At(column), y);
 			await TestTargetFixture.WaitForIdleAsync().ConfigureAwait(false);
 		}
 
-		session.TouchRelease(Finger.PointerId, At(to), y);
+		session.TouchRelease(Finger.PointerId, At(release), y);
 		await TestTargetFixture.WaitForIdleAsync().ConfigureAwait(false);
+	}
+
+	/// <summary>
+	/// Drags one finger straight up or down the terminal, from the middle of a cell in one row to
+	/// the middle of the same column in another, one move per row, and lifts it there - the
+	/// gesture a person makes to scroll through the history. It starts moving at once, so it is a
+	/// scroll, not a selection.
+	/// </summary>
+	/// <param name="fromRow">The row the finger goes down in.</param>
+	/// <param name="toRow">The row it lifts in (above or below).</param>
+	/// <param name="column">The column it runs down.</param>
+	/// <param name="name">The Gherkin name of the terminal.</param>
+	/// <returns>A task that completes once the whole gesture has been delivered.</returns>
+	[When("a finger drags from row {int} to row {int} in column {int} of {string}")]
+	public async Task When_a_finger_drags_from_row_to_row_in_column_of(int fromRow, int toRow, int column, string name)
+	{
+		if (toRow == fromRow)
+		{
+			throw new ArgumentOutOfRangeException(nameof(toRow), toRow, "A drag up or down ends in another row.");
+		}
+
+		await DragDownColumnAsync(column, fromRow, toRow, restMilliseconds: 0, name).ConfigureAwait(false);
+	}
+
+	/// <summary>
+	/// Puts one finger down in a cell, keeps it still for a while (a long press when the while is
+	/// long enough), then drags it straight up or down to another row, one move per row, and
+	/// lifts it there.
+	/// </summary>
+	/// <param name="column">The column the finger goes down in (and stays in).</param>
+	/// <param name="fromRow">The row the finger goes down in.</param>
+	/// <param name="name">The Gherkin name of the terminal.</param>
+	/// <param name="milliseconds">How long the finger rests before it moves.</param>
+	/// <param name="toRow">The row it lifts in.</param>
+	/// <returns>A task that completes once the whole gesture has been delivered.</returns>
+	[When("a finger rests in cell {int} of row {int} of {string} for {int} milliseconds and drags to row {int}")]
+	public async Task When_a_finger_rests_in_cell_of_row_of_for_milliseconds_and_drags_to_row(
+		int column, int fromRow, string name, int milliseconds, int toRow)
+	{
+		if (toRow == fromRow)
+		{
+			throw new ArgumentOutOfRangeException(nameof(toRow), toRow, "A drag up or down ends in another row.");
+		}
+
+		await DragDownColumnAsync(column, fromRow, toRow, milliseconds, name).ConfigureAwait(false);
+	}
+
+	/// <summary>
+	/// Puts one finger down in a cell, keeps it still for a while and lifts it where it went down:
+	/// a long press, when the while is long enough.
+	/// </summary>
+	/// <param name="column">The column of the cell.</param>
+	/// <param name="row">The row of the cell.</param>
+	/// <param name="name">The Gherkin name of the terminal.</param>
+	/// <param name="milliseconds">How long the finger rests.</param>
+	/// <returns>A task that completes once the finger has lifted.</returns>
+	[When("a finger rests in cell {int} of row {int} of {string} for {int} milliseconds and lifts")]
+	public async Task When_a_finger_rests_in_cell_of_row_of_for_milliseconds_and_lifts(
+		int column, int row, string name, int milliseconds)
+	{
+		var (x, y) = await CellCentreAsync(name, column, row).ConfigureAwait(false);
+		var session = TestTargetFixture.Session;
+
+		session.TouchPress(Finger.PointerId, x, y);
+		await TestTargetFixture.WaitForIdleAsync().ConfigureAwait(false);
+		await Task.Delay(milliseconds).ConfigureAwait(false);
+		session.TouchRelease(Finger.PointerId, x, y);
+		await TestTargetFixture.WaitForIdleAsync().ConfigureAwait(false);
+	}
+
+	/// <summary>Asserts how far back into its history the terminal's view is scrolled.</summary>
+	/// <param name="name">The Gherkin name of the terminal.</param>
+	/// <param name="lines">How many lines above the live tail the view must be.</param>
+	/// <returns>A task that completes when the assertion has been made.</returns>
+	[Then("the view of {string} is scrolled back {int} lines")]
+	public async Task Then_the_view_of_is_scrolled_back_lines(string name, int lines) =>
+		(await ScrolledBackAsync(name).ConfigureAwait(false)).Should().Be(lines,
+			"the scroll position of \"{0}\" was asserted", name);
+
+	/// <summary>Asserts that the terminal shows its live tail (it is not scrolled back at all).</summary>
+	/// <param name="name">The Gherkin name of the terminal.</param>
+	/// <returns>A task that completes when the assertion has been made.</returns>
+	[Then("the view of {string} is at the live tail")]
+	public async Task Then_the_view_of_is_at_the_live_tail(string name) =>
+		(await ScrolledBackAsync(name).ConfigureAwait(false)).Should().Be(0,
+			"\"{0}\" must show its live tail", name);
+
+	/// <summary>
+	/// Asserts that the terminal's Copy/Paste menu is open, and whether its Copy item can be used
+	/// (it can while something is selected).
+	/// </summary>
+	/// <param name="name">The Gherkin name of the terminal.</param>
+	/// <param name="state">"enabled" or "disabled".</param>
+	/// <returns>A task that completes when the assertion has been made.</returns>
+	[Then("the Copy and Paste menu of {string} is open with Copy {word}")]
+	public async Task Then_the_Copy_and_Paste_menu_of_is_open_with_Copy(string name, string state)
+	{
+		var expected = state switch
+		{
+			"enabled" => true,
+			"disabled" => false,
+			_ => throw new ArgumentOutOfRangeException(nameof(state), state, "Copy is \"enabled\" or \"disabled\"."),
+		};
+
+		string[] texts = [];
+		bool? copyEnabled = null;
+		await TestTargetFixture.RunOnUIThreadAsync(() =>
+		{
+			var items = OpenMenuItems(name);
+			texts = items.ConvertAll(item => item.Text).ToArray();
+			copyEnabled = items.Find(item => item.Text == "Copy")?.IsEnabled;
+		}).ConfigureAwait(false);
+
+		texts.Should().Equal(["Copy", "Paste"], "the Copy/Paste menu of \"{0}\" must be open", name);
+		copyEnabled.Should().Be(expected);
+	}
+
+	/// <summary>Closes the terminal's Copy/Paste menu, the way a tap outside it would.</summary>
+	/// <param name="name">The Gherkin name of the terminal.</param>
+	/// <returns>A task that completes once the menu has closed.</returns>
+	[When("the Copy and Paste menu of {string} is dismissed")]
+	public async Task When_the_Copy_and_Paste_menu_of_is_dismissed(string name)
+	{
+		await TestTargetFixture.RunOnUIThreadAsync(() =>
+		{
+			var terminal = TerminalOf(name);
+			foreach (var popup in VisualTreeHelper.GetOpenPopupsForXamlRoot(terminal.XamlRoot))
+			{
+				popup.IsOpen = false;
+			}
+		}).ConfigureAwait(false);
+
+		await TestTargetFixture.WaitForIdleAsync().ConfigureAwait(false);
+	}
+
+	/// <summary>
+	/// Delivers a one-finger drag up or down a column: down in the middle of a cell, an optional
+	/// rest, one move per row, then up in the middle of the last row.
+	/// </summary>
+	private static async Task DragDownColumnAsync(int column, int fromRow, int toRow, int restMilliseconds, string name)
+	{
+		var cell = await MetricsAsync(name).ConfigureAwait(false);
+		var bounds = await DeviceRect.OfAsync(ElementRegistry.Resolve(name), inset: 0).ConfigureAwait(false);
+		var session = TestTargetFixture.Session;
+		var x = bounds.X + (int) Math.Round((column + 0.5) * cell.Width);
+
+		int At(int row) => bounds.Y + (int) Math.Round((row + 0.5) * cell.Height);
+
+		session.TouchPress(Finger.PointerId, x, At(fromRow));
+		await TestTargetFixture.WaitForIdleAsync().ConfigureAwait(false);
+
+		if (restMilliseconds > 0)
+		{
+			await Task.Delay(restMilliseconds).ConfigureAwait(false);
+		}
+
+		var step = toRow > fromRow ? 1 : -1;
+		for (var row = fromRow + step; row != toRow + step; row += step)
+		{
+			session.TouchMove(Finger.PointerId, x, At(row));
+			await TestTargetFixture.WaitForIdleAsync().ConfigureAwait(false);
+		}
+
+		session.TouchRelease(Finger.PointerId, x, At(toRow));
+		await TestTargetFixture.WaitForIdleAsync().ConfigureAwait(false);
+	}
+
+	private static async Task<(int X, int Y)> CellCentreAsync(string name, int column, int row)
+	{
+		var cell = await MetricsAsync(name).ConfigureAwait(false);
+		var bounds = await DeviceRect.OfAsync(ElementRegistry.Resolve(name), inset: 0).ConfigureAwait(false);
+		return (bounds.X + (int) Math.Round((column + 0.5) * cell.Width),
+			bounds.Y + (int) Math.Round((row + 0.5) * cell.Height));
+	}
+
+	private static async Task<int> ScrolledBackAsync(string name)
+	{
+		var back = 0;
+		await TestTargetFixture.RunOnUIThreadAsync(() =>
+		{
+			// The control keeps its scroll bar in step with the view: Maximum is the history's
+			// length and Value the first line on show, so the distance from the live tail is the gap.
+			var bar = VisualTreeSearch.FindDescendant<ScrollBar>(TerminalOf(name))
+				?? throw new InvalidOperationException($"\"{name}\" has no scroll bar in its visual tree.");
+			back = (int) Math.Round(bar.Maximum - bar.Value);
+		}).ConfigureAwait(false);
+
+		return back;
+	}
+
+	private static List<MenuFlyoutItem> OpenMenuItems(string name)
+	{
+		var items = new List<MenuFlyoutItem>();
+		foreach (var popup in VisualTreeHelper.GetOpenPopupsForXamlRoot(TerminalOf(name).XamlRoot))
+		{
+			if (popup.Child is { } child)
+			{
+				Collect(child);
+			}
+		}
+
+		return items;
+
+		void Collect(DependencyObject element)
+		{
+			if (element is MenuFlyoutItem item)
+			{
+				items.Add(item);
+				return;
+			}
+
+			var count = VisualTreeHelper.GetChildrenCount(element);
+			for (var i = 0; i < count; i++)
+			{
+				Collect(VisualTreeHelper.GetChild(element, i));
+			}
+		}
 	}
 
 	// --------------------------------------------------------------- the grid

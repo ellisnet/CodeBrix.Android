@@ -40,3 +40,24 @@ Scenario: A disabled ScrollViewer ignores a real finger
 	And the frame is captured
 	Then the VerticalOffset of "scroller" is 0
 	And the native scroll position of "scroller" matches its VerticalOffset
+
+# [AP8-S batch 3] Pinta.Brix: a finger drawing on the canvas inside a ScrollViewer that can scroll a little lost the stroke
+# (only its first move reached the canvas; the pointer's capture was lost, no release came). WinUI's rule: a touch drag in a
+# scrollable ScrollViewer is taken by direct manipulation (panning) unless an element under the finger opts out with a
+# ManipulationMode other than System - which a drawing surface does. This pad opts out (ManipulationMode All).
+Scenario: A real finger dragging across a pad that opts out of panning inside a ScrollViewer reaches the pad, and does not scroll
+	Given the application shows a ScrollViewer named "scroller" 400 by 300 holding a pad named "pad" 440 by 340 that captures the pointer and handles its own manipulations
+	When a real finger drags across the pad "pad" from 40, 40 to 300, 200
+	Then the pad "pad" saw every move of the finger and its release, and no cancel
+	And the ScrollViewer "scroller" is not scrolled
+
+# [AP8-S batch 4] The other half of WinUI's rule: an element that captures the pointer but does NOT opt out of panning
+# (ManipulationMode System, the default) does not keep a touch drag from a scrollable ScrollViewer - the ScrollViewer's
+# direct manipulation takes the pointer over (the element loses its capture) and pans. Android lost that gesture (batch 3:
+# nothing scrolled, natively or in Core; logs/ap8s3_dev_CAPdiag).
+Scenario: A real finger dragging across a pad that captures the pointer without opting out of panning scrolls the ScrollViewer
+	Given the application shows a ScrollViewer named "scroller" 400 by 300 holding a pad named "pad" 440 by 340 that captures the pointer
+	When a real finger drags across the pad "pad" from 300, 200 to 40, 40
+	Then the ScrollViewer "scroller" is scrolled
+	And the native scroll position of "scroller" matches its VerticalOffset
+	And the pad "pad" gave the pointer up to the ScrollViewer

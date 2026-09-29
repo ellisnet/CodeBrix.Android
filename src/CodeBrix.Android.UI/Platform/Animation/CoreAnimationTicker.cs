@@ -1,8 +1,7 @@
 using System;
-using System.Reflection;
 using CodeBrix.Android.UI.Hosting;
+using CodeBrix.Android.UI.Platform.Animation.Portable;
 using Microsoft.Extensions.Logging;
-using Microsoft.UI.Xaml.Media;
 using AChoreographer = global::Android.Views.Choreographer;
 using ALooper = global::Android.OS.Looper;
 using AMessageQueue = global::Android.OS.MessageQueue;
@@ -21,11 +20,13 @@ namespace CodeBrix.Android.UI.Platform.Animation;
 /// request goes through a render state machine that only a recording compositor resets), so the ticker looks
 /// whenever the main looper goes idle - after every batch of UI-thread work, which is where a Storyboard is
 /// begun - and starts the frame loop when Core has subscribers. The loop stops by itself when the last
-/// subscriber goes. Nothing runs while nothing animates (no per-frame wake-ups when idle).
+/// subscriber goes. Nothing runs while nothing animates (no per-frame wake-ups when idle). The per-frame decision
+/// (subscribers? one raise per display frame, next frame only while subscribers remain) is the portable
+/// <see cref="RenderingFramePump"/>, fenced host-free (AP10-C); app code that subscribes to Rendering directly (a
+/// TeachingTip's open, a game loop) is ticked the same way as a Storyboard.
 /// </remarks>
 internal static class CoreAnimationTicker
 {
-    private static readonly FieldInfo _renderingField = typeof(CompositionTarget).GetField("_rendering", BindingFlags.NonPublic | BindingFlags.Static);
     private static FrameCallback _frameCallback;
     private static IdleHandler _idleHandler;
     private static bool _frameScheduled;
@@ -54,7 +55,7 @@ internal static class CoreAnimationTicker
         _frameCallback = new FrameCallback();
         _idleHandler = new IdleHandler();
         ALooper.MainLooper?.Queue?.AddIdleHandler(_idleHandler);
-        if (_renderingField == null)
+        if (!RenderingFramePump.CanReadSubscribers)
         {
             HostLog.For("CodeBrix.Android.UI.Motion").LogWarning(
                 "CompositionTarget has no '_rendering' field in this Core build: Core animations are ticked on every frame while the app is idle-checked.");
@@ -76,24 +77,23 @@ internal static class CoreAnimationTicker
     /// <returns>True when a frame is needed.</returns>
     internal static bool HasSubscribers()
     {
-        if (_renderingField == null)
-        {
-            return true;
-        }
-
         try
         {
-            return _renderingField.GetValue(null) != null;
+            return RenderingFramePump.HasSubscribers();
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
-            if (!_warned)
-            {
-                _warned = true;
-                HostLog.For("CodeBrix.Android.UI.Motion").LogWarning(exception, "Reading Core's Rendering subscribers failed.");
-            }
-
+            WarnOnce(exception);
             return true;
+        }
+    }
+
+    private static void WarnOnce(Exception exception)
+    {
+        if (!_warned)
+        {
+            _warned = true;
+            HostLog.For("CodeBrix.Android.UI.Motion").LogWarning(exception, "Reading Core's Rendering subscribers failed.");
         }
     }
 
@@ -116,17 +116,19 @@ internal static class CoreAnimationTicker
             return;
         }
 
+        _frames++;
+        bool next;
         try
         {
-            _frames++;
-            CompositionTarget.InvokeRendering();
+            next = RenderingFramePump.OnFrame(exception => HostLog.For("CodeBrix.Android.UI.Motion").LogError(exception, "A CompositionTarget.Rendering handler failed."));
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
-            HostLog.For("CodeBrix.Android.UI.Motion").LogError(exception, "A CompositionTarget.Rendering handler failed.");
+            WarnOnce(exception);
+            next = true;
         }
 
-        if (HasSubscribers())
+        if (next)
         {
             Schedule();
         }

@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UI.PlotterView: the Android side of the CodeBrix.Platform PlotterView add-in (AP7-C). Its Core
+    (CodeBrix.Platform.UI.PlotterView.Core, re-shipped by the intake) is the whole chart control: PlotterControl (its
+    code-built tree, key bindings, pointer and touch handlers) over the engine (Engine/PlotHost: model attach, painting of
+    the model, zoom rectangle and tracker, the tracker/zoom/cursor/modifier state, click and touch gestures - the default
+    touch binding pans with one finger, pinches about the pinch centre with two, tap/hold tracks - and every controller
+    call into CodeBrix.Plotter). Every platform supplies only the CANVAS the control draws on: the contract
+    IRenderCanvasPlatform. This assembly registers the Android canvas supply from its module initializer
+    (PlotterView.Core loads it BY NAME; the CodeBrix.Android.UI bootstrap also loads it at start-up): an element painted
+    through the Skia canvas-host of the SkiaSharp.Views add-in, shown by a leaf native Skia view. Pointer and touch
+    input reach the control through Core's own input path (the framework's input router), exactly as on the Skia heads.
+    The chart's typefaces come from the platform font source (IFontSourcePlatform<SKTypeface>), which the TextLayout
+    add-in registers - hence its reference.
+    AssemblyName = the name CodeBrix.Platform.UI.PlotterView.Core (and UI.Core) grant InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android.UI.PlotterView</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.PlotterView</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.SkiaSharp.Views/CodeBrix.Android.SkiaSharp.Views.csproj" />
+    <!-- The platform font source (IFontSourcePlatform<SKTypeface>) the chart's engine takes its typefaces from. -->
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.TextLayout/CodeBrix.Android.UI.TextLayout.csproj" />
+    <!-- The add-in Cores (re-shipped from the pinned Platform build by the intake): the Skia canvas-host seam and the
+         PlotterView Core itself. -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.SkiaSharp.Views.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.PlotterView.Core.dll" />
+    <!-- What the PlotterView Core is built on (the versions its Platform package depends on): the chart engine
+         (self-produced) and SkiaSharp. -->
+    <PackageReference Include="CodeBrix.Plotter.MitLicenseForever" />
+    <PackageReference Include="SkiaSharp" />
+  </ItemGroup>
+
+</Project>

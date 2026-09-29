@@ -1,31 +1,6 @@
 Feature: Calendars and the picker presenters
-	Android-only (AP10-A). A single-selection month CalendarView is the platform calendar (its month grid replaces
-	CalendarPanel and the CalendarViewDayItems); a multiple-selection one keeps its Fluent template. CalendarDatePicker
-	is a Material text field opening a MaterialDatePicker. DatePicker / TimePicker open Material picker dialogs, which
-	replace their Fluent flyout presenters (DatePickerFlyoutPresenter, DatePickerSelector, the LoopingSelector parts,
-	TimePickerFlyoutPresenter). ListPickerFlyoutPresenter and PickerFlyoutPresenter are NotImplemented in the Platform;
-	it has no PickerItem.
-
-Scenario: A single-selection CalendarView is the platform calendar within its MinDate and MaxDate
-	Given the application shows the AP10 sample "calendar view on a fixed day" named "cal"
-	Then "cal" is shown by a native CalendarView
-	And the Core tree of "cal" holds no CalendarPanel
-	And the Core tree of "cal" holds no CalendarViewDayItem
-	And the native calendar of "cal" runs from "2026-01-01" to "2026-12-31"
-	And the native calendar of "cal" shows "2026-03-14"
-	When the frame is captured
-
-Scenario: A date selected in Core is the day the native calendar shows
-	Given the application shows the AP10 sample "calendar view" named "cal"
-	When the selected date of "cal" is set to "2026-03-14"
-	Then the native calendar of "cal" shows "2026-03-14"
-
-Scenario: A day picked on the native calendar becomes the one selected date and Core raises SelectedDatesChanged
-	Given the application shows the AP10 sample "calendar view" named "cal"
-	And the SelectedDatesChanged events of "cal" are counted
-	When the day "2026-05-20" is picked on the native calendar of "cal"
-	Then the selected dates of "cal" are "2026-05-20"
-	And "cal" raised SelectedDatesChanged 1 times
+	The templated calendar and Material picker dialogs. Native month calendars run in
+	AndroidNativeCalendars so their renderer state ends at the group restart.
 
 Scenario: A multiple-selection CalendarView keeps its Fluent template with a CalendarPanel of CalendarViewDayItems (CalendarViewBaseItems)
 	Given the application shows the AP10 sample "multiple selection calendar view" named "cal"

@@ -20,6 +20,25 @@ internal static class ActivityRegistry
     /// <summary>The most recently created live activity (or null).</summary>
     internal static CodeBrixActivity Latest => Get(_latest);
 
+    /// <summary>The live activities (a snapshot).</summary>
+    internal static IReadOnlyList<CodeBrixActivity> All
+    {
+        get
+        {
+            Prune();
+            var list = new List<CodeBrixActivity>(_activities.Count);
+            foreach (var reference in _activities)
+            {
+                if (reference.TryGetTarget(out var activity))
+                {
+                    list.Add(activity);
+                }
+            }
+
+            return list;
+        }
+    }
+
     /// <summary>The number of live activities.</summary>
     internal static int Count
     {

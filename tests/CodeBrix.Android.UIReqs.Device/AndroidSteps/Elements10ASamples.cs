@@ -145,7 +145,7 @@ internal static class Samples
         Content = Reg("content", Box(WColors.Blue)),
     };
 
-#pragma warning disable Uno0001 // TitleBar / ListBox are NotImplemented in the Platform: the scenarios prove exactly that.
+#pragma warning disable Uno0001 // TitleBar / ListBox were NotImplemented before pin 1.0.270.342 (WPE1-10); kept for older pins.
     private static FrameworkElement TitleBarSample() => new TitleBar { Title = "Title" };
 
     private static FrameworkElement ListBoxSample()

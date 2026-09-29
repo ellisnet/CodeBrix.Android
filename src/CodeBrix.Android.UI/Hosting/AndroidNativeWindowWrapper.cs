@@ -4,7 +4,9 @@
 
 using System;
 using CodeBrix.Android.UI.Portable;
+using CodeBrix.Android.UI.Portable.Input;
 using CodeBrix.Android.UI.Portable.Layout;
+using CodeBrix.Platform.UI.Xaml.Core;
 using CodeBrix.Platform.UI.Xaml.Controls;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
@@ -162,6 +164,7 @@ internal sealed class AndroidNativeWindowWrapper : NativeWindowWrapperBase //was
             Math.Max(0, bounds.Bottom - visibleBounds.Bottom));
         var keyboard = _keyboardPx / density;
         var occluded = keyboard > 0 ? new Rect(0, Math.Max(0, bounds.Height - keyboard), bounds.Width, keyboard) : default;
+        ApplyKeyboardOcclusionInset(SoftInputModePolicy.OcclusionInsetDips(_keyboardPx, density, activity.WithholdsKeyboard));
         var safeAreaChanged = SafeAreaMath.Differs(safeArea, _safeAreaDips) || bounds.Size != _lastBoundsSize;
         _lastBoundsSize = bounds.Size;
         _safeAreaDips = safeArea;
@@ -291,6 +294,32 @@ internal sealed class AndroidNativeWindowWrapper : NativeWindowWrapperBase //was
 
     private Size _lastBoundsSize;
     private SafeAreaPadding _lastInsetsPx;
+
+    /// <summary>The height withheld from the bottom of the XAML root for the soft keyboard (DIPs; 0 unless Resize).</summary>
+    internal double KeyboardOcclusionInsetDips { get; private set; }
+
+    /// <summary>
+    /// SoftInputAdjust.Resize: Core lays the page out above the soft keyboard through the root's content bottom
+    /// occlusion inset (IRootElement.ContentBottomOcclusionInset - the seam the Platform's own on-screen keyboard
+    /// uses); popups keep the full window. Pan / Unspecified: 0.
+    /// </summary>
+    private void ApplyKeyboardOcclusionInset(double insetDips)
+    {
+        if (Math.Abs(insetDips - KeyboardOcclusionInsetDips) < 0.01)
+        {
+            return;
+        }
+
+        if (Window?.RootElement is IRootElement root)
+        {
+            KeyboardOcclusionInsetDips = insetDips;
+            root.ContentBottomOcclusionInset = insetDips;
+            if (_log.IsEnabled(LogLevel.Debug))
+            {
+                _log.LogDebug("Content bottom occlusion inset {Inset} DIPs (soft keyboard, Resize).", insetDips);
+            }
+        }
+    }
 
     private static void UpdateInputPane(Rect occluded)
     {

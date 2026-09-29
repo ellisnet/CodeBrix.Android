@@ -58,6 +58,44 @@ public abstract class CodeBrixApplication : AApplication
     /// </summary>
     protected virtual bool UseProjectionViewer => false;
 
+    private SoftInputAdjust? _softInputAdjust;
+
+    /// <summary>
+    /// How the app's windows make room for the soft keyboard (MAUI's WindowSoftInputModeAdjust):
+    /// <see cref="Hosting.SoftInputAdjust.Pan"/> (the default) pans the window so the focused text field stays visible;
+    /// <see cref="Hosting.SoftInputAdjust.Resize"/> lays the page out again above the keyboard;
+    /// <see cref="Hosting.SoftInputAdjust.Unspecified"/> leaves it to the system. Until the app sets it, an activity that
+    /// declares its own adjust mode ([Activity(WindowSoftInputMode = ...)]) keeps that mode and every other activity
+    /// pans; once set, it applies to every activity. Setting it while the app runs re-applies it at once (main thread).
+    /// InputPane.OccludedRect reports the keyboard in every mode. Set it in the application's constructor or OnCreate to
+    /// have it from the first frame.
+    /// </summary>
+    public SoftInputAdjust SoftInputAdjust
+    {
+        get => _softInputAdjust ?? SoftInputAdjust.Pan;
+        set
+        {
+            _softInputAdjust = value;
+            foreach (var activity in ActivityRegistry.All)
+            {
+                activity.ApplySoftInputAdjust();
+            }
+        }
+    }
+
+    /// <summary>Forgets the app-level setting (back to the default: declared modes kept, else Pan) and re-applies it.</summary>
+    internal void ResetSoftInputAdjust()
+    {
+        _softInputAdjust = null;
+        foreach (var activity in ActivityRegistry.All)
+        {
+            activity.ApplySoftInputAdjust();
+        }
+    }
+
+    /// <summary>The app-level setting, or null while the app never set one (declared modes are then kept).</summary>
+    internal SoftInputAdjust? ExplicitSoftInputAdjust => _softInputAdjust;
+
     /// <summary>The projection viewer, while <see cref="UseProjectionViewer"/> is on (null otherwise).</summary>
     internal ProjectionViewer ProjectionViewer => _projectionViewer;
 

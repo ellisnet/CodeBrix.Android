@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageVersion Include="CodeBrix.MarkupParse.MitLicenseForever" Version="1.0.248.1160" />
-    <PackageVersion Include="CodeBrix.PdfDocCreate.MitLicenseForever" Version="1.0.254.196" />
+    <PackageVersion Include="CodeBrix.PdfDocCreate.MitLicenseForever" Version="1.0.271.1182" />
     <PackageVersion Include="CodeBrix.Imaging.ApacheLicenseForever" Version="1.0.248.1113" />
   </ItemGroup>
 

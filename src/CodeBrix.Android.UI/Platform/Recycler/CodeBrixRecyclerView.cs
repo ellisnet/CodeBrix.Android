@@ -37,6 +37,27 @@ internal sealed class CodeBrixRecyclerView : ARecyclerView
         OverScrollMode = global::Android.Views.OverScrollMode.IfContentScrolls;
     }
 
+    /// <inheritdoc />
+    /// <remarks>
+    /// AP8-S batch 1: the list draws nothing outside its own bounds. Its parents replay Core's layout and do not clip their
+    /// children (CodeBrixViewGroup), so an item view partly scrolled out of the list was drawn over whatever sits above or
+    /// below the list (seen in a pasted app: a row over a header). Clipping here also covers the item decorations and
+    /// the overscroll edge effects drawn in Draw.
+    /// </remarks>
+    public override void Draw(global::Android.Graphics.Canvas canvas)
+    {
+        if (canvas == null)
+        {
+            base.Draw(canvas);
+            return;
+        }
+
+        var save = canvas.Save();
+        canvas.ClipRect(ScrollX, ScrollY, ScrollX + Width, ScrollY + Height);
+        base.Draw(canvas);
+        canvas.RestoreToCount(save);
+    }
+
     /// <summary>
     /// Raised when the scroll position changed: (x, y) in pixels and whether more changes follow
     /// (dragging or settling).

@@ -50,31 +50,69 @@ skill need to offer it. Not built by the solution.
 
 TEST PROJECTS AND SCRIPTS
 =========================
-    tests/CodeBrix.Android.IntakeGate.Tests/
     tests/CodeBrix.Android.UI.Tests/
+    tests/CodeBrix.Android.UI.Toolkit.Tests/
+    tests/CodeBrix.Android.<AddIn>.Tests/   (one per add-in)
+    tests/CodeBrix.Android.IntakeGate.Tests/
+    tests/CodeBrix.Android.Analyzers.Tests/
+    tests/CodeBrix.Android.ParityScore.Tests/
+    tests/UIReqsFrameCompare.Tests/
+    tests/Shared/
     tests/PasteAlways/
     tests/CodeBrix.Android.UIReqs.Device/
     tests/CodeBrix.Android.UIReqs/
-    tests/CodeBrix.Android.Analyzers.Tests/
-    tests/CodeBrix.Android.ParityScore.Tests/
-    tools/UIReqsFrameCompare/
-    tools/CodeBrix.Android.ParityScore/
     build/test-scripts/paste-always-compile.sh
     build/test-scripts/parity-score.sh
     build/test-scripts/device-smoke.sh
     build/test-scripts/android-uireqs-avd.sh
     build/test-scripts/android-uireqs-run.sh
     build/test-scripts/compare-uireqs-frames.sh
+    build/test-scripts/uireqs-frame-compare.informational
 
-xUnit v3 tests of the intake gate tool and of CodeBrix.Android (host-free); the
-paste-always compile heads (one throw-away Android head per corpus app, every
-page, built by paste-always-compile.sh, which also counts the CBAND warnings);
-the parity-score tool and its tests (parity-score.sh; the report goes to
-artifacts/parity/); the tests of the CBAND analyzer; the device smoke test (device-smoke.sh); the
-UIReqs suite on an Android emulator (the CodeBrix.Platform UIReqs scenarios,
-copied: a scenario app on the emulator plus a Reqnroll host runner, run by
-android-uireqs-run.sh, frames compared by compare-uireqs-frames.sh). See
+xUnit v3 tests (host-free, no device): the intake and package gates of the
+gate tool (and the fence that keeps THIRD-PARTY-NOTICES.txt complete), the
+portable logic of CodeBrix.Android and CodeBrix.Android.UI with the Core run
+without a device, the Toolkit and every add-in (tests/Shared/ holds the Core
+metadata reader several of them share), the CBAND analyzer, the parity-score
+tool and the frame-compare tool.
+The paste-always compile heads (one throw-away Android head per corpus app,
+every page, built by paste-always-compile.sh, which also counts the CBAND
+warnings). The device smoke test (device-smoke.sh, samples/HelloPaste on the
+test emulator; android-uireqs-avd.sh creates, starts and stops that
+emulator). The UIReqs suite on an Android emulator (the CodeBrix.Platform
+UIReqs scenarios, copied, plus Android-only groups: a scenario app on the
+emulator and a Reqnroll host runner, run by android-uireqs-run.sh; scenarios
+a later change owns are listed in tests/CodeBrix.Android.UIReqs/
+uireqs-pending.txt; tests/CodeBrix.Android.UIReqs.Device/PORTING.txt records
+where every copied file comes from and every adaptation). See
 MAINTAINER-README.txt (TESTING, UIREQS).
+
+
+TOOLS
+=====
+    tools/UIReqsFrameCompare/
+    tools/CodeBrix.Android.ParityScore/
+    src/CodeBrix.Android.Analyzers/
+
+UIReqsFrameCompare (copied from CodeBrix.Platform, with a managed PNG codec
+instead of SkiaSharp) compares a run's saved UIReqs frames with a baseline,
+byte and pixel, writes diff images and a report; compare-uireqs-frames.sh runs
+it with the entries of uireqs-frame-compare.informational (compared and
+reported, never failing). Its tests: tests/UIReqsFrameCompare.Tests; it also
+has a --self-test mode.
+
+CodeBrix.Android.ParityScore reads the re-shipped Core assemblies and the built
+CodeBrix.Android assemblies (static IL reading, nothing is loaded) and writes
+the parity score per build to artifacts/parity/: the NotImplemented members per
+Core type, and per native element handler the dependency properties it maps,
+explains (declined-explained.tsv) or declines. parity-score.sh runs it.
+
+The CBAND analyzer (src/CodeBrix.Android.Analyzers) IS shipped, inside the
+framework package: it reports the CodeBrix.Platform constructs Android
+accepts and ignores, in C# and - through its XAML scan of the Page and
+ApplicationDefinition files - at the XAML file and line. Its tests are
+tests/CodeBrix.Android.Analyzers.Tests; paste-always-compile.sh counts its
+findings per corpus app.
 
 
 SAMPLES

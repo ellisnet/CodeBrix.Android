@@ -8,8 +8,9 @@ using AChoreographer = Android.Views.Choreographer;
 namespace CodeBrix.Android.UIReqs.Device;
 
 /// <summary>
-/// The scenario activity: full screen (system bars hidden, so a screencap is the app window and
-/// nothing but the app), counts Android frames for the frame handshake, and starts the step server.
+/// The scenario activity counts Android frames for the frame handshake and starts the step server.
+/// Normal baseline runs hide system bars; existing-device preservation runs leave them visible to
+/// avoid first-use immersive-mode tutorials without changing any device setting.
 /// </summary>
 [Activity(
     Name = "com.codebrix.uireqs.MainActivity",
@@ -25,7 +26,20 @@ public class MainActivity : CodeBrixActivity
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
+        // An app orientation request affects this activity only; no system rotation setting is written.
+        var orientation = Intent?.GetStringExtra("uireqsOrientation");
+        if (orientation == "Portrait")
+        {
+            RequestedOrientation = global::Android.Content.PM.ScreenOrientation.Portrait;
+        }
+        else if (orientation == "Landscape")
+        {
+            RequestedOrientation = global::Android.Content.PM.ScreenOrientation.Landscape;
+        }
+
         AppHost.Activity = this;
+        ClipboardCaptureWait.Start(this);
+        CodeBrix.Android.UIReqs.Device.TestTarget.TestTargetSession.InstallCaretHook(this);
         HideSystemBars();
         _frames ??= new FrameCounter();
         AChoreographer.Instance!.PostFrameCallback(_frames);
@@ -39,8 +53,22 @@ public class MainActivity : CodeBrixActivity
         HideSystemBars();
     }
 
+    /// <inheritdoc />
+    protected override void OnDestroy()
+    {
+        ClipboardCaptureWait.Stop();
+        base.OnDestroy();
+    }
+
     private void HideSystemBars()
     {
+        // Existing devices can show a first-use immersive-mode tutorial over the app. Keeping
+        // their system bars visible avoids that overlay without acknowledging a system prompt.
+        if (Intent?.GetBooleanExtra("preserveConfiguration", false) == true)
+        {
+            return;
+        }
+
         if (Window is not { } window)
         {
             return;

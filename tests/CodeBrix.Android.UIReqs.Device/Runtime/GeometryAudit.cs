@@ -28,6 +28,11 @@ internal static class GeometryAudit
         var compared = 0;
         await TestTargetFixture.RunOnUIThreadAsync(() =>
         {
+            // [AP8-S item K] A window panned for the soft keyboard (the default adjustPan) draws every view higher by the
+            // pan; GetLocationInWindow includes it (the window root's own location in the window is minus the pan, (0,0)
+            // otherwise). Layout replay is about Core vs the views, not about the pan: take it out.
+            var pan = new int[2];
+            AppHost.Activity?.Window?.DecorView?.GetLocationInWindow(pan);
             foreach (var name in ElementRegistry.Names)
             {
                 if (!ElementRegistry.TryResolve(name, out var element) || element is null)
@@ -51,6 +56,8 @@ internal static class GeometryAudit
                 var core = new Rect(origin.X * density, origin.Y * density, element.RenderSize.Width * density, element.RenderSize.Height * density);
                 var location = new int[2];
                 view.GetLocationInWindow(location);
+                location[0] -= pan[0];
+                location[1] -= pan[1];
                 compared++;
                 var dx = Math.Abs(location[0] - core.X);
                 var dy = Math.Abs(location[1] - core.Y);

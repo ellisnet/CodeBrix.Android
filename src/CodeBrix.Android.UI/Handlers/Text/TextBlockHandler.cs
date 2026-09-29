@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using CodeBrix.Android.UI.Android;
+using CodeBrix.Android.UI.Platform;
 using CodeBrix.Android.UI.Portable.Drawing;
 using CodeBrix.Android.UI.Portable.Layout;
 using CodeBrix.Android.UI.Portable.Projection;
@@ -409,7 +410,35 @@ internal sealed class TextBlockHandler : ViewHandler<TextBlock, ATextView>
         view.SetIncludeFontPadding(false);
         view.FallbackLineSpacing = false;
         view.SetPadding(0, 0, 0, 0);
+        view.LayoutChange += OnTextViewLayoutChange;
         return view;
+    }
+
+    /// <summary>
+    /// [AP8-S batch 2] Rebuilds and redraws the text whenever the replay lays the view out. A TextView makes its text
+    /// layout for the width its frame has when the text is SET (TextView.checkForRelayout); a single-line trimmed
+    /// TextBlock (TextTrimming + MaxLines 1: ellipsized to that width) whose text a native list re-bound while the view
+    /// was 0 wide kept a layout of just the ellipsis, because the replay then measured it with the same exact spec as
+    /// before (Android's measure cache skipped onMeasure) and only moved/resized its frame: the card titles of a
+    /// switched catalog showed "..." or nothing (seen in a pasted app). Forcing the measure at the laid-out size makes
+    /// the TextView rebuild its layout for its real width; the redraw re-records it. Once per arrange, never per frame.
+    /// </summary>
+    private static void OnTextViewLayoutChange(object sender, AView.LayoutChangeEventArgs e)
+    {
+        if (sender is not ATextView view)
+        {
+            return;
+        }
+
+        var width = e.Right - e.Left;
+        var height = e.Bottom - e.Top;
+        if (width > 0 && height > 0)
+        {
+            view.ForceLayout();
+            view.Measure(MeasureSpecExtensions.Exactly(width), MeasureSpecExtensions.Exactly(height));
+        }
+
+        view.Invalidate();
     }
 
     /// <inheritdoc />
@@ -417,6 +446,7 @@ internal sealed class TextBlockHandler : ViewHandler<TextBlock, ATextView>
     {
         _linkBridge.Detach();
         platformView.Touch -= OnLinkTouch;
+        platformView.LayoutChange -= OnTextViewLayoutChange;
         _hasLinks = false;
         _foregroundWatcher.Clear();
         base.DisconnectHandler(platformView);

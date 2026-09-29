@@ -143,6 +143,15 @@ internal sealed class ItemsRepeaterHandler : ViewHandler<ItemsRepeater, CodeBrix
         }
 
         var size = _engine.Measure(availableSize);
+        if (repeater.Layout is UniformGridLayout { ItemsStretch: UniformGridLayoutItemsStretch.None } grid
+            && _engine.UniformCrossExtent(availableSize) is { } across)
+        {
+            // [AP8-S batch 2] Core's UniformGridLayout extent across the lines (span x (item + spacing) - spacing),
+            // not the native list's wrap size: the wrap size depends on the cell width of the LAST layout, so a
+            // centred repeater re-arranged at it lost a column (3 -> 2 in a 732-DIP catalog after a scroll).
+            size = grid.Orientation == Orientation.Vertical ? new Size(size.Width, across) : new Size(across, size.Height);
+        }
+
         _engine.Panel.ViewportSize = size;
         _engine.Panel.Measure(size);
         return size;

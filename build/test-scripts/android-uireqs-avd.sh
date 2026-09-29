@@ -160,6 +160,16 @@ start_avd() {
     echo "FAIL: $serial runs AVD '$running', not '$name' - not touching it" >&2; return 2
   fi
   local pids
+  # [AP7-B AdvancedTextEdit, coordinator 2026-09-27 08:19] A start that follows a stop by seconds could hang in the cold
+  # boot (seen 2026-09-26 21:56 and 2026-09-27 08:12): wait (up to 60 s, polling every 2 s) until no emulator/qemu process
+  # of THIS AVD is alive and its ports are free. Never kills anything; if one is still there after 60 s, it is printed and
+  # the checks below decide as before.
+  local waited=0
+  while { [ -n "$(avd_pids)" ] || port_bound; } && [ $waited -lt 60 ]; do
+    [ $waited -eq 0 ] && log "waiting for the previous $name emulator to exit (pid $(echo $(avd_pids)); ports $port/$((port + 1)) bound: $(port_bound && echo yes || echo no))"
+    sleep 2; waited=$((waited + 2))
+  done
+  [ $waited -gt 0 ] && log "waited ${waited} s for the previous emulator to exit$([ -n "$(avd_pids)" ] && echo " - still running: pid $(echo $(avd_pids))")"
   pids=$(avd_pids)
   if [ -n "$pids" ]; then
     echo "FAIL: an emulator process for $name is running (pid $(echo $pids)) but $serial is not online;" \

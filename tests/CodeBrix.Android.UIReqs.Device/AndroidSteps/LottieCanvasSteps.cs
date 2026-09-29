@@ -57,6 +57,19 @@ public sealed class LottieCanvasSteps
         actual.Should().Be(typeName);
     }
 
+    /// <summary>AP1.12 (WPE1-13 item b): the frame clock the Lottie engine gets on Android.</summary>
+    [Then("the Lottie frame clock is {string}")]
+    public async Task Then_the_Lottie_frame_clock_is(string typeName)
+    {
+        string actual = null;
+        await TestTargetFixture.RunOnUIThreadAsync(() =>
+        {
+            AndroidPlatformBootstrap.EnsureRegistered();
+            actual = AndroidPlatformBootstrap.TickSourcePlatform?.GetType().Name;
+        }).ConfigureAwait(false);
+        actual.Should().Be(typeName);
+    }
+
     /// <summary>Asserts that the player's render surface is the Android canvas element and that it has painted.</summary>
     [Then("the Lottie animation of {string} is painted on the Android canvas supply")]
     public async Task Then_the_animation_is_painted_on_the_canvas_supply(string name)

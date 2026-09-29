@@ -8,7 +8,7 @@ namespace CodeBrix.Android.IntakeGate.Gates;
 
 /// <summary>
 /// Gate 3: every CodeBrix.Android.* assembly is granted InternalsVisibleTo by the Core
-/// assemblies it needs. gates/ivt-grants.txt lists, per Android assembly, the Core
+/// assemblies it needs. gates/ivt-grants.txt also fences Core-to-Core grants and lists, per friend assembly, the Core
 /// assemblies that must grant it ("Android.Assembly &lt;- Core.A, Core.B", or
 /// "&lt;- (none)"). Every row is checked against the Core assemblies' attributes, and every
 /// CodeBrix.Android.* project under src/ must have a row (a new project states what it needs).
@@ -68,7 +68,7 @@ internal sealed class InternalsVisibleToGate : IIntakeGate
             result.Errors.Add($"src/ builds {project} but gates/{ListFileName} has no row for it");
         }
 
-        result.Notes.Add($"{rows.Count} Android assemblies listed, {granted} grants verified, {projects.Count} CodeBrix.Android.* projects under src/");
+        result.Notes.Add($"{rows.Count} friend assemblies listed, {granted} grants verified, {projects.Count} CodeBrix.Android.* projects under src/");
         return result;
     }
 

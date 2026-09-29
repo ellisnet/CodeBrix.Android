@@ -68,6 +68,8 @@ internal sealed class RecyclerItemsEngine : IRecyclerItemsOwner, IDisposable
     private ObservableItemsSource _source;
     private CorePointerScrollBridge _bridge;
     private SpacingItemDecoration _decoration;
+    private UniformGridColumnDecoration _columnDecoration;
+    private double _cellAcross = double.NaN;
     private ItemsLayoutSpec _spec;
     private Size? _uniformSize;
     private Size _lastViewport;
@@ -475,6 +477,20 @@ internal sealed class RecyclerItemsEngine : IRecyclerItemsOwner, IDisposable
             _decoration = null;
         }
 
+        if (_columnDecoration != null)
+        {
+            Recycler.RemoveItemDecoration(_columnDecoration);
+            _columnDecoration = null;
+        }
+
+        _cellAcross = double.NaN;
+        if (_spec.Kind == ItemsLayoutKind.UniformGrid)
+        {
+            // [AP8-S batch 2] Core's column positions when the cells are narrower than item + spacing.
+            _columnDecoration = new UniformGridColumnDecoration(ColumnGeometry) { Horizontal = _spec.ScrollsHorizontally };
+            Recycler.AddItemDecoration(_columnDecoration);
+        }
+
         var spacingPx = LayoutReplayMath.ToPixels(_spec.MainSpacing, Density);
         if (spacingPx > 0)
         {
@@ -516,6 +532,45 @@ internal sealed class RecyclerItemsEngine : IRecyclerItemsOwner, IDisposable
 
         var extra = Math.Max(0, UniformGridMath.ExtraEndPadding(across, itemAcross, _spec.CrossSpacing, span) - Math.Max(0, _spec.CrossSpacing));
         ApplyPadding(extra);
+        var cell = double.IsFinite(across) && span > 0 ? (across - Math.Floor(extra * Density) / Density) / span : double.NaN;
+        if (!cell.Equals(_cellAcross))
+        {
+            _cellAcross = cell;
+            Recycler.InvalidateItemDecorations();
+        }
+    }
+
+    /// <summary>The uniform grid's item extent, cross spacing and layout-manager cell extent across (DIPs), for the column decoration.</summary>
+    private (double ItemAcross, double Spacing, double CellAcross, double Density) ColumnGeometry()
+    {
+        var size = _uniformSize;
+        var item = size == null ? double.NaN : _spec.ScrollsHorizontally ? size.Value.Height : size.Value.Width;
+        return (item, _spec.CrossSpacing, _cellAcross, Density);
+    }
+
+    /// <summary>
+    /// The cross-axis extent (DIPs, padding included) Core's UniformGridLayout reports for <paramref name="available"/>
+    /// when its items do not stretch - span x (item + spacing) - spacing - or null when the list is not such a grid,
+    /// has no items, no known cell size or no finite cross extent (the native measure stands then).
+    /// </summary>
+    internal double? UniformCrossExtent(Size available)
+    {
+        if (_spec.Kind != ItemsLayoutKind.UniformGrid || _provider.ItemCount == 0 || UniformItemSize() is not { } size)
+        {
+            return null;
+        }
+
+        var horizontal = _spec.ScrollsHorizontally;
+        var padding = horizontal ? _padding.Top + _padding.Bottom : _padding.Left + _padding.Right;
+        var across = (horizontal ? available.Height : available.Width) - padding;
+        if (!double.IsFinite(across))
+        {
+            return null;
+        }
+
+        var itemAcross = horizontal ? size.Height : size.Width;
+        var span = UniformGridMath.SpanCount(across, itemAcross, _spec.CrossSpacing, _spec.MaximumLines);
+        return UniformGridMath.CrossExtent(itemAcross, _spec.CrossSpacing, span) + padding;
     }
 
     private Size? UniformItemSize()

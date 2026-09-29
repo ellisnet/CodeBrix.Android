@@ -39,4 +39,33 @@ public class UniformGridMathTests
         ItemsLayoutSpec.VerticalGrid.ScrollsHorizontally.Should().BeFalse();
         ItemsLayoutSpec.HorizontalPager.ScrollsHorizontally.Should().BeTrue();
     }
+
+    [Fact]
+    public void cross_extent_is_cores_uniform_grid_extent_without_trailing_spacing()
+    {
+        // [AP8-S batch 2] the Kenney catalog: 3 cards of 230 + 14 fit 732 DIPs; Core reports 3 x 244 - 14 = 718.
+        var span = UniformGridMath.SpanCount(732, 230, 14, 0);
+        span.Should().Be(3);
+        UniformGridMath.CrossExtent(230, 14, span).Should().Be(718);
+
+        // Arranged at that extent the span holds (it does not drop to 2, the defect).
+        UniformGridMath.SpanCount(718, 230, 14, 0).Should().Be(3);
+        UniformGridMath.CrossExtent(48, 0, 8).Should().Be(384);
+        UniformGridMath.CrossExtent(double.NaN, 14, 3).Should().Be(0);
+        UniformGridMath.CrossExtent(230, 14, 0).Should().Be(0);
+    }
+
+    [Fact]
+    public void column_offset_moves_items_from_equal_cells_to_cores_columns()
+    {
+        // 718 DIPs in 3 equal cells = 239.33 each; Core's columns start at 0, 244, 488.
+        var cell = 718.0 / 3;
+        UniformGridMath.ColumnOffset(0, 230, 14, cell).Should().Be(0);
+        (cell + UniformGridMath.ColumnOffset(1, 230, 14, cell)).Should().BeApproximately(244, 1e-9);
+        (2 * cell + UniformGridMath.ColumnOffset(2, 230, 14, cell)).Should().BeApproximately(488, 1e-9);
+
+        // Exact cells (item + spacing) need no offset; an item never leaves its cell.
+        UniformGridMath.ColumnOffset(2, 230, 14, 244).Should().Be(0);
+        UniformGridMath.ColumnOffset(5, 230, 14, 232).Should().Be(2);
+    }
 }

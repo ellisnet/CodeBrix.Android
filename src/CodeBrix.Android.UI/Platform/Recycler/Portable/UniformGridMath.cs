@@ -44,4 +44,37 @@ internal static class UniformGridMath
         var used = span * (itemExtent + spacing);
         return Math.Max(0, available + spacing - used);
     }
+
+    /// <summary>
+    /// The cross-axis extent Core's UniformGridLayout reports when its items do not stretch (ItemsStretch None):
+    /// <paramref name="span"/> items of <paramref name="itemExtent"/> separated by <paramref name="spacing"/>
+    /// (no trailing spacing), whatever the item count; 0 when nothing fits.
+    /// </summary>
+    internal static double CrossExtent(double itemExtent, double spacing, int span)
+    {
+        if (!double.IsFinite(itemExtent) || itemExtent <= 0 || span <= 0)
+        {
+            return 0;
+        }
+
+        spacing = double.IsFinite(spacing) ? Math.Max(0, spacing) : 0;
+        return Math.Max(0, span * (itemExtent + spacing) - spacing);
+    }
+
+    /// <summary>
+    /// How far (DIPs) the item in <paramref name="column"/> moves from the start of its equal layout-manager cell
+    /// (<paramref name="cellExtent"/> wide) to where Core puts it (column x (item + spacing)); 0 when the cells
+    /// are already item + spacing wide, never so far that the item no longer fits its cell.
+    /// </summary>
+    internal static double ColumnOffset(int column, double itemExtent, double spacing, double cellExtent)
+    {
+        if (column <= 0 || !double.IsFinite(itemExtent) || !double.IsFinite(cellExtent) || cellExtent <= 0)
+        {
+            return 0;
+        }
+
+        spacing = double.IsFinite(spacing) ? Math.Max(0, spacing) : 0;
+        var offset = column * (itemExtent + spacing - cellExtent);
+        return Math.Clamp(offset, 0, Math.Max(0, cellExtent - itemExtent));
+    }
 }

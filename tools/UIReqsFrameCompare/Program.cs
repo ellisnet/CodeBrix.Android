@@ -20,7 +20,9 @@ namespace UIReqsFrameCompare
 			  --report <file>       write the text report to <file> (default: standard output)
 			  --informational <E>   <E> is a whole group (<Group>) or one feature of a group (<Group>/<feature file
 			                        name without extension>); its frames are compared and reported but never affect
-			                        the exit code, and its missing/extra frames are listed as informational (repeatable)
+			                        the exit code, and its missing/extra frames are listed as informational (repeatable);
+			                        or one frame (<Group>/<feature>/<frame file name without .png>); each form may be
+			                        prefixed with Portrait/ or Landscape/ to cover that orientation only
 			  --self-test <folder>  run the tool's own self-test against a baseline folder (copied to --work)
 
 			Exit code: 0 when every strict frame is same (within the threshold) and none is missing or extra,
@@ -62,9 +64,9 @@ namespace UIReqsFrameCompare
 							break;
 						case "--informational":
 							var entry = NextValue().Trim().Trim('/');
-							if (entry.Length == 0 || entry.Split('/').Length > 2)
+							if (!CompareOptions.IsValidEntry(entry))
 							{
-								throw new ArgumentException($"--informational takes <Group> or <Group>/<feature>, not '{entry}'.");
+								throw new ArgumentException($"--informational takes [<Orientation>/]<Group>[/<feature>[/<frame>]], not '{entry}'.");
 							}
 							options.InformationalEntries.Add(entry);
 							break;

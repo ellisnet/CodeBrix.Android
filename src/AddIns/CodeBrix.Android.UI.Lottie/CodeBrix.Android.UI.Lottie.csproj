@@ -10,6 +10,9 @@
     canvas supply from its module initializer (Lottie.Core loads it BY NAME; the CodeBrix.Android.UI bootstrap also
     loads it at start-up): an element painted through the Skia canvas-host factory of the SkiaSharp.Views add-in
     (SKCanvasVisualBaseFactory), shown by that add-in's canvas-element handler as a native Skia view.
+    AP1.12 (WPE1-13): it also registers the frame clock (ILottieTickSourcePlatform): Choreographer frame callbacks
+    instead of the DispatcherQueue timer (Android/ChoreographerTickSource.cs; which display frames raise a tick is
+    Portable/FrameTickGate.cs, host-free tested).
     AssemblyName = the name CodeBrix.Platform.UI.Lottie.Core (and UI.Core) grant InternalsVisibleTo to.
   -->
   <PropertyGroup>

@@ -15,7 +15,7 @@ namespace CodeBrix.Android.UIReqs.Hooks;
 
 /// <summary>
 /// The host's hooks: connect to the device app and start the run there; per scenario, the
-/// frame archives (host side), the pending list, and the device's own scenario hooks (which
+/// frame archives (host side), the pending list and the re-homed list, and the device's own scenario hooks (which
 /// skip scenarios of the other orientation and reset the panel afterwards); on failure, the
 /// failure frame's path and the canvas report go into the test output, as on Platform.
 /// </summary>
@@ -60,7 +60,7 @@ public sealed class HostHooks
         FrameReview.Initialize();
         Console.Out.WriteLine(
             $"UIReqs (Android): {DeviceSession.Serial}, {DeviceSession.Orientation} panel {DeviceSession.Panel.Width} x {DeviceSession.Panel.Height} "
-            + $"(density {DeviceSession.Panel.Density}); {hello.Int("steps")} step definitions on the device; {_pending.Count} pending entries; {FrameReview.Describe()}.");
+            + $"(density {DeviceSession.Panel.Density}); {hello.Int("steps")} step definitions on the device; {_pending.Count(p => !p.Rehomed)} pending entries, {_pending.Count(p => p.Rehomed)} re-homed; {FrameReview.Describe()}.");
         foreach (var line in hello.Strings("output"))
         {
             Console.Out.WriteLine("device: " + line);
@@ -97,7 +97,7 @@ public sealed class HostHooks
         var pending = _pending.FirstOrDefault(p => p.Matches(feature.Title, scenario.Title));
         if (pending != null)
         {
-            _runtime.TestIgnore("PENDING (" + pending.Owner + "): " + pending.Reason);
+            _runtime.TestIgnore((pending.Rehomed ? "RE-HOMED (" : "PENDING (") + pending.Owner + "): " + pending.Reason);
             return;
         }
 
@@ -158,7 +158,16 @@ public sealed class HostHooks
     private static void LoadPending()
     {
         _pending.Clear();
-        var file = Path.Combine(AppContext.BaseDirectory, "uireqs-pending.txt");
+        Load("uireqs-pending.txt", rehomed: false);
+
+        // [AP9-2] A copied scenario whose claim runs in an Android-only group under the device settings it needs (for
+        // example the system animator scale at 1) is RE-HOMED, not pending: nothing is owed, the claim is covered there.
+        Load("uireqs-rehomed.txt", rehomed: true);
+    }
+
+    private static void Load(string name, bool rehomed)
+    {
+        var file = Path.Combine(AppContext.BaseDirectory, name);
         if (!File.Exists(file))
         {
             return;
@@ -175,7 +184,7 @@ public sealed class HostHooks
             var parts = line.Split('|', 4, StringSplitOptions.TrimEntries);
             if (parts.Length == 4)
             {
-                _pending.Add(new PendingEntry(parts[0], parts[1], parts[2], parts[3]));
+                _pending.Add(new PendingEntry(parts[0], parts[1], parts[2], parts[3], rehomed));
             }
         }
     }
@@ -188,7 +197,7 @@ public sealed class HostHooks
         }
     }
 
-    private sealed record PendingEntry(string Feature, string Scenario, string Owner, string Reason)
+    private sealed record PendingEntry(string Feature, string Scenario, string Owner, string Reason, bool Rehomed)
     {
         internal bool Matches(string feature, string scenario) =>
             string.Equals(Feature, feature, StringComparison.Ordinal) && (Scenario == "*" || string.Equals(Scenario, scenario, StringComparison.Ordinal));

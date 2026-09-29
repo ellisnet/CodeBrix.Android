@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UI.AdvancedTextEdit: the Android side of the CodeBrix.Platform AdvancedTextEdit add-in (AP7-B). Its
+    Core (CodeBrix.Platform.UI.AdvancedTextEdit.Core, re-shipped by the intake) is the whole editor: the AdvancedTextEdit
+    control and its TextArea (caret, selection, the input handlers and editing commands, undo/redo, the search panel,
+    code completion, folding, indentation), the document model (the rope, the line tree, anchors, the undo stack), the
+    highlighting engine (the .xshd definitions it ships, HighlightingValues, FontFamilyValue) and the renderer (the
+    TextView's visual lines, laid out by the TextLayout add-in's engine, and the margins). Every platform supplies only
+    the CANVAS the editor draws on: the contract IRenderCanvasPlatform. This assembly registers the Android canvas supply
+    from its module initializer (AdvancedTextEdit.Core loads it BY NAME; the CodeBrix.Android.UI bootstrap also loads it
+    at start-up): one drawing element per surface (the text view and each margin), shown by its handler as the
+    SkiaSharp.Views add-in's native Skia view. It also registers the editor's soft-keyboard session: the "editor"
+    profile (suggestions, composition, Enter is a line break) and a TEXT TARGET for the TextArea, so the input method
+    sees the document around the caret, composes in place (underlined by the editor) and edits the document itself
+    (CodeBrix.Android.UI Input/TextInput). Hardware keys reach the TextArea through Core's key path, as on every head.
+    AssemblyName = the name CodeBrix.Platform.UI.AdvancedTextEdit.Core (and UI.Core) grant InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android.UI.AdvancedTextEdit</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.AdvancedTextEdit</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.SkiaSharp.Views/CodeBrix.Android.SkiaSharp.Views.csproj" />
+    <!-- The text engine and its Android font source: the editor lays every visual line out with it. -->
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.TextLayout/CodeBrix.Android.UI.TextLayout.csproj" />
+    <!-- The add-in Cores (re-shipped from the pinned Platform build by the intake): the Skia canvas-host seam, the text
+         engine and the AdvancedTextEdit Core itself. -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.SkiaSharp.Views.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.TextLayout.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.AdvancedTextEdit.Core.dll" />
+    <!-- What the AdvancedTextEdit Core is built on besides the framework (the version its Platform package depends on). -->
+    <PackageReference Include="SkiaSharp" />
+  </ItemGroup>
+
+</Project>

@@ -42,4 +42,4 @@ Surface/CodeBrixVideoTool.Processing/Tools/ExternalToolCheck.cs  <- CodeBrix.Sam
 Surface/CodeBrixVideoTool.Processing/Tools/IExternalToolCheck.cs  <- CodeBrix.Samples/CodeBrixVideoTool/src/libs/CodeBrixVideoTool.Processing/Tools/IExternalToolCheck.cs  (verbatim)
 Surface/CodeBrixVideoTool.Processing/VideoToolProcessingException.cs  <- CodeBrix.Samples/CodeBrixVideoTool/src/libs/CodeBrixVideoTool.Processing/VideoToolProcessingException.cs  (verbatim)
 Surface/CodeBrixVideoTool.Processing/ViewModels/ConversionViewModel.cs  <- CodeBrix.Samples/CodeBrixVideoTool/src/libs/CodeBrixVideoTool.Processing/ViewModels/ConversionViewModel.cs  (verbatim)
-Surface/Stubs/VideoPlayer/VideoPlayer.cs  <- CodeBrix.Platform.VideoPlayer (package) CodeBrix.Platform.UI.VideoPlayer.Skia.VideoPlayer / VideoPlayerFailedEventArgs  (stub)
+Surface/Stubs/VideoPlayer/VideoPlayer.cs  REMOVED at AP7-C: the real VideoPlayer add-in (CodeBrix.Android.UI.VideoPlayer + the VideoPlayer Core) compiles the page (CodeBrixAndroidInRepoAddIns=VideoPlayer)

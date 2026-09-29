@@ -182,6 +182,15 @@ public sealed class Elements10ASteps
         type!.GetCustomAttributes(false).Select(a => a.GetType().Name).Should().Contain("NotImplementedAttribute");
     }
 
+    /// <summary>AP1.12: asserts that a public element type of the Platform is implemented (no NotImplemented marker).</summary>
+    [Then("the Platform implements {word}")]
+    public void Then_the_Platform_implements(string typeName)
+    {
+        var type = FindPlatformType(typeName);
+        type.Should().NotBeNull("the Platform must have a type {0}", typeName);
+        type!.GetCustomAttributes(false).Select(a => a.GetType().Name).Should().NotContain("NotImplementedAttribute");
+    }
+
     /// <summary>Asserts that the Platform has no public element type of that name.</summary>
     [Then("the Platform has no public element named {word}")]
     public void Then_the_Platform_has_no_element(string typeName) => FindPlatformType(typeName).Should().BeNull();

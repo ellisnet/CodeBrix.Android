@@ -86,14 +86,18 @@
   -->
   <ItemGroup>
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.AppSettings" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.AdvancedTextEdit" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.AudioPlayer" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.SkiaSharp.Views" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.CommandBar" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.FlexPanel" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.Lottie" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.MediaPlayer" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.PlotterView" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.Svg" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.TerminalView" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.TextLayout" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.VideoPlayer" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.WebView" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.WinUI.Graphics2DSK" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.WinUI.Graphics3DGL" />

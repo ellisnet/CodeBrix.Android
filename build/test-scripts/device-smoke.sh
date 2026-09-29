@@ -51,6 +51,8 @@ while [ $# -gt 0 ]; do
 done
 if [ "$port" = 5554 ]; then echo "refusing port 5554 (the default emulator port may be Jeremy's)" >&2; exit 2; fi
 serial=emulator-$port
+# Other adb devices may be attached (a developer's phone or tablet): adb without -s must never address them.
+export ANDROID_SERIAL=$serial
 sdk=${ANDROID_HOME:-$HOME/Android/Sdk}
 adb="$sdk/platform-tools/adb"
 avdsh="$here/android-uireqs-avd.sh"
@@ -97,19 +99,29 @@ stop_emulator() {
   fi
 }
 
-# 2. Build and deploy.
-log "building and deploying HelloPaste ($config)"
-locked dotnet build "$app" -c "$config" -t:Install "-p:AdbTarget=-s $serial" -nologo > "$out/build.log" 2>&1
+# 2. Build and deploy - for the AVD's own ABI, named explicitly (never detected from the default adb device: an APK
+#    built for another device's ABI would be "up to date" for this install).
+abi=$("$adb" -s "$serial" shell getprop ro.product.cpu.abi | tr -d '\r')
+case "$abi" in
+  x86_64) rid=android-x64 ;;
+  arm64-v8a) rid=android-arm64 ;;
+  *) log "FAIL: unexpected device ABI '$abi' on $serial"; stop_emulator; exit 2 ;;
+esac
+log "building and deploying HelloPaste ($config, $rid)"
+locked dotnet build "$app" -c "$config" -t:Install "-p:AdbTarget=-s $serial" "-p:RuntimeIdentifier=$rid" -nologo > "$out/build.log" 2>&1
 rc=$?
 if [ $rc -ne 0 ] && grep -q -E 'device offline|device not found|AdbException' "$out/build.log"; then
   log "deploy hit an adb connection error; waiting for the device and retrying once"
   "$adb" -s "$serial" wait-for-device
   for _ in $(seq 1 60); do online && "$adb" -s "$serial" shell pm path android > /dev/null 2>&1 && break; sleep 2; done
-  locked dotnet build "$app" -c "$config" -t:Install "-p:AdbTarget=-s $serial" -nologo > "$out/build.log" 2>&1
+  locked dotnet build "$app" -c "$config" -t:Install "-p:AdbTarget=-s $serial" "-p:RuntimeIdentifier=$rid" -nologo > "$out/build.log" 2>&1
   rc=$?
 fi
 grep -E '^ +[0-9]+ (Warning|Error)\(s\)|Time Elapsed' "$out/build.log" | sed 's/^ */  /'
 if [ $rc -ne 0 ]; then log "FAIL: build/deploy rc=$rc (see $out/build.log)"; stop_emulator; exit 2; fi
+installed_abi=$("$adb" -s "$serial" shell pm dump $package | sed -n 's/^ *primaryCpuAbi=//p' | head -1 | tr -d '\r')
+if [ "$installed_abi" != "$abi" ]; then log "FAIL: HelloPaste runs as '$installed_abi', not the device's '$abi'"; stop_emulator; exit 2; fi
+log "installed for $installed_abi"
 
 # Waits until a pattern appears in a file (seconds); returns 1 on timeout.
 wait_for() { local file=$1 pattern=$2 secs=$3; for _ in $(seq 1 $((secs * 2))); do grep -q -E "$pattern" "$file" 2>/dev/null && return 0; sleep 0.5; done; return 1; }

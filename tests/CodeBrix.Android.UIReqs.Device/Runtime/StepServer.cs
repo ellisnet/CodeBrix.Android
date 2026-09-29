@@ -110,6 +110,7 @@ internal static class StepServer
     private static async Task<JsonObject> HelloAsync(JsonObject message)
     {
         AppHost.RequestedOrientation = Enum.Parse<TestDisplayOrientation>(message.Str("orientation") ?? "Portrait", ignoreCase: true);
+        AppHost.PreserveDeviceConfiguration = message.Bool("preserveConfiguration");
         var output = new List<string>();
         if (!_testRunStarted)
         {
@@ -177,6 +178,19 @@ internal static class StepServer
         if (matches.Count == 0)
         {
             return Result("undefined", $"No {keyword} step definition matches \"{text}\" on the device.", scope);
+        }
+
+        // AP7-B AdvancedTextEdit: on the Platform an add-in group is its own test assembly and sees only its own steps
+        // and the core harness's; here the Android-only groups' steps (AndroidSteps/) are global too. When a copied
+        // add-in group's own step and an Android-only step share a text (the AdvancedTextEdit group's "the point x, y
+        // inside ... is tapped" and AndroidShapes'), the feature's own group wins, as it does on the Platform.
+        if (matches.Count > 1 && featureGroup.Length > 0)
+        {
+            var own = matches.Where(m => AddInScope.GroupOf(m.Definition.Method.DeclaringType!) == featureGroup).ToList();
+            if (own.Count == 1)
+            {
+                matches = own;
+            }
         }
 
         if (matches.Count > 1)

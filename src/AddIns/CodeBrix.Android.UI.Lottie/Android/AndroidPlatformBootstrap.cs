@@ -9,7 +9,8 @@ namespace CodeBrix.Android.UI.Lottie.Android;
 
 /// <summary>
 /// Registers the Android side of the Lottie add-in: the canvas supply (ILottieCanvasPlatform,
-/// <see cref="LottieCanvasAndroidPlatform"/>) and the handler of its render surface (the SkiaSharp.Views
+/// <see cref="LottieCanvasAndroidPlatform"/>), the frame clock (ILottieTickSourcePlatform, AP1.12:
+/// <see cref="LottieTickSourceAndroidPlatform"/>, Choreographer frame callbacks) and the handler of its render surface (the SkiaSharp.Views
 /// canvas-element handler), after the canvas add-in whose canvas-host factory the surface paints through.
 /// Idempotent; runs as the module initializer (Lottie.Core loads this assembly by name the first time it needs its
 /// canvas, and the CodeBrix.Android.UI bootstrap loads it at start-up).
@@ -40,6 +41,9 @@ internal static class AndroidPlatformBootstrap
     /// <summary>The registered canvas supply (null until registered).</summary>
     internal static LottieCanvasAndroidPlatform CanvasPlatform { get; private set; }
 
+    /// <summary>The registered frame clock (AP1.12; null until registered, or when another one was registered first).</summary>
+    internal static LottieTickSourceAndroidPlatform TickSourcePlatform { get; private set; }
+
     /// <summary>Registers the add-in (once).</summary>
 #pragma warning disable CA2255 // The module initializer is the platform bootstrap by design (twin loading by name).
     [ModuleInitializer]
@@ -62,6 +66,14 @@ internal static class AndroidPlatformBootstrap
                 var canvas = new LottieCanvasAndroidPlatform();
                 CanvasPlatform = canvas;
                 ApiExtensibility.Register(typeof(ILottieCanvasPlatform), _ => canvas);
+            }
+
+            if (!ApiExtensibility.IsRegistered<ILottieTickSourcePlatform>())
+            {
+                // AP1.12 (WPE1-13 item b): the frame clock is the display's Choreographer, not a dispatcher timer.
+                var ticks = new LottieTickSourceAndroidPlatform();
+                TickSourcePlatform = ticks;
+                ApiExtensibility.Register(typeof(ILottieTickSourcePlatform), _ => ticks);
             }
 
             CodeBrixHandlers.Register<LottieCanvasElement>(_ => new SkiaCanvasElementHandler());

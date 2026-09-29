@@ -107,6 +107,31 @@ Scenario: The clipboard chord copies what the finger selected
 	And the InputEmitted of "term" was never raised
 	And row 0 of "term" contains at least 5 percent "Magenta"
 
+Scenario: A drag selection that is released beyond its last move extends to the release point
+	Given the font "ms-appx:///CodeBrix.Platform.Fonts.RobotoMono/Fonts/RobotoMono.ttf" is warm
+	And the application shows a Grid named "cell" with:
+		| Property | Value |
+		| Width    | 800   |
+		| Height   | 600   |
+	And the layout "cell" holds a Terminal named "term" with:
+		| Property         | Value   |
+		| BackgroundColor  | Navy    |
+		| ForegroundColor  | Yellow  |
+		| SelectionColor   | Magenta |
+		| TerminalFontSize | 24      |
+	When the frame is captured
+	And the cursor of "term" is hidden
+	And the script "SampleGlyphs" is fed to "term"
+	And the frame is captured
+	And a finger drags from cell 0 as far as cell 4 and lifts in cell 10 along row 0 of "term"
+	And the key "C" is pressed with the Control and Shift keys held down
+	And the frame is captured as "after the lift"
+	Then the CopyRequested of "term" was raised at least once
+	And the text copied from "term" is "MMMMMMMMMM"
+	And cell 0, 0 of "term" is uniformly "Magenta"
+	And cell 9, 0 of "term" is uniformly "Magenta"
+	And cell 10, 0 of "term" is uniformly "Navy"
+
 Scenario: A session that renames itself says so and leaves the screen alone
 	Given the font "ms-appx:///CodeBrix.Platform.Fonts.RobotoMono/Fonts/RobotoMono.ttf" is warm
 	And the application shows a Grid named "cell" with:
@@ -155,3 +180,83 @@ Scenario: The scrollback chords page back through the history and forward again
 	And the frame is captured as "back at the tail"
 	Then the region of "term" in frame "back at the tail" is unchanged from frame "the live tail"
 	And the InputEmitted of "term" was never raised
+
+Scenario: A finger dragged down the history scrolls back through it and dragged up returns to the live tail
+	Given the font "ms-appx:///CodeBrix.Platform.Fonts.RobotoMono/Fonts/RobotoMono.ttf" is warm
+	And the application shows a Grid named "cell" with:
+		| Property | Value |
+		| Width    | 800   |
+		| Height   | 600   |
+	And the layout "cell" holds a Terminal named "term" with:
+		| Property         | Value   |
+		| BackgroundColor  | Navy    |
+		| ForegroundColor  | Yellow  |
+		| SelectionColor   | Magenta |
+		| TerminalFontSize | 24      |
+	When the frame is captured
+	And the cursor of "term" is hidden
+	And the script "LongOutput" is fed to "term"
+	And the frame is captured as "the live tail"
+	Then the view of "term" is at the live tail
+	When a finger drags from row 2 to row 12 in column 5 of "term"
+	And the frame is captured as "the history"
+	Then the view of "term" is scrolled back 10 lines
+	And the region of "term" in frame "the history" differs from frame "the live tail"
+	When the key "C" is pressed with the Control and Shift keys held down
+	Then the CopyRequested of "term" was never raised
+	When a finger drags from row 12 to row 2 in column 5 of "term"
+	And the frame is captured as "back at the tail"
+	Then the view of "term" is at the live tail
+	And the region of "term" in frame "back at the tail" is unchanged from frame "the live tail"
+	And the InputEmitted of "term" was never raised
+
+Scenario: A finger that rests before it drags down selects instead of scrolling
+	Given the font "ms-appx:///CodeBrix.Platform.Fonts.RobotoMono/Fonts/RobotoMono.ttf" is warm
+	And the application shows a Grid named "cell" with:
+		| Property | Value |
+		| Width    | 800   |
+		| Height   | 600   |
+	And the layout "cell" holds a Terminal named "term" with:
+		| Property         | Value   |
+		| BackgroundColor  | Navy    |
+		| ForegroundColor  | Yellow  |
+		| SelectionColor   | Magenta |
+		| TerminalFontSize | 24      |
+	When the frame is captured
+	And the cursor of "term" is hidden
+	And the script "LongOutput" is fed to "term"
+	And the frame is captured
+	And a finger rests in cell 0 of row 0 of "term" for 800 milliseconds and drags to row 2
+	And the key "C" is pressed with the Control and Shift keys held down
+	And the frame is captured as "after the drag"
+	Then the view of "term" is at the live tail
+	And the CopyRequested of "term" was raised at least once
+	And cell 0, 1 of "term" is uniformly "Magenta"
+	And cell 20, 1 of "term" is uniformly "Magenta"
+
+Scenario: A long press on the terminal opens its Copy and Paste menu and keeps the selection
+	Given the font "ms-appx:///CodeBrix.Platform.Fonts.RobotoMono/Fonts/RobotoMono.ttf" is warm
+	And the application shows a Grid named "cell" with:
+		| Property | Value |
+		| Width    | 800   |
+		| Height   | 600   |
+	And the layout "cell" holds a Terminal named "term" with:
+		| Property         | Value   |
+		| BackgroundColor  | Navy    |
+		| ForegroundColor  | Yellow  |
+		| SelectionColor   | Magenta |
+		| TerminalFontSize | 24      |
+	When the frame is captured
+	And the cursor of "term" is hidden
+	And the script "SampleGlyphs" is fed to "term"
+	And the frame is captured
+	And a finger drags from cell 0 to cell 4 along row 0 of "term"
+	And a finger rests in cell 8 of row 0 of "term" for 800 milliseconds and lifts
+	And the frame is captured as "the menu"
+	Then the Copy and Paste menu of "term" is open with Copy enabled
+	And cell 0, 0 of "term" is uniformly "Magenta"
+	And cell 3, 0 of "term" is uniformly "Magenta"
+	And cell 4, 0 of "term" does not contain "Magenta"
+	When the Copy and Paste menu of "term" is dismissed
+	And the key "C" is pressed with the Control and Shift keys held down
+	Then the text copied from "term" is "MMMM"

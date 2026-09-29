@@ -54,6 +54,7 @@ public class CoreContractTests
         types.Should().Contain("CodeBrix.Platform.UI.Lottie.Contracts.ILottieCanvasPlatform");
         types.Should().Contain("CodeBrix.Platform.UI.Lottie.Engine.LottiePlayer");
         types.Should().Contain("CodeBrix.Platform.UI.Lottie.Engine.ITickSource");
+        types.Should().Contain("CodeBrix.Platform.UI.Lottie.Contracts.ILottieTickSourcePlatform");
         types.Should().Contain("CommunityToolkit.WinUI.Lottie.LottieVisualSource");
     }
 

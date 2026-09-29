@@ -9,7 +9,7 @@
   <PropertyGroup>
     <CodeBrixAndroidInRepoConsumer>true</CodeBrixAndroidInRepoConsumer>
     <!-- The add-ins whose UIReqs groups the scenario app runs (AP7; their scenario code is under Scenarios/AddIns/). -->
-    <CodeBrixAndroidInRepoAddIns>SkiaSharpViews;Svg;Graphics2DSK;CommandBar;FlexPanel;WebView;MediaPlayer;Graphics3DGL;TextLayout;Lottie;TerminalView</CodeBrixAndroidInRepoAddIns>
+    <CodeBrixAndroidInRepoAddIns>SkiaSharpViews;Svg;Graphics2DSK;CommandBar;FlexPanel;WebView;MediaPlayer;Graphics3DGL;TextLayout;Lottie;TerminalView;AdvancedTextEdit;PlotterView;AudioPlayer;VideoPlayer</CodeBrixAndroidInRepoAddIns>
     <IsPackable>false</IsPackable>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <LangVersion>latest</LangVersion>

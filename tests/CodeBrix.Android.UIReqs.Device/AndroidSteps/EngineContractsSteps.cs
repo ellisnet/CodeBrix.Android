@@ -97,6 +97,25 @@ public sealed class EngineContractsSteps
         core.Should().Be(system);
     }
 
+    /// <summary>
+    /// [AP9-2] The precondition of the Android-only group AndroidAnimatorOn: the runner starts that group with the system
+    /// animator duration scale at 1 (every other group runs with it at 0), so the system animations are on and
+    /// UISettings.AnimationsEnabled says so. A run that did not set the scale fails here, by name, instead of on a still frame.
+    /// </summary>
+    [Given("the system animations are on")]
+    public async Task Given_the_system_animations_are_on()
+    {
+        var core = false;
+        var system = false;
+        await TestTargetFixture.RunOnUIThreadAsync(() =>
+        {
+            core = new UISettings().AnimationsEnabled;
+            system = AValueAnimator.AreAnimatorsEnabled();
+        }).ConfigureAwait(false);
+        system.Should().BeTrue("the runner starts the AndroidAnimatorOn group with the system animator duration scale at 1");
+        core.Should().BeTrue("UISettings.AnimationsEnabled follows the system animator duration scale");
+    }
+
     /// <summary>Asserts the operating-system part of the device family (decision D2: "Android.&lt;form&gt;").</summary>
     [Then("AnalyticsInfo.VersionInfo.DeviceFamily starts with {string}")]
     public async Task Then_the_device_family_starts_with(string prefix)

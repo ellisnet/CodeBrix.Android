@@ -517,20 +517,32 @@ internal static class ContentDocuments
         return System.IO.Path.Combine(folder, PickerRequests.SafeFileName(displayName, "document"));
     }
 
+    /// <summary>
+    /// Copies the compatibility file back to its document each time the app finishes writing it. It watches the
+    /// file's own cache FOLDER (every created document has one), so a placeholder deleted and written again, or a
+    /// file renamed into place, is still copied (<see cref="SaveWriteBack"/>).
+    /// </summary>
     private sealed class WriteBack : AFileObserver
     {
         private readonly string _path;
+        private readonly string _name;
         private readonly AUri _uri;
 
         internal WriteBack(string path, AUri uri)
-            : base(new global::Java.IO.File(path), AFileObserverEvents.CloseWrite)
+            : base(new global::Java.IO.File(System.IO.Path.GetDirectoryName(path)), (AFileObserverEvents)SaveWriteBack.WatchedEvents)
         {
             _path = path;
+            _name = System.IO.Path.GetFileName(path);
             _uri = uri;
         }
 
         public override void OnEvent(AFileObserverEvents e, string path)
         {
+            if (!SaveWriteBack.IsFileComplete((int)e, path, _name))
+            {
+                return;
+            }
+
             try
             {
                 using var output = ContentDocuments.Resolver.OpenOutputStream(_uri, "wt")

@@ -16,6 +16,8 @@ public class MainApplication : CodeBrixApplication
     public MainApplication(IntPtr handle, JniHandleOwnership transfer)
         : base(handle, transfer)
     {
+        //The soft keyboard pans the window by default (SoftInputAdjust.Pan); to lay the page out again above it instead:
+        //SoftInputAdjust = SoftInputAdjust.Resize;
     }
 
     protected override Microsoft.UI.Xaml.Application CreateApp() => new App();

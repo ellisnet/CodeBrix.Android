@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Host-free tests (net10.0) of the Android side of the AudioPlayer add-in (AP7-C):
+    - Core/: the contract the Android assembly implements and relies on, read from the pinned AudioPlayer Core (the grants
+      to the Android assembly name, the by-name load, the three platform contracts, what the Core does NOT carry -
+      MidiPlayer, which the Android add-in re-provides), and the Core's source resolver over an IAssetLocation whose
+      root is the Android asset-copy folder;
+    - Portable/: the ms-appx path rules of the Android add-in (Portable/PackagedAssetPaths, linked).
+    The audio output (CodeBrix.Audio.Android), the elements and MidiPlayer run on the emulator (the AudioPlayer UIReqs
+    group, the AndroidAudioPlayer fences) and on the two real devices (the sample gate).
+
+    AssemblyName = the name CodeBrix.Platform.UI.AudioPlayer.Core grants InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>CodeBrix.Android.UI.AudioPlayer.Tests</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.AudioPlayer.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\CodeBrix.Android.UI\CodeBrix.Android.UI.csproj" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)build/intake/CodeBrix.Android.Intake.proj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\CoreMetadata.cs" Link="Shared\CoreMetadata.cs" />
+    <Compile Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.AudioPlayer/Portable/*.cs" Link="Linked\Portable\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="CodeBrix.Android.Tests.CoreLib" Value="$(CodeBrixPlatformIntakeLibDir)" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.AudioPlayer.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Foundation.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Core.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="SilverAssertions.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

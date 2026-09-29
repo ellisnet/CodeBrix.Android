@@ -7,7 +7,8 @@
     (KenneyAssetBrowser.Core) and its AssetRead and Settings libraries, verbatim; the Rendering
     library as its own Surface project (verbatim copies: the real GL renderer, glTF loader and
     image decoders). See Surface/SOURCES.txt. The SkiaSharpViews, Graphics3DGL, FlexPanel and
-    AppSettings add-ins are the real Android add-ins; the AudioPlayer Core comes from the intake.
+    AppSettings add-ins are the real Android add-ins, and so is the AudioPlayer add-in (its Core from the intake and,
+    since AP7-C, its Android twin: the page's AudioPlayer plays).
   -->
   <PropertyGroup>
     <ApplicationId>com.codebrix.pastealways.kenneyassetbrowser</ApplicationId>

@@ -339,6 +339,15 @@ internal class TextBoxHandler : ViewHandler<TextBox, TextBoxView>, INativeTextEd
                 return;
             }
 
+            if (!_bridge.IsTouchActive)
+            {
+                // [AP8-S batch 2] Pointer focus that did not come from a finger on THIS box - Core moved the focus on
+                // (the focused element was collapsed: WinUI keeps the pointer focus state for the next element) - raises
+                // no touch keyboard, as on WinUI; a finger on the box raises it (OnTouch). a pasted app: the
+                // viewer's Back button collapsed and the keyboard came up for the search box.
+                return;
+            }
+
             ShowSoftInput(editor);
             return;
         }

@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using CodeBrix.Android.UI.Input;
+using CodeBrix.Android.UI.Input.TextInput;
 using CodeBrix.Android.UIReqs.Device.Canvas;
 using CodeBrix.Android.UIReqs.Device.Runtime;
 using Windows.System;
@@ -90,6 +91,7 @@ public sealed class TestTargetSession
     private readonly AHandler _main = new(ALooper.MainLooper!);
     private long _sequence;
     private long _frames;
+    private bool _softKeyboardSessionWasOpen;
     private InputInjector? _injector;
 
     internal TestTargetSession(Func<(int Width, int Height, double Density)> panel)
@@ -147,19 +149,136 @@ public sealed class TestTargetSession
         return done.Task;
     }
 
+    /// <summary>Waits through two Android frame callbacks without an adb screenshot round trip.</summary>
+    /// <param name="timeout">Maximum time allowed for the frame callbacks.</param>
+    /// <returns>A task that completes after the preceding frame has rendered.</returns>
+    public Task WaitForRenderAsync(TimeSpan timeout) =>
+        WaitForAndroidFramesAsync(2).WaitAsync(timeout, StepServer.SessionToken);
+
     /// <summary>
     /// Waits until Android has drawn two more frames after everything queued (the native views
     /// replayed the layout Core just did), then asks the host for a screencap.
     /// </summary>
     public async Task<TestFrame> RequestFrameAsync(TimeSpan timeout)
     {
+        await ClipboardCaptureWait.WaitAsync(StepServer.SessionToken).ConfigureAwait(false);
+        await WaitForSoftKeyboardSettledAsync().ConfigureAwait(false);
+        await RunOnUIThreadAsync(HideNativeCarets).ConfigureAwait(false);
         await WaitForAndroidFramesAsync(2).ConfigureAwait(false);
 
         // SurfaceFlinger composes the app's last buffer on the next vsync; give it that.
         await Task.Delay(50).ConfigureAwait(false);
+        // A clipboard notification queued with the UI work above may have arrived after the first check.
+        await ClipboardCaptureWait.WaitAsync(StepServer.SessionToken).ConfigureAwait(false);
+        int[]? imeRect = null;
+        await RunOnUIThreadAsync(() => imeRect = GetImeScreenRect()).ConfigureAwait(false);
         var sequence = Interlocked.Increment(ref _sequence);
         using var cancel = new CancellationTokenSource(timeout + TimeSpan.FromSeconds(10));
-        return await HostChannel.CaptureAsync(sequence, Interlocked.Read(ref _frames), cancel.Token).ConfigureAwait(false);
+        return await HostChannel.CaptureAsync(sequence, Interlocked.Read(ref _frames), cancel.Token, imeRect).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// [AP7-B TerminalView RE-GATE 2, coordinator 01:28 + 02:31] The text caret of a native editor (the EditText a TextBox,
+    /// PasswordBox, AutoSuggestBox or any other editor handler shows) blinks, and its phase at capture time cannot be observed:
+    /// the same frame showed the caret in every touched-groups run and not in any full pass. Before every capture, every EditText
+    /// in the activity's window gets a caret drawable and an insertion-handle drawable that draw NOTHING, with the originals'
+    /// intrinsic sizes (TextView.setTextCursorDrawable / setTextSelectHandle, API 29+): the Editor's blink and bring-into-view
+    /// logic keep running. NOT CursorVisible=false: that stops the EditText re-positioning its text after a theme switch
+    /// (ThemeFocus/Theme Scenario3 02_dark drew its text ~14 px lower; FIXLIST 02:27). MEASURED (dev3/dev4): the insertion
+    /// handle disappears, but a 2-3 px caret column is STILL drawn in the Material TextInputEditText (not through this
+    /// drawable); FIXLIST 02:4x. [AP8-S item 3] That column was the Editor's CACHED cursor drawable (cached at its first caret
+    /// draw, never replaced afterwards): <see cref="InstallCaretHook"/> now sets the draw-nothing drawables on every EditText's
+    /// first layout, before any caret is drawn; this pre-capture pass stays for views created and focused within one frame.
+    /// Harness only; no UIReqs scenario asserts a native caret. UI thread.
+    /// </summary>
+    /// <summary>
+    /// [AP8-S item 3] Installs the caret hiding BEFORE any caret is drawn: the Editor of an EditText caches its cursor
+    /// drawable the first time it draws the caret (Editor.loadCursorDrawable only loads it while its cache is empty), so a
+    /// draw-nothing drawable set later - at capture time, after the field took the focus and blinked - never replaces the
+    /// cached one: that is the 2-3 px caret column the capture-time replacement could not hide. A global-layout listener on
+    /// the window gives every EditText the draw-nothing drawables on its first layout, before it is focused and drawn.
+    /// UI thread; once per activity.
+    /// </summary>
+    internal static void InstallCaretHook(global::Android.App.Activity activity)
+    {
+        if (activity?.Window?.DecorView is not { } decor || decor.GetTag(CaretHookTag) != null)
+        {
+            return;
+        }
+
+        decor.SetTag(CaretHookTag, Java.Lang.Boolean.True);
+        decor.ViewTreeObserver!.GlobalLayout += (_, _) => HideCarets(decor);
+    }
+
+    private const int CaretHookTag = 0x7f0cb0a1;
+
+    private static void HideNativeCarets()
+    {
+        if (AppHost.Activity?.Window?.DecorView is { } decor)
+        {
+            HideCarets(decor);
+        }
+    }
+
+    private static void HideCarets(global::Android.Views.View view)
+    {
+        if (view is global::Android.Widget.EditText edit)
+        {
+            // A drawable that draws NOTHING whatever tint the Material TextInputLayout applies to it (a transparent
+            // GradientDrawable was re-tinted to the cursor colour and drawn), with the original's intrinsic size, for the
+            // caret and for the insertion handle (the teardrop under the caret, its own popup; same size keeps its layout).
+            if (edit.TextCursorDrawable is not EmptyCaretDrawable)
+            {
+                edit.TextCursorDrawable = new EmptyCaretDrawable(edit.TextCursorDrawable);
+            }
+
+            if (edit.TextSelectHandle is not EmptyCaretDrawable)
+            {
+                edit.TextSelectHandle = new EmptyCaretDrawable(edit.TextSelectHandle);
+            }
+
+            return;
+        }
+
+        if (view is global::Android.Views.ViewGroup group)
+        {
+            for (var i = 0; i < group.ChildCount; i++)
+            {
+                if (group.GetChildAt(i) is { } child)
+                {
+                    HideCarets(child);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// [AP7-B TerminalView RE-GATE 2] While the soft keyboard is visible (RootWindowInsets ime(); the settle wait has
+    /// already run), its rectangle in SCREEN pixels as [left, top, right, bottom) - the window's full width, the bottom
+    /// <c>ime().bottom</c> pixels of the window, from the window's bounds on the screen (both orientations; a pan does not move it) -
+    /// so the host can mask it in the frame it saves (the keyboard's content is system UI and not deterministic). Null
+    /// when the keyboard is not visible. UI thread.
+    /// </summary>
+    private static int[]? GetImeScreenRect()
+    {
+        var decor = AppHost.Activity?.Window?.DecorView;
+        var insets = decor?.RootWindowInsets;
+        if (decor == null || insets == null || !insets.IsVisible(global::Android.Views.WindowInsets.Type.Ime()))
+        {
+            return null;
+        }
+
+        var bottom = insets.GetInsets(global::Android.Views.WindowInsets.Type.Ime()).Bottom;
+        if (bottom <= 0)
+        {
+            return null;
+        }
+
+        // [AP8-S item K] From the window's own bounds on the screen (its metrics), not the decor view's GetLocationOnScreen:
+        // a window panned for the keyboard (the default adjustPan) reports its views higher by the pan, the keyboard does
+        // not move. Unpanned, both give the same rectangle.
+        var window = AppHost.Activity!.WindowManager!.CurrentWindowMetrics.Bounds;
+        return new[] { window.Left, window.Bottom - bottom, window.Right, window.Bottom };
     }
 
     /// <summary>A tap (press + release) at (x, y) device pixels.</summary>
@@ -289,6 +408,84 @@ public sealed class TestTargetSession
             InputTrace.EnsureAttached();
             injection(_injector);
         }).GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// [AP7-B TerminalView RE-GATE] The soft keyboard is system UI: its show/hide request and animation do not move Core's
+    /// render generation, so a capture could catch it half-way (stability run 1, Landscape TerminalView "the live tail":
+    /// no keyboard yet, the next frames with it). Before a capture: while a custom control's soft-keyboard session is open
+    /// (CoreTextInput) or the focused Android view is an editor the input method is serving (a native TextBox/PasswordBox;
+    /// coordinator 22:42) and the keyboard is not yet visible, just after such a session closed while it is still visible,
+    /// or while an IME insets animation runs, wait for it to settle - bounded (2 s), then capture anyway.
+    /// </summary>
+    private async Task WaitForSoftKeyboardSettledAsync()
+    {
+        var started = System.Diagnostics.Stopwatch.StartNew();
+        var sessionOpen = false;
+        while (true)
+        {
+            var settled = true;
+            await RunOnUIThreadAsync(() =>
+            {
+                var activity = AppHost.Activity;
+                var insets = activity?.Window?.DecorView?.RootWindowInsets;
+                var focused = activity?.CurrentFocus;
+                var imm = activity?.GetSystemService(global::Android.Content.Context.InputMethodService) as global::Android.Views.InputMethods.InputMethodManager;
+                sessionOpen = CoreTextInputController.Current?.View is { Profile: not null }
+                    || (focused != null && focused.OnCheckIsTextEditor() && imm != null && ImeServes(imm, focused));
+                var visible = insets != null && insets.IsVisible(global::Android.Views.WindowInsets.Type.Ime());
+                var animating = activity?.InsetsListener?.IsImeAnimating == true;
+                settled = !animating
+                    && !(sessionOpen && !visible)
+                    && !(!sessionOpen && _softKeyboardSessionWasOpen && visible);
+            }).ConfigureAwait(false);
+            if (settled || started.ElapsedMilliseconds >= 2000)
+            {
+                break;
+            }
+
+            await WaitForAndroidFramesAsync(1).ConfigureAwait(false);
+        }
+
+        _softKeyboardSessionWasOpen = sessionOpen;
+    }
+
+    // InputMethodManager.isActive(View) is not bound (only the parameterless IsActive property is): call it through JNI.
+    private static bool ImeServes(global::Android.Views.InputMethods.InputMethodManager imm, global::Android.Views.View view)
+    {
+        var method = global::Android.Runtime.JNIEnv.GetMethodID(imm.Class.Handle, "isActive", "(Landroid/view/View;)Z");
+        return global::Android.Runtime.JNIEnv.CallBooleanMethod(imm.Handle, method, new global::Android.Runtime.JValue(view));
+    }
+
+    /// <summary>[AP7-B TerminalView RE-GATE 2] A drawable of a given intrinsic size that draws nothing (harness caret hiding).</summary>
+    private sealed class EmptyCaretDrawable : global::Android.Graphics.Drawables.Drawable
+    {
+        private readonly int _width;
+        private readonly int _height;
+
+        internal EmptyCaretDrawable(global::Android.Graphics.Drawables.Drawable? original)
+        {
+            _width = original?.IntrinsicWidth is > 0 and var w ? w : 2;
+            _height = original?.IntrinsicHeight ?? -1;
+        }
+
+        public override int IntrinsicWidth => _width;
+
+        public override int IntrinsicHeight => _height;
+
+        public override int Opacity => (int)global::Android.Graphics.Format.Transparent;
+
+        public override void Draw(global::Android.Graphics.Canvas canvas)
+        {
+        }
+
+        public override void SetAlpha(int alpha)
+        {
+        }
+
+        public override void SetColorFilter(global::Android.Graphics.ColorFilter? colorFilter)
+        {
+        }
     }
 
     private Task WaitForAndroidFramesAsync(int count)

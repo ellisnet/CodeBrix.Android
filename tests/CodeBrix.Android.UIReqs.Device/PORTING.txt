@@ -143,8 +143,8 @@ ANDROID-ONLY GROUPS (not copies; AP2.5/AP2.6)
       RequestRefresh), ProgressRing, SwipeControl (Core's swipe under a real finger), TeachingTip and Popup /
       NativePopupBase on the native popup layer, HyperlinkButton, DropDownButton (@native-overlays: its flyout as a
       Material menu), BitmapIcon / PathIcon / AnimatedIcon, ScrollView (native scrolling both ways), ColorSpectrum,
-      ColorPickerSlider, the shapes, and the Platform's NotImplemented / absent elements. The MidiPlayer scenario is
-      PENDING (AP7-C, uireqs-pending.txt).
+      ColorPickerSlider, the shapes, and the Platform's NotImplemented / absent elements. The MidiPlayer scenario was
+      PENDING until AP7-C, which restated it (see the AP7-C paragraph under ADD-IN GROUPS).
   AndroidToolkit (AP7-B TriPaneView, TriPaneViewSteps.cs): the Toolkit TriPaneView's Android handler - three panes in
       the Expanded window, finger drags on both dividers inside the 48-dp touch target and none outside it, drag-to-
       minimize and a tap on the restore grip, a mouse left to Core's own divider, the Compact form (one pane; real taps
@@ -158,6 +158,11 @@ ANDROID-ONLY GROUPS (not copies; AP2.5/AP2.6)
       as DEL, key events, non-ASCII text), the session closing when the focus moves away, a dismissed keyboard brought
       back by a real finger (not by a mouse), and - with the status bar shown - a real finger landing where it touches
       while the keyboard is up (the ActivityInputRouter decor-offset fix).
+  AndroidSoftInput (AP8-S item K, SoftInputSteps.cs): the MAUI-style soft-input adjust modes of
+      CodeBrixApplication.SoftInputAdjust - Pan by default (a text field under the keyboard is panned into view, the page
+      keeps its size), Resize (Core lays the page out above the keyboard: the bottom edge on the keyboard's top edge, a
+      full-window terminal re-fitted with its last row visible), switching while the app runs, the full height back when
+      the keyboard goes, and InputPane reporting the keyboard in every mode. Positions are measured on the screen.
 
 ADD-IN GROUPS (AP7-A; copies, like the core groups)
   Source: the same CodeBrix.Platform commit 8272e48e45ac98c91073bd4ede1428c7af86d639, src/UIReqs/Platform.UI.AddIn.<Group>/
@@ -189,6 +194,9 @@ ADD-IN GROUPS (AP7-A; copies, like the core groups)
       cannot load on Android (the pinned Core resolves ms-appx to a FILE under Package.InstalledPath; APK assets are
       not files - FIXLIST [AP7-B Lottie]); the same files, verbatim under Scenarios/AddIns/<Group>/Assets/, are
       EmbeddedResources of this assembly and the fixture names them with embedded:// (Lottie).
+      UNDONE at AP1.12 (pin 1.0.270.342): Core reads ms-appx through IApplicationPackageFilesPlatform, which
+      CodeBrix.Android implements over the APK's AssetManager; LottieFixtures.cs is the Platform's file again,
+      byte-identical, and the two documents are app assets at Assets/{pulse,themed}.json (the csproj's Content links).
   (g) a poll that captured a frame on every look before reading the state it waits for: on Android the element
       draws on every display frame, not when a frame is captured, so the captured frame could predate the state
       change the look then saw. The poll reads the state only and the frame is captured once afterwards (Lottie
@@ -205,8 +213,8 @@ ADD-IN GROUPS (AP7-A; copies, like the core groups)
   e8d56d1f90bff48f4413235f97237d622d7e92ec (the folders were clean at that commit; pristine snapshot
   ~/ClaudeHome/android-buildout-work/uireqs-source-ap7b-lo/, SOURCE.txt): Features/Lottie/*.feature VERBATIM (3 files,
   14 scenarios); Steps/LottieSteps.cs, Support/LottieFixtures.cs, Registration.cs and Assets/{pulse,themed}.json ->
-  Scenarios/AddIns/Lottie/ verbatim except (a) (Registration.cs), (f) (LottieFixtures.cs) and (g) (one step of
-  LottieSteps.cs). The two LottieProgressRing scenarios are PENDING (uireqs-pending.txt): on Android the framework's
+  Scenarios/AddIns/Lottie/ verbatim except (a) (Registration.cs), (f) (LottieFixtures.cs; undone at AP1.12) and (g) (one
+  step of LottieSteps.cs). The two LottieProgressRing scenarios are PENDING (uireqs-pending.txt): on Android the framework's
   ProgressRing is the native Material indicator, not a Lottie animation.
 
   AP7-B (TerminalView): src/UIReqs/Platform.UI.AddIn.TerminalView (+ .Portrait) copied from CodeBrix.Platform commit
@@ -215,6 +223,59 @@ ADD-IN GROUPS (AP7-A; copies, like the core groups)
   14 scenarios); Steps/TerminalViewSteps.cs and Support/TerminalScripts.cs -> Scenarios/AddIns/TerminalView/ VERBATIM (no
   adaptation). No Registration.cs (the control builds its own template; the Android add-in registers its canvas supply from
   its module initializer). The steps find the drawing surface as a Canvas: the Android surface is a Canvas for that reason.
+
+  AP1.12 (pin 1.0.270.342, WPE1-16: a drag selection extends to the pointer-RELEASE position): TerminalInput.feature and
+  Steps/TerminalViewSteps.cs taken again from CodeBrix.Platform (branch platform-split, working tree at HEAD ea87ba01 with
+  WPE1-16's uncommitted fence; read, never built there) - VERBATIM, byte-identical to the Platform's files (sha256 in
+  ~/ClaudeHome/android-buildout-work/ap1_12-tools/terminalview-copy.sha256): + the scenario "A drag selection that is
+  released beyond its last move extends to the release point" and its step "a finger drags from cell {int} as far as
+  cell {int} and lifts in cell {int} along row {int} of {string}" (the old drag step shares DragAlongRowAsync; its
+  injected sequence is unchanged). Proven to fail on pin 1.0.269.982 (logs/ap1_12_uireqs_pre982) and pass on .342.
+
+  AP7-B (AdvancedTextEdit): src/UIReqs/Platform.UI.AddIn.AdvancedTextEdit (+ .Portrait) copied from CodeBrix.Platform
+  (branch platform-split, HEAD ea87ba019bba176b3e7b5b297471c0baf0ef0bbc, the folders clean; pristine snapshot
+  ~/ClaudeHome/android-buildout-work/uireqs-source-ap7b-ate/, SOURCE.txt): Features/AdvancedTextEdit/*.feature VERBATIM
+  (3 files, 15 scenarios); Steps/AdvancedTextEditSteps.cs and Support/EditorSamples.cs -> Scenarios/AddIns/AdvancedTextEdit/
+  verbatim except (h) (one step of AdvancedTextEditSteps). No Registration.cs (the control builds its own tree; the Android
+  add-in registers its canvas supply and keyboard session from its module initializer).
+  (h) a file the scenarios expect BESIDE the test executable (the RobotoMono face and its .manifest, which the Platform's
+      font target copies there) is an APP ASSET on Android, at the same relative path (ms-appx:/// reads the APK's
+      assets since AP1.12): the step opens it through the AssetManager instead of File.Exists.
+  Runtime/StepServer.cs (AP7-B AdvancedTextEdit): when a copied add-in group's own step and an Android-only step share a
+  text (AdvancedTextEdit's and AndroidShapes' "the point {int}, {int} inside {string} is tapped"), the feature's own
+  group wins - on the Platform the add-in group never sees the Android-only steps.
+
+  AP7-C (PlotterView, AudioPlayer, VideoPlayer): src/UIReqs/Platform.UI.AddIn.{PlotterView,AudioPlayer,VideoPlayer} (+ .Portrait)
+  copied from CodeBrix.Platform (branch platform-split, HEAD ea87ba019bba176b3e7b5b297471c0baf0ef0bbc, those folders clean; pristine
+  snapshot ~/ClaudeHome/android-buildout-work/uireqs-source-ap7c/, SOURCE.txt; sha256 lists ap7c-tools/{plotterview,audioplayer,
+  videoplayer}-copy.sha256):
+    PlotterView: Features/PlotterView/*.feature VERBATIM (2 files, 15 scenarios); Steps/PlotterViewSteps.cs and
+      Support/{PlotterControllers,PlotterModels}.cs -> Scenarios/AddIns/PlotterView/ VERBATIM (no adaptation).
+    AudioPlayer: Features/AudioPlayer/*.feature VERBATIM (2 files, 14 scenarios); Steps/AudioPlayerSteps.cs VERBATIM;
+      Support/AudioFixtures.cs verbatim except (b): the Assets/ files (silence2s.wav/.ogg, silence_long.wav, silent.sfz +
+      Samples/silence.wav, verbatim under Scenarios/AddIns/AudioPlayer/Assets/) are EmbeddedResources written with their tree
+      to the app's cache folder on first use (an .sfz is opened by path with its samples beside it), and the generated MIDI
+      sequence goes to the cache folder too. The same fixtures are also app assets at ms-appx:///Assets/AudioFence/ for the
+      Android-only group.
+    VideoPlayer: Features/VideoPlayer/*.feature VERBATIM (3 files, 16 scenarios); Steps/VideoPlayerSteps.cs verbatim except
+      (a) (one null-forgiving `!`, the NRT-annotated ScenarioContext shim) and (d) (the "sound device present" probe asks
+      the device's AudioManager for output devices instead of /proc/asound and the sound-server sockets);
+      Support/VideoFixtures.cs verbatim except (b) (the three .mkv clips are EmbeddedResources written to the cache folder on
+      first use; AssemblyFolder() removed). The two-colour clip is also an app asset at ms-appx:///Assets/VideoFence/.
+  Android-only groups AndroidPlotterView (PlotterViewAndroidSteps.cs: the canvas supply; REAL one-finger pan, two-finger
+  pinch, held finger, mouse wheel with the chart engine's default touch binding), AndroidAudioPlayer
+  (AudioPlayerAndroidSteps.cs: the add-in's platforms and CodeBrix.Audio.Android, an ms-appx clip copied out of the APK and
+  played, a sound effect, the add-in's own MidiPlayer with an ms-appx SFZ) and AndroidVideoPlayer (VideoPlayerAndroidSteps.cs:
+  the add-in's own element on a native Skia view, an ms-appx clip, the GPU path iff an Android graphics context can be made,
+  a soundtrack playing through the Android output). AndroidElements10B "A MidiPlayer plays through the AudioPlayer add-in" was
+  a placeholder ("shown by a native MidiPlayerView", pending since AP10-B); AP7-C restated it (named cause: MidiPlayer is a
+  non-visual element of the AudioPlayer add-in, re-provided by the Android add-in) as: the sample is the add-in's MidiPlayer and
+  opens the copied group's silent SFZ + generated sequence.
+  AndroidAdvancedTextEdit (Android-only, AdvancedTextEditAndroidSteps.cs; the connection steps "the soft keyboard
+  commits/composes/finishes/deletes/sends ..." are the AndroidTerminal group's): the canvas supply, the editor's
+  soft-keyboard session and its TEXT TARGET. Scenarios that drive the input connection themselves say "the input
+  method is driven by the scenario alone" (CoreTextInputView.ReportsReachInputMethod = false for the scenario): the
+  device's real input method would end a composition it did not make.
 
 PENDING SCENARIOS
   tests/CodeBrix.Android.UIReqs/uireqs-pending.txt lists scenarios that need a control or service a later
@@ -237,3 +298,22 @@ SINGLE-SESSION ISOLATION (AP7-M)
     - AndroidSteps/PolicySteps.cs PolicyHooks.Use_the_harness_policy runs at BeforeTestRun Order 5 (was 50): before the
       copied ThemeColors.RegisterAsync (Order 10) reads "Accent" once per run. At 50, a run whose theme bridge had
       already written the Material palette at start-up registered the Material primary as "Accent" (a start-up race).
+
+AP10-D (resumed 2026-09-28)
+  The three native month-calendar scenarios moved verbatim from AndroidElements10A/Calendars.feature
+  to AndroidNativeCalendars/NativeCalendars.feature. The separate process per group isolates the native
+  renderer state. Remaining calendar scenarios are unchanged except their ordinal frame names shift by three.
+  ClipboardCaptureWait observes clipboard-change notifications for the activity lifetime and delays captures
+  through a quiet period, including accessibility timeout extensions. It does not suppress system UI.
+  AndroidClipboard/ClipboardCapture.feature verifies a real copy makes capture wait at least ten seconds.
+  The existing-device runner and preserveConfiguration handshake forbid device configuration changes;
+  density-resize checks and IME-reset isolation cannot be claimed by that mode (MAINTAINER-README.txt).
+
+AP1.14 (resumed 2026-09-28; pin recorded in build/PlatformPin.props)
+  TerminalInput.feature and TerminalViewSteps.cs copied verbatim from the authorized Platform working tree:
+  three touch scenarios and seven steps from WPE1-21. AudioPlayerTransport.feature and AudioPlayerSteps.cs
+  copied verbatim: WPE1-22's compressed-file scrubber settle step. Originals are retained under
+  ~/ClaudeHome/android-buildout-work/ap10d/originals/. No source-control commands were used for this copy.
+
+  Audio settle follow-up: TestTargetFixture.WaitForRenderAsync uses native frame callbacks on Android,
+  avoiding adb screenshot latency while waiting for the binding. The shared AudioPlayer steps stay verbatim.

@@ -22,6 +22,9 @@ logdir=${PASTE_ALWAYS_LOG_DIR:-$repo/artifacts/paste-always}
 mkdir -p "$logdir"
 lock=${CODEBRIX_ANDROID_BUILD_LOCK:-}
 export MSBUILDDISABLENODEREUSE=1
+# Compile-only heads (nothing is installed), but a Debug Android build still asks an adb device for its ABI: never a
+# device other than the agent AVD (a developer's phone may be attached). Without it running, the probe finds nothing.
+export ANDROID_SERIAL=${ANDROID_SERIAL:-emulator-5600}
 ids="CBAND0001 CBAND0002 CBAND0003 CBAND0004 CBAND0005 CBAND0006 CBAND0007 CBAND0008"
 
 apps=("$@")

@@ -2,6 +2,7 @@ using System;
 using CodeBrix.Android.Android;
 using CodeBrix.Android.UI.Input;
 using CodeBrix.Android.UI.Platform.Insets;
+using CodeBrix.Android.UI.Portable.Input;
 using CodeBrix.Android.UI.Portable.Layout;
 using Microsoft.Extensions.Logging;
 using Windows.UI.Core;
@@ -29,7 +30,8 @@ namespace CodeBrix.Android.UI.Hosting;
 /// laid out edge to edge; the first activity starts the XAML application
 /// (<see cref="CodeBrixApplication"/>). The soft keyboard is hidden at start
 /// (WindowSoftInputMode StateHidden unless the activity declares a visibility): it shows when a
-/// text box is focused by touch, as WinUI's touch keyboard does.
+/// text box is focused by touch, as WinUI's touch keyboard does. How the window makes room for it
+/// follows <see cref="CodeBrixApplication.SoftInputAdjust"/> (default: the window pans, MAUI-style).
 /// </summary>
 public class CodeBrixActivity : AppCompatActivity
 {
@@ -44,6 +46,7 @@ public class CodeBrixActivity : AppCompatActivity
         | AConfigChanges.Keyboard | AConfigChanges.KeyboardHidden | AConfigChanges.Navigation;
 
     private readonly ILogger _log = HostLog.For("CodeBrix.Android.UI.Hosting.Activity");
+    private int _declaredSoftInputMode;
     private bool _isContentViewSet;
     private WindowInsetsListener _insetsListener;
 
@@ -69,13 +72,17 @@ public class CodeBrixActivity : AppCompatActivity
         base.OnCreate(savedInstanceState);
 
         // WinUI shows the touch keyboard only when a text box gets focus from a touch: never raise the IME for
-        // Android's initial focus. An app's own [Activity(WindowSoftInputMode = ...)] visibility wins; the adjust
-        // mode is left as declared (the insets listener reports the keyboard either way).
+        // Android's initial focus. An app's own [Activity(WindowSoftInputMode = ...)] visibility wins. The adjust
+        // mode follows the app's SoftInputAdjust (default Pan, MAUI-style; a declared adjust mode is kept until the
+        // app sets one) - ApplySoftInputAdjust; the insets listener reports the keyboard in every mode.
+        _declaredSoftInputMode = Window?.Attributes is { } attributes ? (int)attributes.SoftInputMode : 0;
         if (Window is { } window
             && (window.Attributes.SoftInputMode & global::Android.Views.SoftInput.MaskState) == global::Android.Views.SoftInput.StateUnspecified)
         {
             window.SetSoftInputMode((window.Attributes.SoftInputMode & ~global::Android.Views.SoftInput.MaskState) | global::Android.Views.SoftInput.StateHidden);
         }
+
+        ApplySoftInputAdjust();
 
         RootLayout = new CodeBrixRootLayout(this);
         RootLayout.ViewAttachedToWindow += OnRootLayoutAttachedToWindow;
@@ -243,6 +250,41 @@ public class CodeBrixActivity : AppCompatActivity
         }
 
         return base.DispatchGenericMotionEvent(ev);
+    }
+
+    /// <summary>
+    /// True while this activity's window is in adjustResize: the page is laid out above the soft keyboard (the
+    /// keyboard's height is withheld from the bottom of the XAML root). False for Pan, Unspecified and adjustNothing.
+    /// </summary>
+    internal bool WithholdsKeyboard { get; private set; }
+
+    /// <summary>
+    /// Applies the soft-input adjust policy (<see cref="SoftInputModePolicy"/>): the app's
+    /// <see cref="CodeBrixApplication.SoftInputAdjust"/> when it set one, else the activity's declared adjust mode, else
+    /// Pan; then tells the window wrapper whether the keyboard is withheld from the page. Main thread; called at
+    /// create and whenever the app setting changes.
+    /// </summary>
+    internal void ApplySoftInputAdjust()
+    {
+        if (Window is not { } window || IsDestroyed)
+        {
+            return;
+        }
+
+        var current = (int)window.Attributes.SoftInputMode;
+        var mode = SoftInputModePolicy.Resolve(current, _declaredSoftInputMode, (Application as CodeBrixApplication)?.ExplicitSoftInputAdjust);
+        if (mode != current)
+        {
+            window.SetSoftInputMode((global::Android.Views.SoftInput)mode);
+        }
+
+        WithholdsKeyboard = SoftInputModePolicy.WithholdsKeyboard(mode);
+        if (_log.IsEnabled(LogLevel.Debug))
+        {
+            _log.LogDebug("Soft-input mode 0x{Mode:X2} (declared 0x{Declared:X2}); keyboard withheld from the page: {Withholds}.", mode, _declaredSoftInputMode, WithholdsKeyboard);
+        }
+
+        WindowWrapper?.RaiseNativeSizeChanged();
     }
 
     /// <summary>Called by the window wrapper when it binds to this activity.</summary>

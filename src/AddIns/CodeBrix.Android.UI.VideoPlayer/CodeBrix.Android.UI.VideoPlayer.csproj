@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UI.VideoPlayer: the Android side of the CodeBrix.Platform VideoPlayer add-in (AP7-C). Its Core
+    (CodeBrix.Platform.UI.VideoPlayer.Core, re-shipped by the intake) holds only the source resolver (over IAssetLocation),
+    the playback-state rules and the failure event args: the VideoPlayer ELEMENT's public API names CodeBrix.VideoPlayback
+    and SkiaSharp types, so on the Platform it lives in the Skia assembly with the presenter and the render paths. This
+    assembly therefore re-provides it (Public/: VideoPlayer, IVideoLayer, VideoComposingEventArgs,
+    VideoPlayerRenderPathChangedEventArgs - the same public types in the same namespace; Internal/: the presenter, the
+    render driver, the YUV renderer, the surface element - ported from the Platform's Skia side with provenance headers).
+    Decode and composition are CodeBrix.VideoPlayback's (Mode1 WebM/Opus, Mode2 CBVF/Vorbis; AV1 through the application's
+    own CodeBrix.VideoPlayback.Dav1d registration, as on every head); the picture is presented on the SkiaSharp.Views
+    add-in's canvas (the same canvas-host path as the Skia heads), composed on the GPU through the Graphics3DGL add-in's
+    SkiaGpuContext (EGL / OpenGL ES) where one can be made and on the processor otherwise; the sound plays through
+    CodeBrix.Audio's shared output on CodeBrix.Audio.Android's backend (initialised by this assembly's bootstrap), the
+    same way the Platform's VideoPlayer package takes CodeBrix.Audio for its desktop backend.
+    AssemblyName = the name CodeBrix.Platform.UI.VideoPlayer.Core (and UI.Core) grant InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android.UI.VideoPlayer</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.VideoPlayer</RootNamespace>
+    <!-- The ported presenter copies plane rows through pointers, as on the Platform. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.SkiaSharp.Views/CodeBrix.Android.SkiaSharp.Views.csproj" />
+    <!-- The graphics path of the picture (SkiaGpuContext over EGL / OpenGL ES), as the Platform's VideoPlayer references Graphics3DGL. -->
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.WinUI.Graphics3DGL/CodeBrix.Android.WinUI.Graphics3DGL.csproj" />
+    <!-- The add-in Cores (re-shipped from the pinned Platform build by the intake). -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.SkiaSharp.Views.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.WinUI.Graphics3DGL.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.VideoPlayer.Core.dll" />
+    <!-- Decode, timing and composition (self-produced; it depends on CodeBrix.Audio.Core only), and its sound's device
+         backend on Android (self-produced; the same CodeBrix.Audio.Core line). -->
+    <PackageReference Include="CodeBrix.VideoPlayback.MitLicenseForever" />
+    <PackageReference Include="CodeBrix.Audio.Android.ApacheLicenseForever" />
+    <PackageReference Include="SkiaSharp" />
+  </ItemGroup>
+
+</Project>

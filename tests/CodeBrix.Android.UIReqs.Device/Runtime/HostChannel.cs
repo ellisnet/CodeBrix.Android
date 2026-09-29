@@ -17,11 +17,21 @@ internal static class HostChannel
     /// <summary>The connection to the host runner (null between sessions).</summary>
     internal static UIReqsChannel? Current { get; set; }
 
-    /// <summary>Asks the host for a screencap and returns it as a frame.</summary>
-    internal static async Task<TestFrame> CaptureAsync(long sequence, long renderGeneration, CancellationToken cancellationToken)
+    /// <summary>
+    /// Asks the host for a screencap and returns it as a frame. [AP7-B TerminalView RE-GATE 2] <paramref name="imeRect"/>
+    /// (screen pixels, [left, top, right, bottom)) is the visible soft keyboard's rectangle: the host masks it in the frame it
+    /// SAVES; the pixels returned here are never masked.
+    /// </summary>
+    internal static async Task<TestFrame> CaptureAsync(long sequence, long renderGeneration, CancellationToken cancellationToken, int[]? imeRect = null)
     {
         var channel = Current ?? throw new InvalidOperationException("No host runner is connected; frames come from the host's screencap.");
-        await channel.SendAsync(new JsonObject { ["request"] = "capture", ["seq"] = sequence }, null, cancellationToken).ConfigureAwait(false);
+        var request = new JsonObject { ["request"] = "capture", ["seq"] = sequence };
+        if (imeRect is { Length: 4 })
+        {
+            request["ime"] = new JsonArray(imeRect[0], imeRect[1], imeRect[2], imeRect[3]);
+        }
+
+        await channel.SendAsync(request, null, cancellationToken).ConfigureAwait(false);
         var reply = await channel.ReceiveAsync(cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException("The host runner closed the connection during a capture.");
         var (message, payload) = reply;

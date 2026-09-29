@@ -1,8 +1,8 @@
 # Gate 3 input: the Core assemblies that must grant InternalsVisibleTo to each
-# CodeBrix.Android.* assembly.
+# listed friend assembly (Android implementations and required Core friends).
 #
-#   <Android assembly> <- <Core assembly>[, <Core assembly> ...]
-#   <Android assembly> <- (none)          (needs no Core internals)
+#   <friend assembly> <- <Core assembly>[, <Core assembly> ...]
+#   <friend assembly> <- (none)          (needs no Core internals)
 #
 # The Android assembly names are fixed by these grants: Core finds its platform
 # twin BY NAME (it loads CodeBrix.Android.{Y} and runs its module initializer), so
@@ -41,3 +41,6 @@ CodeBrix.Android.UI.MediaPlayer   <- CodeBrix.Platform.UI.Core, CodeBrix.Platfor
 # Assemblies that need no Core internals
 CodeBrix.Android.Analyzers        <- (none)
 CodeBrix.Android.Build.Tasks      <- (none)
+
+# AP1.14 / WPE1-21: SoundEffect resolves packaged audio through Platform.Core's package-files contract.
+CodeBrix.Platform.UI.AudioPlayer.Core <- CodeBrix.Platform.Core

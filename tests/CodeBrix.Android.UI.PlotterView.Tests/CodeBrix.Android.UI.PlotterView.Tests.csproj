@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Host-free tests (net10.0) of the Android side of the PlotterView add-in (AP7-C):
+    - Core/: the contract the Android assembly implements and relies on, read from the pinned PlotterView Core's
+      metadata (the grants to the Android assembly name, the by-name loads - the canvas supply and the font source -,
+      the canvas-supply contract, the engine entry type, the pointer handlers the control reads input through);
+    - Engine/: the touch path the Android twin relies on (D7, CodeBrix.Plotter 1.0.269.1424): the Core's own engine
+      (Engine/PlotHost) fed a one-finger drag and a two-finger pinch exactly as PlotterControl feeds it, over a real
+      chart painted on a raster SKCanvas.
+    The canvas element, its native view, the painting on the device and real fingers run on the emulator (the
+    PlotterView UIReqs group, the AndroidPlotterView fences and the sample gate).
+
+    AssemblyName = the name CodeBrix.Platform.UI.PlotterView.Core grants InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>CodeBrix.Android.UI.PlotterView.Tests</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.PlotterView.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\CodeBrix.Android.UI\CodeBrix.Android.UI.csproj" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)build/intake/CodeBrix.Android.Intake.proj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\CoreMetadata.cs" Link="Shared\CoreMetadata.cs" />
+    <EmbeddedResource Include="$(PkgCodeBrix_Platform_Fonts_OpenSans_ApacheLicenseForever)/lib/net10.0/CodeBrix.Platform.Fonts.OpenSans/Fonts/OpenSans.ttf" LogicalName="OpenSans.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Read as metadata only (PEReader), never loaded. -->
+    <AssemblyMetadata Include="CodeBrix.Android.Tests.CoreLib" Value="$(CodeBrixPlatformIntakeLibDir)" />
+    <!-- The engine tests load the PlotterView Core (its engine names no XAML element) and what it is built on. -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.PlotterView.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Foundation.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Core.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CodeBrix.Plotter.MitLicenseForever" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
+    <PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" />
+    <!-- The typeface the test font source hands the engine (Open Sans, Apache 2.0 / OFL; the family's font package). -->
+    <PackageReference Include="CodeBrix.Platform.Fonts.OpenSans.ApacheLicenseForever" GeneratePathProperty="true" ExcludeAssets="all" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="SilverAssertions.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

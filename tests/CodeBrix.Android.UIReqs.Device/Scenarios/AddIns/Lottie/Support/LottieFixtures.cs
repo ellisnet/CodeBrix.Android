@@ -57,16 +57,10 @@ public static class LottieFixtures
 
 	private static IReadOnlyDictionary<string, LottieFixture> Build()
 	{
-		// ANDROID PORT (f): an APK's assets are not files, and the pinned Core resolves an ms-appx:/// URI to a FILE
-		// under Package.InstalledPath (StorageFile.GetFileFromApplicationUriAsync), so a Lottie document named by
-		// ms-appx:/// cannot load on Android (FIXLIST [AP7-B Lottie]; the AndroidNative fence pins it as pending).
-		// The same two documents (Assets/, verbatim) are resources of the scenario app's one assembly instead, named
-		// with embedded:// - the scheme the Lottie source reads from an assembly, and the one the Platform comment
-		// above ruled out only because its Landscape and Portrait twins are two assemblies.
 		var fixtures = new Dictionary<string, LottieFixture>(StringComparer.OrdinalIgnoreCase)
 		{
-			[Pulse] = new LottieFixture(Pulse, new Uri("embedded://CodeBrix.Android.UIReqs.Device/UIReqs.Lottie.pulse.json"), IsThemable: false),
-			[Themed] = new LottieFixture(Themed, new Uri("embedded://CodeBrix.Android.UIReqs.Device/UIReqs.Lottie.themed.json"), IsThemable: true),
+			[Pulse] = new LottieFixture(Pulse, new Uri("ms-appx:///Assets/pulse.json"), IsThemable: false),
+			[Themed] = new LottieFixture(Themed, new Uri("ms-appx:///Assets/themed.json"), IsThemable: true),
 		};
 
 		return new ReadOnlyDictionary<string, LottieFixture>(fixtures);

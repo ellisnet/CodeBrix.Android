@@ -2,9 +2,9 @@ Feature: The Toolkit TriPaneView on Android
 	Android-only (not a copy of a CodeBrix.Platform feature: the Platform's src/UIReqs has no TriPaneView group). The
 	TriPaneView keeps its template and Core's engine; its Android handler adds the adaptive form by the window's width
 	size class - Compact = one pane, Medium = the side pane and one stacked pane, Expanded = three panes - reached through
-	the engine's weights (a region the window has no room for is minimized with its restore grip, and its weight comes back
-	when the window widens), and takes a finger on a divider within the 48-dp Material touch target, driving the drag
-	through the control's drag entry points. The 15-inch window is Expanded; Compact and Medium come from REAL resizes of
+	the engine's DISPLAY OVERRIDE (a region the window has no room for is shown minimized with its restore grip; the app's weights
+	and minimized flags are never written), and takes a finger on a divider within the 48-dp Material touch target, raising the drag
+	through the divider's own platform entry points. The 15-inch window is Expanded; Compact and Medium come from REAL resizes of
 	the window. The fingers and the mouse are REAL MotionEvents dispatched to the activity.
 
 Scenario: A TriPaneView in an Expanded window shows its three panes through its Android handler
@@ -84,3 +84,23 @@ Scenario: With the adaptive form switched off a Compact window keeps the three p
 	When the real window is resized to 400 dp wide
 	Then the TriPaneView "tri" shows the panes "side, upper, lower"
 	And the weights of "tri" are 33.3, 66.7, 50 and 50
+
+Scenario: The adaptive form never writes the application's weights or minimized flags
+	Given the application shows a TriPaneView named "tri" with its panes painted "Red", "Lime" and "Blue"
+	Then the TriPaneView "tri" shows its adaptive form through its display override
+	When the real window is resized to 400 dp wide
+	Then the window is "Compact" wide
+	And the TriPaneView "tri" shows the panes "upper"
+	And the weights of "tri" are 33.3, 66.7, 50 and 50
+	And no pane of "tri" is minimized
+	When a real finger taps the side divider of "tri"
+	Then the TriPaneView "tri" shows the panes "side"
+	And the weights of "tri" are 33.3, 66.7, 50 and 50
+	And no pane of "tri" is minimized
+	When the real window is resized to 700 dp wide
+	Then the window is "Medium" wide
+	And the TriPaneView "tri" shows the panes "side, upper"
+	And the weights of "tri" are 33.3, 66.7, 50 and 50
+	And no pane of "tri" is minimized
+	When the real window size is restored
+	Then the TriPaneView "tri" shows the panes "side, upper, lower"

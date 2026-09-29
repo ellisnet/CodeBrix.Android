@@ -105,9 +105,34 @@ bare `Android.` prefix.
   never `adb install` a Debug APK), then start it from the launcher; a Release build writes an installable
   `.apk`.
 
+## What an Android head needs today (beyond the four files)
+
+- **Soft keyboard.** Nothing: the window pans the focused text field above the keyboard by default
+  (`SoftInputAdjust.Pan`). `MainApplication.cs` carries the one commented line an app uncomments to lay the
+  page out again above the keyboard instead (`SoftInputAdjust = SoftInputAdjust.Resize;`, in the constructor).
+- **Add-in packages.** For every CodeBrix.Platform add-in package an app references for its desktop heads, the
+  Android head references the Android package of the same add-in, `CodeBrix.Android.<Add-in>.ApacheLicenseForever`
+  (for example `CodeBrix.Android.Lottie.ApacheLicenseForever` next to the Platform Lottie package), at the
+  CodeBrix.Android version. A Platform add-in package must never reach the Android app: when the two-framework Core
+  references add-ins, put the Platform ones in its `net10.0` ItemGroup and the Android ones in its
+  `net10.0-android36.1` ItemGroup (or in the Android head). AGENT-README.txt has the add-in table.
+- **App assets (ms-appx).** A file reaches `ms-appx:///<path>` on Android only as a `Content` item of the app's build;
+  it becomes the APK asset `<path>` (for example `<Content Include="Assets\Logo.png" />` in the Android head is
+  `ms-appx:///Assets/Logo.png`). The assets of referenced CodeBrix packages (fonts, images) are added the same way,
+  under their package name, with nothing to write.
+- **Fonts.** The font package the Core project references (Open Sans, or Roboto after the font swap) reaches the
+  Android app through the Core's unconditional ItemGroup and is packed as assets; the Fluent symbols font comes with
+  CodeBrix.Android itself. Nothing else is needed.
+- **Package id.** The ApplicationId is `com.companyname.<Name>` in the template; an organization replaces the
+  `com.companyname` prefix with its own (it is the app's identity on a device and in a store).
+
 ## Proof
 
-The instantiation that the AP9-1 work package ran (the steps above applied by a script to a copy of the
-archive, the LinuxX11 and Android heads selected, built against the locally packed CodeBrix.Android
-packages from an isolated package folder) is recorded in the work package's report; the on-device run
-of such an app is part of the next work package.
+A scratch app was instantiated from the archive with ONLY the Android head selected (the steps above applied by a
+script: head folder, `.slnx` line, the two-framework Core, the token), with one add-in package (Lottie), an app asset
+read through `ms-appx:///`, a TextBox, a ListView and the add-in's player on its page. It restored with an isolated
+package folder, the locally packed CodeBrix.Android packages as the ONLY source of `CodeBrix.Android.*` and nuget.org
+for everything else; it built Debug and a trimmed Release with 0 warnings and 0 errors (the trimmed APK carries the
+framework's Core assemblies and no Skia twin), and ran on an emulator and on real arm64 and x86_64 devices: first
+frame with no application error line, the text box typed into with the soft keyboard up (Pan), the list scrolled
+and selected, the Lottie document from the app's assets playing. The work package's report has the details.

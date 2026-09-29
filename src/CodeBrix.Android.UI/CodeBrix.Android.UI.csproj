@@ -12,7 +12,7 @@
     Two target frameworks: net10.0-android36.1 (everything) and net10.0 (the portable
     parts only - Portable/, Diagnostics/, the handler core Handlers/Core/ (mappers, handler
     base, registry, factory), Overlay/Portable/ and the lanes' portable helpers
-    (Platform/Recycler/Portable/, Handlers/<Family>/Portable/: pure C#, no Android types) - so
+    (Platform/Recycler/Portable/, Platform/Animation/Portable/, Handlers/<Family>/Portable/: pure C#, no Android types) - so
     host-free tests can run them against the real Core seam).
   -->
   <PropertyGroup>
@@ -37,6 +37,7 @@
     <Compile Include="Handlers/Core/**/*.cs" />
     <Compile Include="Handlers/*/Portable/**/*.cs" />
     <Compile Include="Platform/Recycler/Portable/**/*.cs" />
+    <Compile Include="Platform/Animation/Portable/**/*.cs" />
     <Compile Remove="Diagnostics/NativeViewDump.cs" />
     <Compile Remove="Diagnostics/NativeViewLocator.cs" />
   </ItemGroup>

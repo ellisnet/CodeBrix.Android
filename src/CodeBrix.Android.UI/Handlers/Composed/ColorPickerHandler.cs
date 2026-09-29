@@ -25,7 +25,7 @@ using WColor = Windows.UI.Color;
 namespace CodeBrix.Android.UI.Handlers;
 
 /// <summary>
-/// The native ColorPicker (plan 3 row ColorPicker; Pinta's ColorPickerDialog): a composition of Android views
+/// The native ColorPicker (plan 3 row ColorPicker; e.g. a colour picker dialog): a composition of Android views
 /// instead of the Fluent template (whose spectrum is a composition-drawn bitmap and whose text boxes are templated
 /// parts): a spectrum view drawing the two HSV channels of ColorSpectrumComponents (<see cref="ColorSpectrumView"/>,
 /// android.graphics), a preview swatch, Material Sliders for the third channel and for alpha (over a gradient bar),

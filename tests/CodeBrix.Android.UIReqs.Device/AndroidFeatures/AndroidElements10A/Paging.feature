@@ -97,12 +97,16 @@ Scenario: A crumb added to a BreadcrumbBar's collection appears at its end
 	When the crumb "Drafts" is added to "crumbs"
 	Then the BreadcrumbBar "crumbs" shows the crumbs "Home, Documents, Design, Drafts" with 3 buttons
 
-Scenario: ListBox, ListBoxItem and GroupItem are NotImplemented in the Platform
-	Then the Platform marks ListBox as not implemented
-	And the Platform marks ListBoxItem as not implemented
-	And the Platform marks GroupItem as not implemented
+Scenario: ListBox, ListBoxItem and GroupItem are Core controls and a ListBox keeps its Fluent template
+	AP1.12 (pin 1.0.270.342): WPE1-10 implemented ListBox and ListBoxItem and WPE1-8 GroupItem in the Platform Core (AP10-A
+	pinned them as NotImplemented); a ListBox keeps its Core template, with a ListBoxItem per item.
+	Then the Platform implements ListBox
+	And the Platform implements ListBoxItem
+	And the Platform implements GroupItem
 	Given the application shows the AP10 sample "list box" named "list"
 	Then "list" is not shown by a native RecyclerView
+	And the Core tree of "list" holds a ListBoxItem
+	And "list" shows the native text "a"
 
 Scenario: An ItemsView keeps its Fluent template with an ItemContainer per item
 	Given the application shows the AP10 sample "items view" named "items"

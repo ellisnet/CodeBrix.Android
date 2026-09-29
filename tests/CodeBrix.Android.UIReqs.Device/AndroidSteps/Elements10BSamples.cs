@@ -67,6 +67,8 @@ internal static class Samples10B
         "line" => new Line { X1 = 0, Y1 = 0, X2 = 100, Y2 = 50, Stroke = new SolidColorBrush(WColors.Blue), StrokeThickness = 4 },
         "polygon" => new Polygon { Points = { new(0, 0), new(80, 0), new(40, 60) }, Fill = new SolidColorBrush(WColors.Lime) },
         "polyline" => new Polyline { Points = { new(0, 0), new(80, 0), new(40, 60) }, Stroke = new SolidColorBrush(WColors.Blue), StrokeThickness = 3 },
+        // AP7-C: the AudioPlayer add-in's MidiPlayer (not in the AudioPlayer Core; the Android add-in's own port), turned down.
+        "midi player" => new CodeBrix.Platform.UI.AudioPlayer.Skia.MidiPlayer { Volume = 0 },
         "rectangle" => new Rectangle { Width = 80, Height = 40, Fill = new SolidColorBrush(WColors.Orange), RadiusX = 8, RadiusY = 8 },
         _ => throw new ArgumentException("no AP10B sample " + sample),
     };

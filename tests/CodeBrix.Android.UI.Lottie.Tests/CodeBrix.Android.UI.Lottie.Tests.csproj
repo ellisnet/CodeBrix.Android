@@ -25,6 +25,8 @@
 
   <ItemGroup>
     <Compile Include="..\Shared\CoreMetadata.cs" Link="Shared\CoreMetadata.cs" />
+    <!-- AP1.12: the add-in's portable part (pure C#), its net10.0 flavor. -->
+    <Compile Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.Lottie/Portable/*.cs" Link="Linked\Portable\%(Filename)%(Extension)" />
     <!-- The Lottie group's animation documents (the UIReqs copy, verbatim), read by the engine tests. -->
     <EmbeddedResource Include="..\CodeBrix.Android.UIReqs.Device\Scenarios\AddIns\Lottie\Assets\*.json" LogicalName="Lottie.%(Filename)%(Extension)" />
   </ItemGroup>

@@ -8,7 +8,8 @@
 #      for the WHOLE run (one build / one emulator at a time),
 #   2. starts the AVD (build/test-scripts/android-uireqs-avd.sh start: CodeBrix_Agent_15inch, port 5600, cold boot),
 #   3. fixes the global settings (animation scales 0, font scale 1.0, night mode off, show_touches off,
-#      stay awake, no auto-rotation, default size and density),
+#      stay awake, no auto-rotation, default size and density); the groups in $animator_on_groups run with the
+#      animator duration scale at 1 instead (set before the app starts, restored to 0 after the group),
 #   4. installs the device app (Debug: dotnet build -t:Install) and builds the host runner,
 #   5. for each orientation: rotates the emulator (`cmd window user-rotation lock <r>` - the API 37 AVD ignores
 #      `settings put system user_rotation` alone), waits until the display really is 1080x1920 / 1920x1080
@@ -56,7 +57,12 @@ mkdir -p "$out"
 export MSBUILDDISABLENODEREUSE=1
 adb="${ANDROID_HOME:-$HOME/Android/Sdk}/platform-tools/adb"
 serial="emulator-$port"
+# Other adb devices may be attached (a developer's phone or tablet): adb without -s must never address them.
+export ANDROID_SERIAL=$serial
 lock=${CODEBRIX_ANDROID_BUILD_LOCK:-$HOME/ClaudeHome/android-buildout-work/build.lock}
+# [AP9-2] Android-only groups whose claims need the system animations ON (native indicators honour the animator duration
+# scale; Jeremy 2026-09-26 Option A). Every other group runs with the scale at 0.
+animator_on_groups="AndroidAnimatorOn"
 log() { echo "[$(date +%H:%M:%S)] $*" | tee -a "$out/run.log"; }
 
 if [ $nolock -eq 0 ]; then
@@ -78,6 +84,7 @@ cleanup() {
     timeout 10 "$adb" -s "$serial" forward --remove tcp:47300 >/dev/null 2>&1
     timeout 10 "$adb" -s "$serial" shell cmd window user-rotation lock 0 >/dev/null 2>&1
     timeout 10 "$adb" -s "$serial" shell settings put system user_rotation 0 >/dev/null 2>&1
+    timeout 10 "$adb" -s "$serial" shell settings put global animator_duration_scale 0 >/dev/null 2>&1
     [ -n "$density" ] && timeout 10 "$adb" -s "$serial" shell wm density reset >/dev/null 2>&1
   fi
   if [ $keep -eq 0 ]; then
@@ -111,9 +118,22 @@ dsh wm density reset
 [ -n "$density" ] && dsh wm density "$density"
 log "device settings fixed (animations 0, font scale 1.0, night mode off, touches hidden, awake, rotation locked)"
 
-log "installing the scenario app (Debug, -t:Install)"
-if ! dotnet build "$repo/tests/CodeBrix.Android.UIReqs.Device/CodeBrix.Android.UIReqs.Device.csproj" -c Debug -t:Install "-p:AdbTarget=-s $serial" -nologo > "$out/device-build.log" 2>&1 9>&-; then
+# The ABI is named explicitly (the AVD's own), never detected: a Debug build without a target asks the DEFAULT adb device
+# for its ABI, and an APK built for another device's ABI (arm64-only) is "up to date" for the next -t:Install and aborts
+# on this x86_64 AVD ("No assemblies found ... Fast Deployment").
+abi=$(dsh getprop ro.product.cpu.abi | tr -d '\r')
+case "$abi" in
+  x86_64) rid=android-x64 ;;
+  arm64-v8a) rid=android-arm64 ;;
+  *) log "unexpected device ABI '$abi' on $serial"; exit 2 ;;
+esac
+log "installing the scenario app (Debug, -t:Install, $rid)"
+if ! dotnet build "$repo/tests/CodeBrix.Android.UIReqs.Device/CodeBrix.Android.UIReqs.Device.csproj" -c Debug -t:Install "-p:AdbTarget=-s $serial" "-p:RuntimeIdentifier=$rid" -nologo > "$out/device-build.log" 2>&1 9>&-; then
   log "device app build/install FAILED (see device-build.log)"; grep -E 'error' "$out/device-build.log" | sort -u | head -20 | tee -a "$out/run.log"; exit 2
+fi
+installed_abi=$(dsh pm dump com.codebrix.uireqs | sed -n 's/^ *primaryCpuAbi=//p' | head -1 | tr -d '\r')
+if [ "$installed_abi" != "$abi" ]; then
+  log "the installed scenario app runs as '$installed_abi', not the device's '$abi' - refusing to run"; exit 2
 fi
 if ! dotnet build "$repo/tests/CodeBrix.Android.UIReqs/CodeBrix.Android.UIReqs.csproj" -c Debug -nologo > "$out/host-build.log" 2>&1 9>&-; then
   log "host runner build FAILED (see host-build.log)"; exit 2
@@ -139,6 +159,12 @@ for g in $group; do
     log "$tag: display $size"
   fi
   dsh am force-stop com.codebrix.uireqs
+  animator_on=0
+  case " $animator_on_groups " in *" $g "*) animator_on=1 ;; esac
+  if [ $animator_on -eq 1 ]; then
+    dsh settings put global animator_duration_scale 1
+    log "$tag: animator duration scale 1 for this group (restored to 0 after it)"
+  fi
   "$adb" -s "$serial" logcat -c
   "$adb" -s "$serial" logcat -v brief > "$out/$tag.logcat.txt" 2>&1 9>&- &
   logcat_pid=$!
@@ -152,6 +178,10 @@ for g in $group; do
   logcat_pid=""
   "$adb" -s "$serial" forward --remove tcp:47300 >/dev/null 2>&1
   "$adb" -s "$serial" exec-out screencap -p > "$out/$tag.last.png"
+  if [ $animator_on -eq 1 ]; then
+    dsh am force-stop com.codebrix.uireqs
+    dsh settings put global animator_duration_scale 0
+  fi
   summary=$(grep -E '^\s+(total|failed|succeeded|skipped):' "$out/$tag.log" | tr -s ' ' | tr '\n' ' ')
   log "$tag: exit $rc; $summary"
   grep -E '^\s*(failed|skipped) ' "$out/$tag.log" | sed 's/^/    /' | tee -a "$out/run.log"

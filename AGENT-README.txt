@@ -121,6 +121,25 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
   * Content is laid out edge to edge; Window.Bounds is the whole Android
     window and XamlRoot / the window's visible bounds exclude the system bars
     and display cutout.
+  * The soft keyboard: CodeBrixApplication.SoftInputAdjust (the enum
+    CodeBrix.Android.UI.Hosting.SoftInputAdjust) says how the window makes
+    room for it: Pan (the default) pans the window so the focused text field
+    stays visible, the page keeps its size; Resize lays the page out again
+    above the keyboard (popups keep the whole window); Unspecified leaves it
+    to Android. Resize is CodeBrix.Platform's own layout, not Android's: the
+    keyboard's height is withheld from the bottom of the window's content
+    (the root's content bottom occlusion inset, the mechanism the Platform's
+    own on-screen keyboard uses), so the page's bottom edge sits on the
+    keyboard's top edge. Set it in the MainApplication constructor or
+    OnCreate (SoftInputAdjust = SoftInputAdjust.Resize;); setting it while
+    the app runs re-applies it to every activity. Until it is set, an
+    activity that declares its own [Activity(WindowSoftInputMode =
+    ...Adjust...)] keeps that. InputPane.OccludedRect reports the keyboard
+    in every mode.
+    In Pan mode a custom text control (AdvancedTextEdit, TerminalView) is
+    panned by its CARET too (a terminal by its cursor cell, while the hosted
+    program shows the cursor); Resize remains the choice when the whole
+    control should stay above the keyboard.
   * One XAML Window per app in this version. If Android re-creates the
     activity, the same Window (and its Frame content) is shown again.
   * Logging: override ConfigureLogging(ILoggingBuilder) to change levels
@@ -144,17 +163,24 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     path made when you first read it - a copy of an opened document, or for a
     saved document a file copied back to it every time you close it after
     writing - so desktop code that opens file.Path keeps working; prefer the
-    StorageFile's streams. A picked folder's Path is empty (use its members).
+    StorageFile's streams. A picked folder's Path is empty: a picked folder
+    has no local path on Android, so desktop code that hands folder.Path to
+    System.IO finds nothing there - use the StorageFolder's own members
+    (GetFilesAsync, GetFolderAsync, CreateFileAsync, ...) instead.
   * AnalyticsInfo.VersionInfo.DeviceFamily is "Android.<form>", where the
     form comes from the window size class: "Android.Mobile" (compact width),
     "Android.Tablet" (medium) or "Android.Desktop" (expanded - a Googlebook,
     or a phone docked in desktop mode). AnalyticsInfo.DeviceForm ("Mobile",
     "Tablet", "Desktop") is read from the current window every time you ask,
-    so it follows a phone that is docked or undocked. DeviceFamily itself is
-    fixed the first time the app reads it (it names the form of that moment);
-    read AnalyticsInfo.DeviceForm when you need the current form. Television,
+    so it follows a phone that is docked or undocked; DeviceFamily is read
+    the same way, so it too names the form of the window at the moment you
+    ask (read it again after a resize instead of caching it). Television,
     car, watch and VR-headset devices report those forms. UISettings.
     AnimationsEnabled follows the system's "remove animations" setting.
+  * CompositionTarget.Rendering is raised once per display frame (from the
+    display's frame callbacks) for as long as anything subscribes to it -
+    Storyboards, a TeachingTip opening, your own per-frame code - and stops
+    when the last handler unsubscribes, so an idle app costs no frames.
   * Display: every element of the page gets a native Android view through an
     element handler. Core still does the layout; the views are placed exactly
     where Core laid the elements out. Panels, Border and ContentPresenter draw
@@ -186,8 +212,9 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     and the DropDownButton (Material button with a chevron) are native;
     RefreshContainer pulls to refresh through a SwipeRefreshLayout; ScrollView
     scrolls natively; a monochrome BitmapIcon is tinted. TitleBar, ListBox,
-    ListBoxItem, GroupItem, the list / picker flyout presenters, the rich-text
-    family (RichTextBlock, RichEditBox, Paragraph, ...), Hub, SemanticZoom,
+    ListBoxItem and GroupItem are Core controls on their templates (a grouped
+    ListView/GridView shows its group headers). The list / picker flyout
+    presenters, the rich-text family (RichTextBlock, RichEditBox, Paragraph, ...), Hub, SemanticZoom,
     ParallaxView, AnnotatedScrollBar, MapControl, the swap-chain panels and the
     legacy WebView are not implemented by the Platform on any head.
   * Look and adaptivity: an app that sets no control keys looks Material 3
@@ -241,8 +268,12 @@ WHAT THE PACKAGE DOES AT BUILD TIME
     whose path is its ms-appx path: ms-appx:///Assets/Logo.png is the asset
     Assets/Logo.png; ms-appx:///CodeBrix.Platform.Fonts.Roboto/Fonts/Roboto.ttf
     is the asset CodeBrix.Platform.Fonts.Roboto/Fonts/Roboto.ttf. (The Android
-    SDK's default "Assets/** without the Assets/ prefix" item is turned off for
-    this reason.)
+    SDK's default "Assets/** without the Assets/ prefix" item is turned off,
+    and its assets prefix is set to one no ms-appx path starts with, for this
+    reason.)
+    Core reads those assets for every ms-appx:/// URI (StorageFile.
+    GetFileFromApplicationUriAsync returns a read-only package file; images,
+    Lottie documents, font manifests and RandomAccessStreamReference too).
   * Defines the compile constants
         HAS_CODEBRIX  __CODEBRIX__  HAS_CODEBRIX_WINUI  __CODEBRIX_WINUI__
         WINUI_WINDOWING  CODEBRIX_HAS_FRAMEWORKELEMENT_MEASUREOVERRIDE
@@ -284,6 +315,55 @@ XAML file and line that uses them:
   CBAND0008  acrylic and Mica materials (a solid fallback colour)
 Silence an id with NoWarn as usual (or #pragma warning disable in C#).
 
+SWITCHES AND SEAMS AN APP MAY USE
+---------------------------------
+The package registers the Android implementation of every CodeBrix.Platform
+platform contract itself (application data, globalization, imaging, device
+family and display information, the app-package files behind ms-appx:///,
+clipboard, launcher, sharing, connectivity, haptics, the pickers, ...) before
+any XAML type is used. An app never registers one of those contracts (a
+second registration throws) and cannot register native element handlers
+(see WHAT THIS PACKAGE DOES NOT DO). What an app MAY set or override:
+
+  CodeBrixApplication (the MainApplication base class):
+    CreateApp()                    required: return new App()
+    SoftInputAdjust                Pan (default) / Resize / Unspecified - the
+                                   soft keyboard, see above
+    ConfigureLogging(builder)      log levels and extra providers
+    LogTag                         the logcat tag (default: package name)
+    LogVisualTreeAfterLayout       diagnostic tree dump (default false)
+    UseProjectionViewer            diagnostic overlay (default false)
+  App constructor (as on the desktop heads):
+    FeatureConfiguration.Font.DefaultTextFontFamily = the app's default font
+    file (see Fonts above).
+  AppContext switches (in the head's csproj, read once at start-up):
+      <ItemGroup>
+        <RuntimeHostConfigurationOption Include="CodeBrix.Android.UI.NativeComboBox"
+                                        Value="true" />
+      </ItemGroup>
+    CodeBrix.Android.UI.NativeComboBox       default false: a ComboBox keeps
+                                             its Fluent template and Core's
+                                             drop-down; true shows the Material
+                                             exposed drop-down menu instead
+    CodeBrix.Android.UI.NativeExpander       default true (false: Expander
+                                             keeps its Fluent template)
+    CodeBrix.Android.UI.NativeCommandBar     default true (false: CommandBar
+                                             keeps its Fluent template)
+    CodeBrix.Android.UI.AdaptiveTriPaneView  default true (false: TriPaneView
+                                             does not adapt to the window width)
+  Audio without the add-ins: an app that uses CodeBrix.Audio or
+    CodeBrix.VideoPlayback directly (not through the AudioPlayer / VideoPlayer
+    add-ins, which do this for you) references
+    CodeBrix.Audio.Android.ApacheLicenseForever (CodeBrix.Audio's Android
+    backend, same external API) in its Android head and initialises it once,
+    in MainApplication.OnCreate after base.OnCreate():
+        CodeBrix.Audio.Android.CodeBrixAndroidAudio.Initialize(this);
+    (it is idempotent). Do not reference the desktop
+    CodeBrix.Audio.MitLicenseForever package from the Android head.
+  Codec opt-ins: AV1 (CodeBrix.VideoPlayback.Dav1d.BsdLicenseForever) and Opus
+    (CodeBrix.Audio.Opus.BsdLicenseForever) are referenced and their
+    Register() methods called by the app, exactly as on the desktop heads.
+
 
 ADD-INS ON ANDROID
 ------------------
@@ -293,7 +373,12 @@ packages it builds on). Application code and XAML written against the add-in
 compile and run unchanged. The add-in packages:
 
     CodeBrix.Platform add-in   Android package
+    AdvancedTextEdit           CodeBrix.Android.AdvancedTextEdit.ApacheLicenseForever
+                               (brings TextLayout and SkiaSharp.Views)
     AppSettings                CodeBrix.Android.AppSettings.ApacheLicenseForever
+    AudioPlayer                CodeBrix.Android.AudioPlayer.ApacheLicenseForever
+                               (brings CodeBrix.Audio.Android, CodeBrix.Audio's Android
+                               backend)
     CommandBar                 CodeBrix.Android.CommandBar.ApacheLicenseForever
                                (brings Svg and SkiaSharp.Views)
     FlexPanel                  CodeBrix.Android.FlexPanel.ApacheLicenseForever
@@ -303,16 +388,32 @@ compile and run unchanged. The add-in packages:
     Lottie                     CodeBrix.Android.Lottie.ApacheLicenseForever
                                (brings SkiaSharp.Views)
     MediaPlayer                CodeBrix.Android.MediaPlayer.ApacheLicenseForever
+    PlotterView                CodeBrix.Android.PlotterView.ApacheLicenseForever
+                               (brings TextLayout, SkiaSharp.Views and CodeBrix.Plotter)
     SkiaSharp.Views            CodeBrix.Android.SkiaSharp.Views.ApacheLicenseForever
     Svg                        CodeBrix.Android.Svg.ApacheLicenseForever
                                (brings SkiaSharp.Views)
     TerminalView               CodeBrix.Android.TerminalView.ApacheLicenseForever
                                (brings TextLayout and SkiaSharp.Views)
     TextLayout                 CodeBrix.Android.TextLayout.ApacheLicenseForever
+    VideoPlayer                CodeBrix.Android.VideoPlayer.ApacheLicenseForever
+                               (brings SkiaSharp.Views, Graphics3DGL, CodeBrix.VideoPlayback
+                               and CodeBrix.Audio.Android)
     WebView                    CodeBrix.Android.WebView.ApacheLicenseForever
 
 The TriPaneView of CodeBrix.Platform's Toolkit is part of the framework package.
 What differs on Android:
+  * FlexPanel: the panel is laid out by its Core exactly as on the desktop
+    heads and shown by the framework's panel handler (nothing Android-specific).
+  * Svg: SVG images are parsed and drawn by the add-in's Core (CodeBrix.
+    SkiaSvg) on a native Skia view, as on every head.
+  * Graphics2DSK: SKCanvasElement's RenderOverride runs on each draw of a
+    native Skia view (one canvas unit = one DIP, clipped to the element).
+  * CommandBar: the add-in's tool bar controls (ToolBar, ToolBarTray, ...)
+    keep their templates and behave as on the desktop heads; their SVG icons
+    are rasterized at the icon size and tinted by the Svg add-in. (The
+    framework's own CommandBar control is a separate, native Material app
+    bar - see Display above.)
   * SkiaSharp.Views: SKXamlCanvas paints in software into a kept buffer and
     repaints only on Invalidate(), as on every head. SKSwapChainPanel is not
     supported (it throws NotSupportedException unless RaiseOnUnsupported is
@@ -334,10 +435,10 @@ What differs on Android:
     SkiaSharp.Views package too); the engine has no element of its own.
   * Lottie: AnimatedVisualPlayer with LottieVisualSource /
     ThemableLottieVisualSource plays as on the desktop heads (the Core decodes
-    with Skottie and runs the frame clock); each frame is drawn on a native
-    Skia view. Name the document with embedded:// (a resource of your
-    assembly), ms-appdata:/// or http(s); an ms-appx:/// document does not load
-    yet (the app's assets are not files on Android). The framework's
+    with Skottie; its frames are ticked by the display's Choreographer); each
+    frame is drawn on a native Skia view. Name the document with ms-appx:///
+    (an app asset, read from the APK's assets), embedded:// (a resource of your
+    assembly), ms-appdata:/// or http(s). The framework's
     ProgressRing does not need this add-in on Android (it is the native
     Material indicator).
   * TriPaneView (framework package, no add-in): the control and its engine
@@ -345,14 +446,15 @@ What differs on Android:
     On top, it follows the window's width size class, live: Compact = one pane
     (the upper one; the dividers become restore grips and a tap on a grip
     switches panes), Medium = the side pane and one stacked pane, Expanded =
-    three panes. The form is reached through the weights: a pane the window has
-    no room for gets weight 0 (your bound percent properties and IsMinimized
-    flags see it, and DividerDragCompleted is not raised), and the weights come
-    back exactly when the window widens. With RestoreGripMode Never there are no
-    grips, so your code must switch panes. A finger within 48 dp of a divider
-    drags it (the divider's own DragStarted/DragDelta/DragCompleted events are
-    not raised for such a drag; the control's DividerDragCompleted is); a mouse
-    uses the divider exactly as on the desktop. Turn the adaptive form off with
+    three panes. The form is only what is DISPLAYED: a pane the window has no
+    room for is shown minimized with its restore grip, but your percent
+    properties and IsMinimized flags are never written (they keep your values,
+    and DividerDragCompleted is not raised for a form change), so your layout is
+    back exactly as it was when the window widens. With RestoreGripMode Never
+    there are no grips, so your code must switch panes. A finger within 48 dp of
+    a divider drags it and raises the divider's own DragStarted/DragDelta/
+    DragCompleted events, as a mouse does; a mouse uses the divider exactly as
+    on the desktop. Turn the adaptive form off with
     the AppContext switch CodeBrix.Android.UI.AdaptiveTriPaneView = false.
   * TerminalView: TerminalControl works as on the desktop heads (feed, grid
     fitting and GridResized, colours, fonts, scrollback and its scroll bar,
@@ -365,10 +467,55 @@ What differs on Android:
     finger or pen on the terminal brings a dismissed keyboard back; a mouse
     does not. The keyboard covers the bottom rows of a terminal that fills the
     window (the control is not resized for it).
+  * AdvancedTextEdit: the editor works as on the desktop heads (the document,
+    highlighting, folding, line numbers, the search panel, completion windows,
+    undo/redo, the caret and the drag selection of the editor itself); every
+    surface (the text and each margin) is drawn on a native Skia view. Hardware
+    keys (and adb input) reach it as on the desktop. When its text area gets
+    the focus the soft keyboard opens as a text editor (suggestions,
+    autocorrection, Enter is a line break) that SEES the document: it reads the
+    text around the caret, composes a word in place (underlined until it is
+    committed), replaces a word it corrects, deletes around the caret and moves
+    the selection; what it types goes through the editor's own typing path, so
+    TextEntering/TextEntered (and a completion window opened on them) behave as
+    for a hardware key. A read-only editor opens no keyboard. The keyboard
+    covers the part of the editor below its top edge (the control is not
+    resized for it). There are no native selection handles: a finger drag on
+    the text selects, as a mouse drag does.
   * Graphics3DGL: GLCanvasElement renders on an OpenGL ES 3.0 context, so
     shaders must be GLSL ES (`#version 300 es` plus a precision statement);
     desktop GLSL (`#version 330 core`) does not compile. SkiaGLCanvasElement,
     OffscreenGLContext and SkiaGpuContext are available (OpenGL ES backend).
+  * PlotterView: PlotterControl works as on the desktop heads (the model, the
+    controller and its bindings, the tracker, the zoom rectangle, keys, the
+    mouse and its wheel); the chart is painted on a native Skia view, with the
+    typefaces of the TextLayout add-in's font source. Fingers use the chart
+    engine's default touch binding: one finger pans, two fingers pinch-zoom,
+    a finger held on a series shows the tracker.
+  * AudioPlayer: AudioPlayer, SoundEffect and MidiPlayer work as on the
+    desktop heads (the transport and its bindings, sound-effect voices, MIDI
+    through SoundFont / SFZ / Decent Sampler instruments), playing through
+    CodeBrix.Audio.Android, which the add-in initialises at start-up (do not
+    reference the desktop CodeBrix.Audio.MitLicenseForever package from the
+    Android head; codec and synthesizer add-ons such as CodeBrix.Audio.Opus
+    are referenced and registered exactly as on the desktop). ms-appx:///
+    sources are the app's assets: an asset is copied out of the APK on first
+    use (once per installed build), with its folder for an SFZ or Decent
+    Sampler preset whose samples sit beside it. SoundEffect reads an
+    ms-appx:/// source by path before anything copies it out, so give it an
+    embedded:// resource, a file path or a stream instead.
+  * VideoPlayer: the VideoPlayer element works as on the desktop heads (WebM
+    and .cbv Mode 1 / Mode 2 clips, the transport and its bindings, Stretch,
+    render paths, effects, layers, captions and chapters); the picture is
+    drawn on a native Skia view and composed on the GPU through an OpenGL ES
+    context when one can be made (ActiveRenderPath says which), and the sound
+    plays through CodeBrix.Audio.Android. AV1 and Opus remain the
+    application's own opt-ins (reference CodeBrix.VideoPlayback.Dav1d.
+    BsdLicenseForever and CodeBrix.Audio.Opus.BsdLicenseForever and call their
+    Register() methods; dav1d ships android-arm64 and android-x64 natives).
+    ms-appx:/// clips are the app's assets, copied out of the APK before they
+    are opened. CodeBrix.VideoPlayback.Authoring (encoding) is not supported on
+    Android.
 
 
 COMPLETE EXAMPLES
@@ -445,6 +592,10 @@ COMMON PITFALLS TO AVOID
     libraries as shown under APP SHAPE.
   * Do not put app assets under the Android `Assets/` convention expecting the
     prefix to be stripped: CodeBrix.Android keeps ms-appx paths as they are.
+    An app file reaches ms-appx:/// only as a Content item (from the shared
+    project, the head or a referenced library, as on the desktop heads, e.g.
+    <Content Include="Assets\**" />); a file that is not a Content item is
+    not packaged.
   * A ControlTemplate (or a Style that sets Template) on a control takes that
     control off its native widget: the template is shown as written, with
     native views, but the control loses the Material widget's look, ripple and
@@ -462,13 +613,17 @@ WHAT THIS PACKAGE DOES NOT DO
   * It does not support iOS (see CodeBrix.Mobile) or Android versions below
     API 33.
   * It does not use the CodeBrix.Platform desktop head or runtime packages.
-  * It has no Android package for the AudioPlayer, VideoPlayer, PlotterView
-    and AdvancedTextEdit add-ins (the list under ADD-INS ON ANDROID is
-    complete).
+  * It has no Android package for a CodeBrix.Platform add-in that is not in
+    the list under ADD-INS ON ANDROID (the list is complete). Not supported
+    on Android: camera capture, the GameEngine canvas, TkCanvas,
+    CodeBrix.VideoPlayback.Authoring (encoding), and hardware-device drivers
+    that have no Android build (an app that talks to such a device through a
+    desktop driver library can run only its non-hardware paths, such as a
+    simulated source).
   * It does not let an app register its own native element handlers: the
     handler-authoring API is internal.
   * The CodeBrix.Platform types that are not implemented on any head are not
-    implemented here either (TitleBar, ListBox, the rich-text family, Hub,
+    implemented here either (the list / picker flyout presenters, the rich-text family, Hub,
     SemanticZoom, MapControl, the swap-chain panels, ...).
 
 
@@ -496,5 +651,6 @@ QUICK REFERENCE CARD
                MainActivity : CodeBrixActivity (ConfigurationChanges =
                CodeBrixActivity.HandledConfigurationChanges, Material3 theme)
   Deploy       dotnet build -t:Install (Debug), Release APK for side-loading
-  Warnings     CBAND0001-0008: accepted-but-ignored constructs, never errors
+  Warnings     CBANDnnnn: accepted-but-ignored constructs, never errors
+               (see BUILD DIAGNOSTICS)
 ================================================================================

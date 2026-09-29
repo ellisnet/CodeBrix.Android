@@ -41,8 +41,29 @@ internal sealed class RecyclerItemsPanel : VirtualizingPanel
         _inertLayouter = layouter;
     }
 
-    /// <summary>The size the panel reports and fills (the RecyclerView's viewport, in DIPs).</summary>
-    internal Size ViewportSize { get; set; }
+    private Size _viewportSize;
+
+    /// <summary>
+    /// The size the panel reports and fills (the RecyclerView's viewport, in DIPs). The panel's Core Clip follows it
+    /// (AP8-S batch 1): an item partly scrolled out of the list is arranged partly OUTSIDE the panel (where its host view
+    /// sits), and without the clip Core's hit testing found it there - a tap on a control ABOVE a scrolled list ran the
+    /// scrolled-out row's command (seen in a pasted app). The viewport clips it, as the ScrollContentPresenter does on the
+    /// Skia heads.
+    /// </summary>
+    internal Size ViewportSize
+    {
+        get => _viewportSize;
+        set
+        {
+            if (_viewportSize == value)
+            {
+                return;
+            }
+
+            _viewportSize = value;
+            Clip = new Microsoft.UI.Xaml.Media.RectangleGeometry { Rect = new Rect(0, 0, value.Width, value.Height) };
+        }
+    }
 
     /// <inheritdoc />
     private protected override VirtualizingPanelLayout GetLayouterCore() => _inertLayouter;

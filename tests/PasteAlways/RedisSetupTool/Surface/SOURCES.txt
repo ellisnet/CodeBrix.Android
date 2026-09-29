@@ -1,5 +1,5 @@
 # Surface/ of the RedisSetupTool paste-always head: every file, with its CodeBrix.Samples source.
-# (verbatim) = an unedited copy; (stub) = same namespace, type names and the public members the pasted/copied files use.
+# (verbatim) = an unedited copy. No stubs: TerminalControl is the real TerminalView add-in (AP8-S batch 3).
 Surface/RedisSetupTool.Core/Bridges/IConsoleTabsBridge.cs  <- CodeBrix.Samples/RedisSetupTool/src/RedisSetupTool.Core/Bridges/IConsoleTabsBridge.cs  (verbatim)
 Surface/RedisSetupTool.Core/Bridges/ICopyToClipboard.cs  <- CodeBrix.Samples/RedisSetupTool/src/RedisSetupTool.Core/Bridges/ICopyToClipboard.cs  (verbatim)
 Surface/RedisSetupTool.Core/Helpers/HostHelper.cs  <- CodeBrix.Samples/RedisSetupTool/src/RedisSetupTool.Core/Helpers/HostHelper.cs  (verbatim)
@@ -164,6 +164,5 @@ Surface/RedisSetupTool.TerminalView/TerminalPalette.cs  <- CodeBrix.Samples/Redi
 Surface/RedisSetupTool.TerminalView/TerminalSessionFactory.cs  <- CodeBrix.Samples/RedisSetupTool/src/libs/RedisSetupTool.TerminalView/TerminalSessionFactory.cs  (verbatim)
 Surface/RedisSetupTool.TerminalView/TerminalSessionState.cs  <- CodeBrix.Samples/RedisSetupTool/src/libs/RedisSetupTool.TerminalView/TerminalSessionState.cs  (verbatim)
 Surface/RedisSetupTool.TerminalView/TerminalText.cs  <- CodeBrix.Samples/RedisSetupTool/src/libs/RedisSetupTool.TerminalView/TerminalText.cs  (verbatim)
-Surface/Stubs/TerminalView/TerminalControl.cs  <- (stub, no CodeBrix.Samples source: CodeBrix.Platform.UI.TerminalView.TerminalControl (assembly CodeBrix.Platform.UI.TerminalView, package CodeBrix.Platform.TerminalView.ApacheLicenseForever))
 # Not copied: CodeBrix.Samples/RedisSetupTool/src/libs/RedisSetupTool.DockerManagement/DockerAssemblyResolver.cs (internal, referenced by nothing; it finds the PrivateAssets=all CodeBrix.Docker.dll at run time, which this head references directly - and its Assembly.Location raises IL3000 as an error on Android).
 # Not copied: InternalsVisibleTo.cs of each library (grants to the libraries' own test projects).

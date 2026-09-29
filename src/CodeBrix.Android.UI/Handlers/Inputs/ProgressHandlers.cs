@@ -193,7 +193,8 @@ internal sealed class ProgressBarHandler : ViewHandler<ProgressBar, ALinearProgr
 /// <summary>
 /// The ProgressRing handler (plan 3 row ProgressRing): CircularProgressIndicator; IsActive shows or hides
 /// it (an inactive ring draws nothing), IsIndeterminate (default) spins, a determinate ring shows Value;
-/// Foreground -> indicator colour, Background -> track colour; the ring is as large as Core lays it out.
+/// Foreground -> indicator colour, Background -> track colour (visible while the ring spins too: the theme overlay
+/// CodeBrix.ThemeOverlay.ProgressRing sets indeterminateTrackVisible); the ring is as large as Core lays it out.
 /// </summary>
 internal sealed class ProgressRingHandler : ViewHandler<ProgressRing, ACircularProgressIndicator>
 {
@@ -272,7 +273,16 @@ internal sealed class ProgressRingHandler : ViewHandler<ProgressRing, ACircularP
     /// <inheritdoc />
     protected override ACircularProgressIndicator CreatePlatformView()
     {
-        var view = new ACircularProgressIndicator(MaterialWidgets.Material3(Context))
+        // [AP9-2] The theme overlay keeps the track of a SPINNING indicator visible (indeterminateTrackVisible), so Background
+        // (the track colour) is drawn while the ring spins, as WinUI draws it (Resources/values/codebrix_progress_ring.xml).
+        var context = MaterialWidgets.Material3(Context);
+        var overlay = MaterialWidgets.StyleId(context, "CodeBrix.ThemeOverlay.ProgressRing");
+        if (overlay != 0)
+        {
+            context = new global::Android.Views.ContextThemeWrapper(context, overlay);
+        }
+
+        var view = new ACircularProgressIndicator(context)
         {
             Max = Scale,
             IndicatorTrackGapSize = 0,

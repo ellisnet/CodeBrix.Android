@@ -21,12 +21,6 @@
     <RootNamespace>CodeBrix.Android.UIReqs.Device</RootNamespace>
     <AssemblyName>CodeBrix.Android.UIReqs.Device</AssemblyName>
     <Nullable>enable</Nullable>
-    <!-- Uno0007: the Platform analyzer asks for the Lottie add-in wherever ProgressRing is used
-         (Scenarios/Support/RangeElements.cs, the Lottie group's LottieProgressRing scenarios) and recognizes
-         only the Skia twin's assembly name (CodeBrix.Platform.UI.Lottie). This app references the Android
-         Lottie add-in (AP7-B; CodeBrixAndroidInRepoAddIns), and on Android the ProgressRing is a native
-         Material indicator that needs no animation source, so the warning does not apply here. -->
-    <NoWarn>$(NoWarn);Uno0007</NoWarn>
     <!-- The copied Graphics3DGL fixtures hand the GL binding vertex-attribute offsets as raw pointers (as the
          Platform's own Graphics3DGL UIReqs project does). -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -43,12 +37,25 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The Lottie group's two animation documents, verbatim (Scenarios/AddIns/Lottie/Assets), as resources of this
-         assembly: the copied fixtures name them with embedded:// URIs (ANDROID PORT (f), PORTING.txt). -->
-    <EmbeddedResource Include="Scenarios/AddIns/Lottie/Assets/*.json" LogicalName="UIReqs.Lottie.%(Filename)%(Extension)" />
+    <!-- The Lottie group's two animation documents, verbatim (Scenarios/AddIns/Lottie/Assets), as app assets at the
+         ms-appx:///Assets/ paths the copied fixtures name (AP1.12: ms-appx reads the APK's assets through
+         IApplicationPackageFilesPlatform, so ANDROID PORT (f) - embedded:// resources - is undone). -->
+    <Content Include="Scenarios/AddIns/Lottie/Assets/*.json" Link="Assets/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <!-- The same pulse document as an app asset at ms-appx:///Assets/LottieFence/pulse.json, for the AndroidNative fence of
-         ms-appx Lottie sources (pending: FIXLIST [AP7-B Lottie]). -->
+         ms-appx Lottie sources. -->
     <Content Include="Scenarios/AddIns/Lottie/Assets/pulse.json" Link="Assets/LottieFence/pulse.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The AudioPlayer group's silent fixtures, verbatim (Scenarios/AddIns/AudioPlayer/Assets): opened BY PATH (an .sfz names its
+         samples beside it), so they are EmbeddedResources written to a cache folder on first use (ANDROID PORT (b), AP7-C). -->
+    <EmbeddedResource Include="Scenarios/AddIns/AudioPlayer/Assets/**/*" LogicalName="AudioPlayerAssets/%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- The same fixtures as app assets at ms-appx:///Assets/AudioFence/ (silence2s.wav, silent.sfz + Samples/silence.wav), for the
+         AndroidAudioPlayer fences of ms-appx audio (the asset copy folder, an SFZ with its samples). -->
+    <Content Include="Scenarios/AddIns/AudioPlayer/Assets/silence2s.wav;Scenarios/AddIns/AudioPlayer/Assets/silent.sfz" Link="Assets/AudioFence/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Scenarios/AddIns/AudioPlayer/Assets/Samples/silence.wav" Link="Assets/AudioFence/Samples/silence.wav" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The VideoPlayer group's three clips, verbatim (Scenarios/AddIns/VideoPlayer/Assets): opened BY PATH, so they are
+         EmbeddedResources written to a cache folder on first use (ANDROID PORT (b), AP7-C). The two-colour clip is also an app
+         asset at ms-appx:///Assets/VideoFence/, for the AndroidVideoPlayer fence of ms-appx video. -->
+    <EmbeddedResource Include="Scenarios/AddIns/VideoPlayer/Assets/*.mkv" LogicalName="VideoPlayerAssets/%(Filename)%(Extension)" />
+    <Content Include="Scenarios/AddIns/VideoPlayer/Assets/twocolour_raw_videoonly.mkv" Link="Assets/VideoFence/twocolour_raw_videoonly.mkv" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

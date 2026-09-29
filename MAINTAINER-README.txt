@@ -183,6 +183,12 @@ PIN BUMP (moving to a newer Platform build)
      references may need gates/allowed-references.txt (only for packages that
      are allowed and not produced by the Platform repo); new add-in grants go
      into gates/ivt-grants.txt; refresh build/platform-repo-package-ids.txt.
+     A gate 5 error (a fingerprinted seam type or member is missing) means the
+     Platform build changed a seam the Android code calls: never delete the
+     line to pass the gate - adapt the Android code to the new seam (or have
+     the Platform keep it) and change gates/seam-fingerprint.txt in the same
+     change. A NEW seam the Android code starts to use gets its lines there
+     too, so the next pin cannot drop it silently.
   4. Rebuild and test everything, Debug and Release.
   5. Re-run the device gates: paste-always, the HelloPaste smoke (Debug and
      trimmed Release), the full UIReqs suite in both orientations three times
@@ -197,7 +203,11 @@ name):
     CodeBrix.Android                 WinRT-surface contracts (application data,
                                      globalization, graphics imaging) and the
                                      WinRT registry extensions (analytics info,
-                                     system theme, display information).
+                                     system theme, display information); the
+                                     app-package files contract over the APK's
+                                     AssetManager (AP1.12: ms-appx:/// reads;
+                                     Portable/PackageFileLookup, host-free
+                                     tested).
     CodeBrix.Android.UI.Dispatching  the Looper dispatcher pump; multi-targets
                                      net10.0 (HostFree/ only: a managed pump the
                                      host-free tests drain).
@@ -208,8 +218,10 @@ name):
                                      Portable/ and HostFree/ only).
     CodeBrix.Android.UI.Toolkit      IElevationPlatform (stub until handlers);
                                      TriPaneViewEntryPoints: the door into the
-                                     TriPaneView engine's drag entry points
-                                     (used by UI's Handlers/Toolkit).
+                                     TriPaneView's internal seams - the
+                                     divider's platform drag entry points and
+                                     the display override (AP1.12; used by UI's
+                                     Handlers/Toolkit).
     CodeBrix.Android.UI              the bootstrap chain, hosting, logging, the
                                      UI contracts, the ELEMENT HANDLERS, the
                                      (diagnostic) projection viewer;
@@ -360,14 +372,16 @@ handler (parent first) and its native view:
   Handlers/Toolkit/ (AP7-B) TriPaneViewHandler: the Toolkit TriPaneView keeps its
                    template and Core's engine; the handler applies the adaptive
                    form (AdaptivePolicy.TriPane: one pane / side + one stacked /
-                   three panes) THROUGH the engine's weights - Portable/TriPanePlan
-                   zeroes the regions the window has no room for (the engine then
-                   minimizes them with their restore grips; a grip tap switches
-                   panes and the plan closes the sibling) and writes the saved
-                   weights back when the window widens - and takes a finger or
-                   stylus within the 48-dp touch target of a divider natively
-                   (TriPaneViewLayout.OnInterceptTouchEvent; Core gets a cancel),
-                   driving TriPaneView.Start/Update/CompleteDividerDrag through
+                   three panes) as the engine's DISPLAY OVERRIDE (AP1.12, WPE1-13
+                   ITriPaneDisplayOverride) - Portable/TriPanePlan returns the
+                   weights to display, zero for the regions the window has no room
+                   for (the engine lays them out minimized with their restore
+                   grips; a grip tap calls the plan's Restore, which switches
+                   panes); the app's percent and IsMinimized properties are never
+                   written - and takes a finger or stylus within the 48-dp touch
+                   target of a divider natively (TriPaneViewLayout.
+                   OnInterceptTouchEvent; Core gets a cancel), raising the
+                   divider's RaiseDrag*FromPlatform entry points (AP1.12) through
                    CodeBrix.Android.UI.Toolkit's TriPaneViewEntryPoints (only the
                    Toolkit names get Toolkit.Core's internals; UI.Toolkit cannot
                    reference UI, so the handler lives here). A mouse stays Core's.
@@ -456,7 +470,17 @@ action (the handlers turn it into Core's Enter / QuerySubmitted) instead of a
 Core-focused control elsewhere. System keys (back, volume) never go native-first.
 The soft keyboard is hidden at start (CodeBrixActivity sets WindowSoftInputMode
 StateHidden unless the app's activity declares a visibility): it shows for a
-text box focused by touch, as WinUI's touch keyboard. Pointer icons follow
+text box focused by touch, as WinUI's touch keyboard. SOFT-INPUT ADJUST (AP8-S
+item K, MAUI's model): CodeBrixActivity.ApplySoftInputAdjust sets the window's
+adjust bits from CodeBrixApplication.SoftInputAdjust (when the app set it), else
+from the activity's declared adjust mode, else AdjustPan (Portable/Input/
+SoftInputModePolicy, host-free tested); in adjustResize the window wrapper feeds
+the settled IME inset to IRootElement.ContentBottomOcclusionInset (the Platform's
+FrameBuffer keyboard seam: Core withholds it from every root but the popup root),
+otherwise 0. Edge to edge, Android itself never resizes the window, so Resize is
+Core's layout; Pan is the window manager's pan (GetLocationOnScreen includes it;
+Core's coordinates do not). Fence: the Android-only UIReqs group AndroidSoftInput.
+Pointer icons follow
 Core's cursor (PointerIcons). Core drops a wheel event from a mouse it has not
 seen hover: real mice always hover first.
 CodeBrixRootLayout has DefaultFocusHighlightEnabled = false: it holds the Android focus for Core-focused elements,
@@ -484,6 +508,36 @@ control's CoreTextInputProfile (EditorInfo: suggestions or not, multi-line or no
 with CoreTextInput.RegisterProfile from its module initializer; the default profile is
 a multi-line text editor with suggestions. Hardware keys never pass through the view
 (Core gets every key first; the view is not a native editor for ActivityInputRouter).
+CARET (AP8-S item L): Android's adjustPan brings the FOCUSED view's rectangle above the keyboard (and only a rectangle
+inside that view's visible bounds), so while a session is open CoreTextInputView is laid out ON the control's caret
+(FrameLayout margins in the focus layer: Portable/TextInput/CaretPlacement, host-free tested) and follows it (the
+caret's Moved event, the element's LayoutUpdated; one placement per looper turn; OnLayout asks for the rectangle on
+screen again so the pan follows a caret that moved while the keyboard is up). An add-in registers its control's
+caret (CoreTextInput.RegisterCaret(type, control => ICoreTextInputCaret: Element, TryGetBounds in the element's DIPs,
+Moved)); without one the view stays parked 1x1 at the origin (no pan). AdvancedTextEdit registers TextAreaCaret
+(Caret.CalculateCaretRectangle minus the TextView's scroll offset); TerminalView registers Input/TerminalCaret (the
+Core's internal platform seam TerminalControl.GetCaretRectForPlatform / CaretRectChangedForPlatform, WPE1-18: the
+cursor cell in control DIPs, Rect.Empty while the program hides the cursor or its line is scrolled out; intake gate 5
+fingerprints both). A control that reports its focus while it is not on the page gets no session: not loaded AND its
+parents do not reach its XamlRoot's content (the live-tree rule - it also covers a control whose Unloaded the
+controller never saw). Fence: AndroidSoftInput.
+TEXT TARGET (AP7-B AdvancedTextEdit): a control whose text the keyboard may SEE registers a target factory
+(CoreTextInput.RegisterTarget(type, control => ICoreTextInputTarget)); the session then gives
+CoreTextInputView.TargetEditor (Portable/TextInput/TextInputTargetEditor, host-free tested) and the connection
+works on the control's own text instead of its empty editable: getTextBefore/AfterCursor, getSelectedText,
+getCursorCapsMode, commitText, setComposingText/Region, finishComposingText, deleteSurroundingText(InCodePoints),
+setSelection, performContextMenuAction (select all/cut/copy/paste), batch edits. ICoreTextInputTarget (UTF-16
+offsets): TextLength, SelectionStart/End, GetText, CanEdit (read-only ranges), Type (the control's own typing path,
+returns the caret), Replace (raw), Select, ShowComposition (the underline), Perform, BeginBatch/EndBatch (one undo
+group per input-method call, never held across looper turns), Changed(Selection|Text|Reset), IDisposable (the
+session disposes it). The editor types a composition that grows at the caret (and a commit that replaces the
+selection) through Type, so the control's text-input events fire; anything else is a raw Replace. Changes made by
+anything else end a composition; the view reports to the input method on the NEXT looper turn, coalesced
+(UpdateSelection with the composing region, or RestartInput for a whole new text: a restart makes the input method
+call finishComposingText synchronously, which must not happen inside the control's change event).
+CoreTextInputView.ReportsReachInputMethod = false is the UIReqs switch for scenarios that drive the connection
+themselves (the device's real input method would end a composition it did not make). Without a target (the terminal)
+the key-press path above is unchanged.
 Unfocus (or the focused control's Unloaded) closes the session on the next looper turn unless another custom control
 took the focus; the same control focused again does not re-summon a dismissed keyboard, a
 finger/pen press on it does (a mouse press does not).
@@ -534,12 +588,10 @@ Portable/DeviceFormClassifier maps it, Android/AnalyticsInfoAndroidExtension
 asks the size-class service (WindowSizeClassMonitor.CurrentWindowWidthDp,
 override-aware, installed by the UI bootstrap) and falls back to
 Configuration.ScreenWidthDp. AnalyticsInfo.DeviceForm is therefore live on a
-docked phone. VersionInfo.DeviceFamily is NOT live yet: Core composes it ONCE
-(AnalyticsInfo's Lazy AnalyticsVersionInfo reads OperatingSystemFamily and the
-form on the first read), so it keeps the form of that first read - a Platform
-change, reported in the FIXLIST [AP1.11]; its UIReqs scenario (AndroidPolicy,
-"The device family names the form of the window's current size class") is
-pending until then. CodeBrix.Mobile will use "AppleMobile.<form>" on Apple
+docked phone. VersionInfo.DeviceFamily is live too since pin 1.0.270.342
+(WPE1-11: Core reads it at query time while IDeviceFamilyPlatform is
+registered); fence: AndroidPolicy "The device family names the form of the
+window's current size class". CodeBrix.Mobile will use "AppleMobile.<form>" on Apple
 devices; Android/DeviceFamilyAndroidPlatform) and sets the
 FeatureConfiguration platform defaults (Popup.ConstrainByVisibleBounds,
 Frame.UseWinUIBehavior, ToolTip.UseToolTips = true). CodeBrixApplication.OnCreate
@@ -635,7 +687,7 @@ Theme: ThemeBridge writes Material 3 roles (baseline or dynamic) into the curate
 Fluent keys (MaterialRoleMap) as brushes of its own per theme dictionary and
 re-resolves ThemeResources (Application.OnRequestedThemeChanged); app keys always
 win; AppCompat night mode follows an explicit Application.RequestedTheme.
-ThemeKeyMap = the 173 re-keyed corpus keys with their path (161 honored);
+ThemeKeyMap = the re-keyed corpus keys with their path (and which are honored);
 ThemeKeyAppliers complete the CheckBox/Slider/TextControl families on the AP3a
 handlers: CheckBoxHandler.ApplyColors, SliderHandler.MapColors and TextBoxHandler's
 recolour (and its editing refresh, which re-sets the end icon) end with the family's
@@ -650,7 +702,11 @@ styles -> Material type roles (app-authored TextBlocks only). Motion:
 CoreAnimationTicker raises CompositionTarget.Rendering from Choreographer while Core
 has subscribers (Storyboards, VisualState transitions, TeachingTip); it looks at every
 looper idle and at each of Core's own frame requests (AndroidXamlRootHost.
-InvalidateRender -> Poke); MotionPolicy.AlwaysAnimate drives frozen native
+InvalidateRender -> Poke); the per-frame decision (one raise per display frame,
+next frame only while subscribers remain) is Platform/Animation/Portable/
+RenderingFramePump, fenced host-free (HostFree/RenderingFramePumpTests) and on the
+device (AndroidNative "CompositionTarget.Rendering ticks while subscribed and stops
+when not"; AP10-C); MotionPolicy.AlwaysAnimate drives frozen native
 indeterminate indicators (ProgressBarHandler.MapProgress ->
 IndeterminateProgressDriver); AnimatorScaleMonitor follows the system scale. Frame
 page changes under a native NavigationView fade through.
@@ -731,14 +787,16 @@ initializer (Android/AndroidPlatformBootstrap) registers its contracts and handl
     Android/TextEngineProbe (diagnostics, UIReqs fences) lays text out through the public
     TextLayoutEngine and reads the engine's ICU state (Portable/TextEngineIcu names the Core's
     private members; a host-free test pins them against the intake's TextLayout.Core). Fences:
-    the copied TextLayout group (Scenarios/Features/TextLayout, 15 scenarios) and
+    the copied TextLayout group (Scenarios/Features/TextLayout) and
     AndroidNative/EngineContracts "The text engine finds the device's ICU ...".
   Lottie (AP7-B): the Core (CodeBrix.Platform.UI.Lottie.Core) is the whole player - the
     animation sources, JSON loading, and the engine (Engine/LottiePlayer over Skottie: play
-    state, stopwatch frame clock, segments/loop, stretch, colour theming), ticked by the
-    Core's own DispatcherQueue timer (Internal/DispatcherQueueTickSource; the sources name it
-    directly, so no platform tick source is taken - Android's DispatcherQueue drives it). The
-    Android side is only the CANVAS SUPPLY, ILottieCanvasPlatform
+    state, stopwatch frame clock, segments/loop, stretch, colour theming). Since AP1.12 (WPE1-13)
+    the ticks come from the Android frame clock, ILottieTickSourcePlatform
+    (Android/ChoreographerTickSource: Choreographer frame callbacks, every display frame whose
+    time is at least the engine's interval after the last tick - Portable/FrameTickGate,
+    host-free tested); which animation frame is drawn stays the engine's stopwatch. The
+    Android side is otherwise only the CANVAS SUPPLY, ILottieCanvasPlatform
     (Android/LottieCanvasAndroidPlatform), registered from the module initializer (Lottie.Core
     loads CodeBrix.Android.UI.Lottie by name): Android/LottieCanvasElement is a leaf element whose
     visual comes from the SkiaSharp.Views canvas-host factory (SKCanvasVisualBaseFactory, as the
@@ -748,8 +806,9 @@ initializer (Android/AndroidPlatformBootstrap) registers its contracts and handl
     here: the Core declares it with an ApiExtension attribute and an app's generated App code
     registers it (a second registration throws); Android's ProgressRing is native and does not
     use it. Package: SkiaSharp.Skottie (native code in SkiaSharp's library). An ms-appx:///
-    document does not load (Core resolves it to a file under Package.InstalledPath; FIXLIST
-    [AP7-B Lottie], pending fence in AndroidNative/EngineContracts). Fences: the copied Lottie
+    document loads from the APK's assets (since AP1.12: CodeBrix.Android's
+    IApplicationPackageFilesPlatform over the AssetManager; fence AndroidNative/EngineContracts
+    "A Lottie document named by an ms-appx URI loads from the app's assets"). Fences: the copied Lottie
     group (Scenarios/Features/Lottie; its two ProgressRing scenarios are pending: the native ring)
     and AndroidNative/EngineContracts "A Lottie animation is drawn on the Android canvas supply".
   TerminalView (AP7-B): the Core (CodeBrix.Platform.UI.TerminalView.Core) is the whole terminal -
@@ -768,8 +827,65 @@ initializer (Android/AndroidPlatformBootstrap) registers its contracts and handl
     re-arrange; PaintCount/InvalidateCount are for fences. Packages: CodeBrix.Terminal and the
     RobotoMono fonts (the Platform package's versions); it references the TextLayout add-in (the
     cell is measured and the runs laid out with its engine). Fences: the copied TerminalView group
-    (Scenarios/Features/TerminalView, 14 scenarios) and the Android-only AndroidTerminal group (the
+    (Scenarios/Features/TerminalView) and the Android-only AndroidTerminal group (the
     canvas supply, the soft-keyboard session and connection, the keyboard-up touch mapping).
+  AdvancedTextEdit (AP7-B): the Core (CodeBrix.Platform.UI.AdvancedTextEdit.Core) is the whole editor -
+    the control and its TextArea (caret, selection, input handlers, commands, undo), the document model,
+    highlighting, folding, completion, search, and the renderer (TextView's visual lines laid out by the
+    TextLayout engine, the margins). The Android side is the CANVAS SUPPLY, IRenderCanvasPlatform
+    (Android/RenderCanvasAndroidPlatform: one Android/EditorCanvasElement per surface - the TextView's child 0
+    and one per margin - shown by Android/EditorCanvasHandler, the same leaf SkiaCanvasView pattern as the
+    TerminalView surface), registered from the module initializer (AdvancedTextEdit.Core loads
+    CodeBrix.Android.UI.AdvancedTextEdit by name), plus the TextArea's soft-keyboard session: profile
+    CoreTextInputProfile.Editor and the TEXT TARGET Editing/TextAreaInputTarget (see INPUT, TEXT TARGET) with
+    Editing/CompositionUnderline (an IBackgroundRenderer on the TextView's selection layer, the Core's own
+    extension point). Selection UI = the Core's own (drag selection, the selection brush); no native handles.
+    Fences: the copied AdvancedTextEdit group (Scenarios/Features/AdvancedTextEdit) and the
+    Android-only AndroidAdvancedTextEdit group (canvas supply, the session and its text target, composition,
+    autocorrection, re-composition, delete/line break, selection, a hardware key during a composition, read-only,
+    focus away, a real finger tap with the keyboard up, a real finger drag selection).
+  PlotterView (AP7-C): the Core (CodeBrix.Platform.UI.PlotterView.Core) is the whole chart control - PlotterControl
+    over Engine/PlotHost (model attach, painting of the model, zoom rectangle and tracker, CodeBrix.Plotter's controller
+    for keys, mouse, wheel and touch: its default touch binding pans, pinch-zooms and tracks). The Android side is the
+    CANVAS SUPPLY, IRenderCanvasPlatform (Android/RenderCanvasAndroidPlatform: one Android/PlotterCanvasElement - a
+    childless Canvas - per chart, shown by Android/PlotterCanvasHandler, the TerminalView leaf SkiaCanvasView pattern),
+    registered from the module initializer (PlotterView.Core loads CodeBrix.Android.UI.PlotterView by name). Fingers,
+    the mouse and the wheel reach the control through Core's own pointer path (the input router); the typefaces come
+    from IFontSourcePlatform<SKTypeface>, which the TextLayout add-in registers (PlotterView.Core loads that assembly
+    by name too; the add-in references it). Fences: the copied PlotterView group and the Android-only
+    AndroidPlotterView group (the canvas supply; a REAL one-finger pan, two-finger pinch, held finger and mouse wheel
+    with the default binding). The host tests drive the engine's touch path (tests/..PlotterView.Tests/Engine).
+  AudioPlayer (AP7-C): the Core (CodeBrix.Platform.UI.AudioPlayer.Core) holds the AudioPlayer element, its transport
+    (Engine/AudioTransport), SoundEffect and the source resolver. The Android assembly registers, from its module
+    initializer (after CodeBrixAndroidAudio.Initialize - CodeBrix.Audio.Android, the Android backend of CodeBrix.Audio
+    with the same external API): IAudioPlayerPlatform (Android/AudioPlayerAndroidPlatform, an AudioFilePlayer per
+    element), IAudioOutputPlatform (Android/AudioOutputAndroidPlatform: SoundEffectClip voices + the Opus failure
+    explanation) and IAssetLocation (Android/AssetLocationAndroidPlatform: the ms-appx root is AndroidPackagedAssets'
+    copy folder; Android/PackagedAudioAssets copies an asset out of the APK when a player opens it by path, with its
+    folder for an SFZ / Decent Sampler preset - Portable/PackagedAssetPaths, host-tested). These are the Platform's
+    Skia-side output files ported with the package swapped (provenance headers). MidiPlayer is NOT in the Core (its
+    API is made of CodeBrix.Audio types): Public/MidiPlayer.cs re-provides it, ported (ANDROID PORT (1)-(3): ms-appx
+    copy-out; UI.Core's internals are visible here, so three PropertyMetadata callbacks are typed and IsLoading's
+    hiding is acknowledged). Known gap: SoundEffect (Core) reads an ms-appx source with File.ReadAllBytes at the
+    resolved path before any Android code runs, so an ms-appx sound effect is found only once something copied it
+    out (FIXLIST [AP7-C]; a Core change: read ms-appx through IApplicationPackageFilesPlatform). Fences: the copied
+    AudioPlayer group (informational for frames) and AndroidAudioPlayer (the platforms, an ms-appx
+    clip copied out and played, a sound effect, the add-in's MidiPlayer with an ms-appx SFZ); the AndroidElements10B
+    MidiPlayer scenario (restated at AP7-C).
+  VideoPlayer (AP7-C): the Core (CodeBrix.Platform.UI.VideoPlayer.Core) holds only the source resolver (over
+    IAssetLocation), the rules and the failure args - the ELEMENT's public API names CodeBrix.VideoPlayback and
+    SkiaSharp types, so the Platform keeps it in its Skia assembly. The Android assembly re-provides it: Public/
+    (VideoPlayer, IVideoLayer, VideoComposingEventArgs, VideoPlayerRenderPathChangedEventArgs) and Internal/ (the
+    presenter, the render driver, the YUV renderer, the surface element) are the Platform's Skia-side files ported
+    with provenance headers; ANDROID PORT changes: an ms-appx source is copied out of the APK before it is opened
+    (Android/PackagedVideoAssets), and the GPU-composed frame is read back as RGBA (OpenGL ES has no guaranteed BGRA
+    read; the BGRA read failed with GL_INVALID_ENUM and presented nothing). The surface element paints through the
+    SkiaSharp.Views canvas-host factory and is shown by that add-in's SkiaCanvasElementHandler (registered in the
+    bootstrap); the GPU path is the Graphics3DGL add-in's SkiaGpuContext (EGL / OpenGL ES); the sound is
+    CodeBrix.Audio's shared output on CodeBrix.Audio.Android (the bootstrap initialises it). One CodeBrix.Audio.Core
+    line: CodeBrix.VideoPlayback 1.0.271.1195 and CodeBrix.Audio.Android 1.0.271.1201 both depend on
+    CodeBrix.Audio.Core.MitLicenseForever 1.0.271.1165 (never the desktop CodeBrix.Audio package's own assemblies).
+    Fences: the copied VideoPlayer group (informational for frames) and AndroidVideoPlayer.
   UIReqs: each add-in's group is copied (tests/CodeBrix.Android.UIReqs.Device/PORTING.txt,
   ADD-IN GROUPS).
 
@@ -797,9 +913,10 @@ Shell/, Paging/, Calendars/, each with Portable/ helpers tested host-free).
     MaterialDatePicker (Opened/Closed raised through CalendarDatePicker.RaiseOpened/
     ClosedFromPlatform since pin 1.0.268.12).
   Not mapped because the Platform marks them NotImplemented (compile error Uno0001 in an
-  app): TitleBar, ListBox, ListBoxItem, GroupItem, ListPickerFlyoutPresenter,
-  PickerFlyoutPresenter. Grouped ListView/GridView keep the template; the pinned Core
-  realises no group headers (FIXLIST AP10-A). UIReqs: AndroidFeatures/AndroidElements10A.
+  app): ListPickerFlyoutPresenter, PickerFlyoutPresenter. Since pin 1.0.270.342 TitleBar,
+  ListBox, ListBoxItem (WPE1-10) and GroupItem (WPE1-8) are Core controls on their Core
+  templates (no native mapping), and grouped ListView/GridView (Fluent template) show a
+  ListViewHeaderItem / GridViewHeaderItem per group. UIReqs: AndroidFeatures/AndroidElements10A.
 
 REMAINING ELEMENTS, SECOND LANE (AP10-B; src/CodeBrix.Android.UI/Handlers/TemplateOverlays/,
 Status/, MenuButtons/, Icons/, Scroller/, ColorParts/; Status/Portable/ tested host-free).
@@ -948,17 +1065,18 @@ CODEBRIX_ANDROID_BUILD_LOCK: when set, builds and emulator start/stop run under
         line per app; PASS = unchanged files, 0 warnings other than CBAND, 0
         errors. CBAND warnings are counted, never failures: the CBAND column,
         <log dir>/cband-counts.tsv (per app and id) and cband-findings.txt (file
-        and line of each). Heads: every page of the 21 Apache CodeBrix.Samples
-        corpus apps (one head per app; PolyHavenBrowser_viewer_only has its own).
+        and line of each). Heads: every page of every Apache CodeBrix.Samples
+        corpus app (one head per app; an app with a second main-page variant
+        has a second head).
         The heads never write an XML doc file (tests/PasteAlways/
         Directory.Build.targets removes the doc item the Android SDK's
         Bindings.Core.targets adds after GenerateDocumentationFile=false), so
         verbatim sample sources are compiled as the desktop builds compile them. An add-in with an Android flavor is the real
         add-in in every head that uses it (CodeBrixAndroidInRepoAddIns); a
         Surface/ library that needs an add-in's Core sets the same property
-        (e.g. KenneyAssetBrowser.Rendering / PolyHavenBrowser.Rendering:
-        Graphics3DGL). WikipediaPublisher, PolyHavenBrowser and
-        KenneyAssetBrowser have no stubs left (Surface/SOURCES.txt).
+        (a rendering library that needs Graphics3DGL, for example). Each
+        head's Surface/SOURCES.txt says which of its files are verbatim and
+        which are stubs.
         The heads define nothing extra: since pin 1.0.266.1160 the re-shipped
         generator emits the Core template root (UIElement) for an Android
         consumer, so the pages compile exactly as a shipped consumer's would.
@@ -971,6 +1089,12 @@ CODEBRIX_ANDROID_BUILD_LOCK: when set, builds and emulator start/stop run under
         fd), every boot-wait adb call bounded by `timeout 10`, and an EXIT trap
         that stops the emulator it started if the boot does not complete.
         stop: stops only this AVD's emulator on the port.
+        START-WAIT: a start that follows a stop by seconds first waits (up to
+        60 s) until no emulator process of this AVD is alive and its ports are
+        free - a start on the heels of a stop could hang in the cold boot.
+        If a cold boot still hangs (boot timeout, exit 1), stop the AVD and
+        start it ONCE more; a second hang is a failure to report, not to
+        retry again.
 
     build/test-scripts/device-smoke.sh [-c Debug|Release] [--avd NAME] [--port N] [--keep-emulator]
         Starts CodeBrix_Agent_15inch headless on port 5600 (serial emulator-5600;
@@ -1008,6 +1132,20 @@ CODEBRIX_ANDROID_BUILD_LOCK: when set, builds and emulator start/stop run under
         density: scenarios that state device-pixel sizes fail there by design;
         what it proves is the geometry audit (logcat tag UIReqs.Geometry, and no
         "Layout replay:" failure).
+
+    OTHER ADB DEVICES ATTACHED (a developer's phone or tablet): the device
+        scripts address ONLY their own serial. android-uireqs-run.sh and
+        device-smoke.sh export ANDROID_SERIAL=<serial> (adb without -s never
+        reaches another device), read the AVD's ABI (ro.product.cpu.abi) and
+        install with -p:RuntimeIdentifier=android-x64 (or android-arm64) next to
+        -p:AdbTarget, then check `pm dump <package>` primaryCpuAbi equals it
+        (exit 2 otherwise). Why: a Debug build WITHOUT AdbTarget (a plain
+        solution build) asks the DEFAULT adb device for its ABI and packs only
+        that ABI; the next -t:Install finds that APK up to date, and an
+        arm64-only APK on the x86_64 AVD aborts at start ("No assemblies found
+        ... Fast Deployment"). paste-always-compile.sh (compile only) exports
+        ANDROID_SERIAL=emulator-5600 unless set. Run solution builds with
+        ANDROID_SERIAL=emulator-5600 too.
 
     build/test-scripts/parity-score.sh [-c Debug|Release]
         The parity score, published per build (run it after the solution build):
@@ -1098,13 +1236,16 @@ PORTING.txt: source commit, every adaptation). Two halves:
       hides a soft keyboard a scenario left up (logcat UIReqs.Keyboard). (The
       AP7-M FrameworkBrushGuard is gone: pin 1.0.268.12 fixes the shared-brush
       animation leak in Core, fenced by the copied ProgressBar scenario.)
-      Rendering carry-over (AP1.10): after the AndroidElements10A calendars
-      feature, strict frames drawn later IN THE SAME APP SESSION can differ from
+      Rendering carry-over (AP1.10): after drawing a native month calendar, strict frames drawn later IN THE SAME APP SESSION can differ from
       the baseline by 1-5/255 on single edge rows/columns (state inside the
       emulator's rendering pipeline; no view, window or composition property
       differs; FIXLIST [AP1.10]). Stability triples therefore run PER GROUP
-      (--group "<the 28 group names>": the runner restarts the app for every
-      group). A single-session run is still useful for leak hunting.
+      (--group "<every group name>": the runner restarts the app for every
+      group). The three native CalendarView scenarios now live in their own
+      AndroidNativeCalendars group; the templated calendar and Material picker
+      dialogs remain in AndroidElements10A. This prevents native calendar
+      renderer state from reaching the other scenarios in that group.
+      A single-session run is still useful for leak hunting.
       The harness waits until the content a step shows IsLoaded before the
       next step (VirtualApplication.SetContentAsync, PORTING.txt (8)).
   tests/CodeBrix.Android.UIReqs          (net10.0, xunit.v3 + Reqnroll, MTP)
@@ -1119,10 +1260,72 @@ PORTING.txt: source commit, every adaptation). Two halves:
       size the device reported at hello). A failure's output carries
       the canvas report and the screencap path, as on Platform. Scenarios a
       later phase owns are listed in uireqs-pending.txt (skipped as PENDING,
-      never deleted). `dotnet test --solution` runs it too: with no scenario
+      never deleted). A copied scenario whose claim runs in an Android-only
+      group under the device settings it needs is listed in
+      uireqs-rehomed.txt instead (same four columns; the third names the new
+      home; skipped as RE-HOMED: nothing is owed, the claim is covered there).
+      `dotnet test --solution` runs it too: with no scenario
       app answering on 127.0.0.1:47300 (no device/emulator reachable, nothing
       forwarded) every scenario is SKIPPED with that reason; the scenarios run
       when the runner script drives it (UIREQS_SERIAL set) or an app answers.
+ANIMATIONS: the runner sets the system animation scales to 0 for every group
+(deterministic frames; native Material indicators and UISettings.AnimationsEnabled
+honour the animator duration scale - the ruled policy). The Android-only groups
+named in the runner's animator_on_groups (today AndroidAnimatorOn) start with the
+animator duration scale at 1 and get 0 back when the group ends (also on every
+way out of the runner). Their scenarios begin with "Given the system animations
+are on", so a run that did not set the scale fails by name; their frames are
+informational (an animation is caught at a timing-dependent phase). A copied
+claim that needs animations running (the ProgressRing "is animating" scenario)
+is re-homed there through uireqs-rehomed.txt.
+HARNESS RULES (what keeps the runs and the saved frames deterministic; the
+keyboard mask and the host's request handling are fenced by host-free tests,
+tests/CodeBrix.Android.UIReqs/HostFreeTests/ImeMaskTests.cs and
+DeviceSessionTests.cs):
+  * THE KEYBOARD MASK (tests/CodeBrix.Android.UIReqs/TestTarget/ImeMask.cs):
+    the soft keyboard is system UI whose content (suggestion strip, labels,
+    clipboard chip) is not deterministic. When the device asks for a capture
+    while the IME is visible it sends the IME rectangle in screen pixels; the
+    host fills that rectangle, plus ImeMask.ShadowBand rows above it (the
+    keyboard's top shadow), with one flat grey in the copy it SAVES (frame
+    files, archives). The pixels sent back to the device - which scenario
+    assertions and the keyboard warm-up use - are never masked. A frame
+    compare inside the masked rectangle is meaningless.
+  * THE IME SETTLE WAIT (device TestTarget.WaitForSoftKeyboardSettledAsync):
+    before every capture the device waits, bounded (2 s), while a soft-
+    keyboard session is open but the keyboard is not yet visible, while a
+    session just closed but the keyboard is still visible, or while an IME
+    insets animation runs - then captures.
+  * THE CARET DRAWABLE (TestTargetSession.InstallCaretHook, called from the
+    scenario app's MainActivity): a global-layout listener gives every
+    EditText a caret and insertion-handle drawable that draw NOTHING on its
+    first layout, before the editor caches the real one (a native caret's
+    blink phase cannot be observed at capture time). Never CursorVisible =
+    false (the EditText then stops re-positioning its text after a theme
+    switch). No scenario asserts a native caret.
+  * "ime reset" AND THE KEYBOARD WARM-UP: a scenario that typed through a
+    custom control's keyboard session asks the host for `ime reset` (a fresh
+    input method, so its state cannot reach later scenarios). A reset input
+    method cold-starts and briefly shows a different bottom row, so the
+    harness then warms it up: a scratch 1x1 editor shows the keyboard, the
+    harness waits until it is visible AND two captures 300 ms apart show the
+    same keyboard (bounded), then hides it and waits until it has settled.
+  * HOST SHELL WHITELIST: the host runs only `wm size`, `wm density`,
+    `input tap X Y` and `ime reset` for a scenario (DeviceSession.
+    IsAllowedShell).
+  * HOST REQUEST SERIALIZATION: DeviceSession.RequestAsync lets ONE request
+    be in flight per session (a SemaphoreSlim; an overlap is logged and
+    waits) - the device's capture / save / shell requests are served inside
+    the request loop, so overlapping requests would read each other's
+    replies. DeviceSession.ReadScreencap reads each screencap into one fresh
+    array of the capture's exact size (no shared or grown stream buffer).
+  * INFORMATIONAL ENTRIES (build/test-scripts/uireqs-frame-compare.
+    informational; its header is the reference): frames that are compared
+    and reported but never fail. One entry per line: a whole group, a
+    feature as <Group>/<feature>, or ONE frame as <Group>/<feature>/<frame>
+    (the frame form only for one frame with a named cause); each covers both
+    orientations unless prefixed Landscape/ or Portrait/. Every entry carries
+    a comment with its cause. Everything not listed is strict.
 Baselines per orientation/group:
 ~/ClaudeHome/android-buildout-work/uireqs-baseline/<Orientation>/<Group>/.
 Tests never reach outside the repository.
@@ -1140,7 +1343,7 @@ package. Only Android target frameworks get the generator; the net10.0 flavor of
 a multi-targeted app library compiles against the same Core assemblies. Add-in
 Cores: CodeBrixAndroidInRepoAddIns="FlexPanel;AudioPlayer;CommandBar;AppSettings;TextLayout" (the names are listed in
 build/inrepo/CodeBrix.Android.InRepo.targets; an Android head also gets each named add-in's Android assembly).
-samples/HelloPaste uses Svg (the JustBetweenUs page's SVG icons).
+samples/HelloPaste uses Svg (one of its pasted pages shows SVG icons).
 A head's RootNamespace must differ from its app libraries' (the generator names
 per-assembly types after it; the paste-always heads use <App>.PasteAlways).
 
@@ -1278,3 +1481,46 @@ NOTES
   * The intake's isolated packages folder and extraction folder live under
     artifacts/ (git-ignored). Deleting artifacts/ is always safe; the next
     build re-creates it from the feed / nuget.org.
+  * The FIXLIST (the maintainer's fix list for this repository's Android
+    track: every defect found, fixed-and-fenced items, pending decisions and
+    the items for other libraries) is kept outside the repository, in
+    ~/ClaudeHome/FIXLIST_codebrix_android_buildout_2026-09-23.txt. The
+    "FIXLIST [<work package>]" references in this file and in source
+    comments point at its entries. A defect found in another CodeBrix
+    library is written there for its owner, never worked around here.
+
+UIREQS ON AN EXISTING DEVICE WITHOUT CONFIGURATION CHANGES
+=========================================================
+build/test-scripts/android-uireqs-existing.py --serial SERIAL --group Harness
+  --orientation both --out /absolute/output/directory
+
+This runner uses an already connected device; it never starts or reconfigures
+an AVD. It pins the device ABI for installation, restarts the scenario app for
+each group, and asks only the app activity for its orientation. It verifies
+the resulting screen orientation and fails if the request was not honoured.
+The activity leaves system bars visible in this mode to avoid first-use fullscreen
+tutorials that can obscure it. These captures therefore differ from fullscreen
+emulator baselines. The clipboard fence requires the activity to own window focus.
+Both build locks are held, Platform first. --group all discovers every group
+and still restarts the app per group. --repeat 3 performs three runs.
+
+UIREQS_PRESERVE_DEVICE_CONFIGURATION=1 travels in the host handshake. The host
+rejects configuration-changing shell requests even if a scenario sends one.
+Density-changing scenarios therefore fail; the custom keyboard cleanup omits
+IME reset and system corner taps. IME-reset isolation remains UNVERIFIED in
+this mode. The normal hook still hides the app's own soft keyboard. Existing
+pixel baselines require the same density, display size and animation settings;
+a physical-device run is not automatically a baseline validation. The runner
+records the existing settings, without writing them. Uninstall the scratch
+com.codebrix.uireqs app after a physical-device validation session.
+
+Clipboard captures now wait for a quiet period after PrimaryClipChanged.
+The harness does not read clipboard data, suppress the system overlay or
+change a device setting. It waits ten seconds from the most recent copy,
+extended by Android's recommended accessibility timeout, before requesting
+the next frame. A new copy restarts the wait; ending the host session cancels
+it. A capture fails after 30 seconds if the quiet period cannot finish; it never
+shortens an accessibility timeout. AndroidClipboard/ClipboardCapture.feature
+exercises a real copy and asserts that capture waited at least ten seconds.
+The informational clipboard entries remain until device evidence supports
+removing them and adopting the explicitly changed frames.

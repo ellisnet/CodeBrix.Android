@@ -63,6 +63,10 @@ internal static class AndroidPlatformBootstrap
             ApiExtensibility.Register(typeof(ISystemThemeHelperExtension), _ => SystemThemeHelperAndroidExtension.Create());
             ApiExtensibility.Register(typeof(IDisplayInformationExtension), _ => new DisplayInformationAndroidExtension());
 
+            // AP1.12 (WPE1-13 item a): the application package's files (ms-appx:///) are the APK's assets.
+            var packageFiles = new ApplicationPackageFilesAndroidPlatform();
+            ApiExtensibility.Register(typeof(IApplicationPackageFilesPlatform), _ => packageFiles);
+
             // The services of AP4 (plan 2.3 registry row): clipboard, launcher, share, connectivity, haptics,
             // pickers over the Storage Access Framework, application view, badge (no-op), contact picker (D-O10).
             // The ones that show system UI go through the activity bridge CodeBrix.Android.UI installs.

@@ -178,6 +178,11 @@ internal sealed class RatingControlHandler : TemplateOverlayHandler<RatingContro
     {
         var drawable = new AShapeDrawable(new ARectShape());
         drawable.Paint.SetShader(new ABitmapShader(bitmap, AShaderTileMode.Repeat, AShaderTileMode.Clamp));
+
+        // AP10-C: the tile is drawn at its own pixel size (the cell size above), so it is sampled pixel for pixel, never
+        // filtered: a filtered bitmap shader gave two antialiasing states of the star edges between emulator sessions
+        // (FIXLIST [AP1.12] RatingControl).
+        drawable.Paint.FilterBitmap = false;
         return drawable;
     }
 

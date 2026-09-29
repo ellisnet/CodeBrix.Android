@@ -148,6 +148,27 @@ public sealed class TriPaneViewSteps
         actual.Should().Be((side, stack, upper, lower));
     }
 
+    /// <summary>AP1.12 (WPE1-13 display override): the application's minimized flags are all clear (the adaptive form hides
+    /// panes without minimizing them).</summary>
+    [Then("no pane of {string} is minimized")]
+    public async Task Then_no_pane_is_minimized(string name)
+    {
+        var flags = await OnUIThreadAsync(() =>
+        {
+            var view = Tri(name);
+            return (view.IsSidePaneMinimized, view.IsStackMinimized, view.IsUpperPaneMinimized, view.IsLowerPaneMinimized);
+        }).ConfigureAwait(false);
+        flags.Should().Be((false, false, false, false));
+    }
+
+    /// <summary>AP1.12: the adaptive form is the control's display override, set by the Android handler.</summary>
+    [Then("the TriPaneView {string} shows its adaptive form through its display override")]
+    public async Task Then_the_display_override_is_set(string name)
+    {
+        var set = await OnUIThreadAsync(() => (PolicyDiagnostics.HandlerOf(Tri(name)) as TriPaneViewHandler)?.HasDisplayOverride == true).ConfigureAwait(false);
+        set.Should().BeTrue();
+    }
+
     /// <summary>The side pane's share of the width, from the weights.</summary>
     [Then("the side pane of {string} is wider than {int} percent")]
     public async Task Then_the_side_pane_is_wider(string name, int percent)

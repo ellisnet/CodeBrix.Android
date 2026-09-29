@@ -21,15 +21,17 @@ namespace CodeBrix.Android.UI.Handlers;
 /// <list type="bullet">
 /// <item>The ADAPTIVE FORM by the window's width size class (<see cref="AdaptivePolicy.TriPane"/>, followed live -
 /// a docked phone switching between phone and desktop mode): Compact = one pane, Medium = the side pane and one stacked
-/// pane, Expanded = three panes. It is reached THROUGH the engine by weights (<see cref="TriPanePlan"/>): a region the
-/// window has no room for gets weight 0, as if its divider had been dragged over, so the engine minimizes it and offers
-/// its restore grip (RestoreGripMode Auto/Always); tapping the grip reopens that pane and the plan closes its sibling (the
-/// grips switch panes); the weights the plan zeroed come back when the window widens. Switch:
+/// pane, Expanded = three panes. It is the Core engine's DISPLAY OVERRIDE (AP1.12, WPE1-13 ITriPaneDisplayOverride; the
+/// weights are <see cref="TriPanePlan"/>): a region the window has no room for is DISPLAYED with weight 0, so the engine
+/// lays it out minimized and offers its restore grip (RestoreGripMode Auto/Always); tapping the grip shows that pane
+/// instead of its sibling (the grips switch panes). The application's percent and IsMinimized properties are never
+/// written (D-P7B-TP-4 closed), so the app's own layout is back as it was when the window widens. Switch:
 /// <see cref="AdaptivePolicy.AdaptiveTriPaneView"/> (AppContext "CodeBrix.Android.UI.AdaptiveTriPaneView").</item>
 /// <item>FINGER DRAGS on the dividers: a divider is a few DIPs thick, so a finger (or stylus) that lands within the 48-dp
 /// Material touch target around a shown, enabled divider is taken natively - Core gets a cancel for that pointer - and
-/// the drag is driven through the TriPaneView's drag entry points (<see cref="TriPaneViewEntryPoints"/>): the engine
-/// resolves drag, tap-to-restore on a grip, drag-to-minimize and cancel exactly as for its own pointer handling. A mouse
+/// the drag is raised through the divider's own platform entry points (AP1.12, WPE1-13; <see cref="TriPaneViewEntryPoints"/>):
+/// the divider raises its public drag events and the engine resolves drag, tap-to-restore on a grip, drag-to-minimize and
+/// cancel exactly as for its own pointer handling. A mouse
 /// keeps Core's own divider handling (hover state, resize cursor).</item>
 /// </list>
 /// </summary>
@@ -38,18 +40,12 @@ internal sealed class TriPaneViewHandler : ViewGroupHandler<TriPaneView, TriPane
     /// <summary>The Material minimum touch target, in dp.</summary>
     internal const double TouchTargetDp = 48d;
 
-    /// <summary>TriPaneView's mapper: a weight change (a drag, the app, the grips) re-checks the adaptive form.</summary>
-    public static readonly PropertyMapper<TriPaneView, TriPaneViewHandler> Mapper = new(ViewMappers.ViewMapper)
-    {
-        [TriPaneView.SidePanePercentProperty] = MapWeights,
-        [TriPaneView.StackPercentProperty] = MapWeights,
-        [TriPaneView.UpperPanePercentProperty] = MapWeights,
-        [TriPaneView.LowerPanePercentProperty] = MapWeights,
-    };
+    /// <summary>TriPaneView's mapper (the view mappers; a weight change needs nothing here: the engine asks the display
+    /// override on every state pass).</summary>
+    public static readonly PropertyMapper<TriPaneView, TriPaneViewHandler> Mapper = new(ViewMappers.ViewMapper);
 
     private static readonly ILogger _log = CodeBrix.Android.UI.Hosting.HostLog.For("CodeBrix.Android.UI.Handlers.TriPaneView");
     private readonly TriPanePlan _plan = new();
-    private bool _applying;
     private bool _posted;
     private DividerGesture _gesture;
 
@@ -62,7 +58,7 @@ internal sealed class TriPaneViewHandler : ViewGroupHandler<TriPaneView, TriPane
     /// <inheritdoc />
     public override ElementHandlerCapabilities Capabilities => ElementHandlerCapabilities.OwnsChildren;
 
-    /// <summary>The form applied last (null before the first application or when the adaptive form is off).</summary>
+    /// <summary>The form displayed (null before the first size-class reading or when the adaptive form is off).</summary>
     internal TriPaneForm? Form => _plan.Form;
 
     /// <summary>The adaptive plan (diagnostics and the device fences).</summary>
@@ -79,10 +75,10 @@ internal sealed class TriPaneViewHandler : ViewGroupHandler<TriPaneView, TriPane
     /// <returns>The handler.</returns>
     internal static IAndroidElementHandler Create(UIElement element) => new TriPaneViewHandler();
 
-    /// <summary>A weight changed: re-check the form once the engine's pass is over (posted, coalesced).</summary>
-    public static void MapWeights(TriPaneViewHandler handler, TriPaneView element) => handler.PostApply();
+    /// <summary>Whether the control carries this handler's display override (diagnostics and the device fences).</summary>
+    internal bool HasDisplayOverride => Element is TriPaneView view && TriPaneViewEntryPoints.HasDisplayOverride(view);
 
-    /// <summary>Re-applies the adaptive form now (tests, diagnostics).</summary>
+    /// <summary>Re-reads the window's size class now (tests, diagnostics).</summary>
     internal void ApplyNow() => Apply();
 
     /// <inheritdoc />
@@ -93,6 +89,14 @@ internal sealed class TriPaneViewHandler : ViewGroupHandler<TriPaneView, TriPane
     {
         base.OnConnected();
         WindowSizeClassMonitor.Changed += OnSizeClassChanged;
+        if (AdaptivePolicy.AdaptiveTriPaneView && Element is TriPaneView view)
+        {
+            TriPaneViewEntryPoints.SetDisplayOverride(
+                view,
+                weights => ToTuple(_plan.Display(new TriPaneWeights(weights.Side, weights.Stack, weights.Upper, weights.Lower))),
+                region => _plan.Restore((TriPaneRegion)region));
+        }
+
         PostApply();
     }
 
@@ -100,9 +104,14 @@ internal sealed class TriPaneViewHandler : ViewGroupHandler<TriPaneView, TriPane
     protected override void DisconnectHandler(TriPaneViewLayout platformView)
     {
         WindowSizeClassMonitor.Changed -= OnSizeClassChanged;
-        if (_gesture != null && Element is TriPaneView view)
+        if (Element is TriPaneView view)
         {
-            TriPaneViewEntryPoints.CompleteDrag(view, _gesture.Kind, 0d, canceled: true);
+            if (_gesture != null)
+            {
+                TriPaneViewEntryPoints.CompleteDrag(view, _gesture.Kind, canceled: true);
+            }
+
+            TriPaneViewEntryPoints.SetDisplayOverride(view, null, null);
         }
 
         _gesture = null;
@@ -142,13 +151,12 @@ internal sealed class TriPaneViewHandler : ViewGroupHandler<TriPaneView, TriPane
 
     private void Apply()
     {
-        if (_applying || _gesture != null || Element is not TriPaneView view || !AdaptivePolicy.AdaptiveTriPaneView)
+        if (_gesture != null || Element is not TriPaneView view || !TriPaneViewEntryPoints.HasDisplayOverride(view))
         {
             return;
         }
 
-        // Never in the middle of a divider drag (Core's pointer or ours): the form is re-checked when the drag has written
-        // its last weights.
+        // Never in the middle of a divider drag (Core's pointer or ours): the form is re-read when the drag has ended.
         if (TriPaneViewEntryPoints.Divider(view, TriPaneViewDividerKind.Side) is { IsDragging: true }
             || TriPaneViewEntryPoints.Divider(view, TriPaneViewDividerKind.Stack) is { IsDragging: true })
         {
@@ -162,47 +170,18 @@ internal sealed class TriPaneViewHandler : ViewGroupHandler<TriPaneView, TriPane
         }
 
         var form = AdaptivePolicy.TriPane(window);
-        var current = Weights(view);
-        var target = _plan.Apply(form, current);
-        if (target != current)
+        if (_plan.Form == form)
         {
-            _applying = true;
-            try
-            {
-                // Opened regions first, so a pair is never written with both weights at zero (the engine would read an
-                // even split).
-                Write(view, target, open: true);
-                Write(view, target, open: false);
-            }
-            finally
-            {
-                _applying = false;
-            }
-
-            _log.LogDebug("TriPaneView {Name}: {Form} at {Width:0} dp: {Before} -> {After}.", view.Name, form, window.WidthDp, current, Weights(view));
+            return;
         }
 
-        _plan.Observe(Weights(view));
+        _plan.Form = form;
+        TriPaneViewEntryPoints.RefreshDisplayOverride(view);
+        _log.LogDebug("TriPaneView {Name}: {Form} at {Width:0} dp: {Layout}.", view.Name, form, window.WidthDp, TriPaneViewEntryPoints.Describe(view));
     }
 
-    private static TriPaneWeights Weights(TriPaneView view) =>
-        new(view.SidePanePercent, view.StackPercent, view.UpperPanePercent, view.LowerPanePercent);
-
-    private static void Write(TriPaneView view, TriPaneWeights target, bool open)
-    {
-        void Set(double currentValue, double wanted, Action<double> setter)
-        {
-            if (!currentValue.Equals(wanted) && TriPaneWeights.IsClosed(wanted) != open)
-            {
-                setter(wanted);
-            }
-        }
-
-        Set(view.SidePanePercent, target.Side, v => view.SidePanePercent = v);
-        Set(view.StackPercent, target.Stack, v => view.StackPercent = v);
-        Set(view.UpperPanePercent, target.Upper, v => view.UpperPanePercent = v);
-        Set(view.LowerPanePercent, target.Lower, v => view.LowerPanePercent = v);
-    }
+    private static (double Side, double Stack, double Upper, double Lower) ToTuple(TriPaneWeights weights) =>
+        (weights.Side, weights.Stack, weights.Upper, weights.Lower);
 
     /// <summary>A touch reached the control's view group before its children: take it when it lands on a divider.</summary>
     /// <param name="e">The event.</param>
@@ -277,8 +256,7 @@ internal sealed class TriPaneViewHandler : ViewGroupHandler<TriPaneView, TriPane
             || (action == AMotionEventActions.PointerUp && e.GetPointerId(e.ActionIndex) == gesture.PointerId))
         {
             _gesture = null;
-            var travel = gesture.Kind == TriPaneViewDividerKind.Side ? gesture.LastX - gesture.StartX : gesture.LastY - gesture.StartY;
-            TriPaneViewEntryPoints.CompleteDrag(view, gesture.Kind, travel / gesture.Density, canceled: action == AMotionEventActions.Cancel);
+            TriPaneViewEntryPoints.CompleteDrag(view, gesture.Kind, canceled: action == AMotionEventActions.Cancel);
             PostApply();
         }
 

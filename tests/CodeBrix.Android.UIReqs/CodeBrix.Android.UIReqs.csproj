@@ -50,6 +50,7 @@
     <Compile Include="$(_UIReqsDeviceProjectDir)Protocol/*.cs" Link="Protocol/%(Filename)%(Extension)" />
     <None Update="reqnroll.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="uireqs-pending.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="uireqs-rehomed.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

@@ -93,6 +93,10 @@
     <Project Path="src/AddIns/CodeBrix.Android.UI.TextLayout/CodeBrix.Android.UI.TextLayout.csproj" />
     <Project Path="src/AddIns/CodeBrix.Android.UI.Lottie/CodeBrix.Android.UI.Lottie.csproj" />
     <Project Path="src/AddIns/CodeBrix.Android.UI.TerminalView/CodeBrix.Android.UI.TerminalView.csproj" />
+    <Project Path="src/AddIns/CodeBrix.Android.UI.AdvancedTextEdit/CodeBrix.Android.UI.AdvancedTextEdit.csproj" />
+    <Project Path="src/AddIns/CodeBrix.Android.UI.PlotterView/CodeBrix.Android.UI.PlotterView.csproj" />
+    <Project Path="src/AddIns/CodeBrix.Android.UI.AudioPlayer/CodeBrix.Android.UI.AudioPlayer.csproj" />
+    <Project Path="src/AddIns/CodeBrix.Android.UI.VideoPlayer/CodeBrix.Android.UI.VideoPlayer.csproj" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="tests/CodeBrix.Android.IntakeGate.Tests/CodeBrix.Android.IntakeGate.Tests.csproj" />
@@ -110,8 +114,13 @@
     <Project Path="tests/CodeBrix.Android.UI.Lottie.Tests/CodeBrix.Android.UI.Lottie.Tests.csproj" />
     <Project Path="tests/CodeBrix.Android.UI.Toolkit.Tests/CodeBrix.Android.UI.Toolkit.Tests.csproj" />
     <Project Path="tests/CodeBrix.Android.UI.TerminalView.Tests/CodeBrix.Android.UI.TerminalView.Tests.csproj" />
+    <Project Path="tests/CodeBrix.Android.UI.AdvancedTextEdit.Tests/CodeBrix.Android.UI.AdvancedTextEdit.Tests.csproj" />
+    <Project Path="tests/CodeBrix.Android.UI.PlotterView.Tests/CodeBrix.Android.UI.PlotterView.Tests.csproj" />
+    <Project Path="tests/CodeBrix.Android.UI.AudioPlayer.Tests/CodeBrix.Android.UI.AudioPlayer.Tests.csproj" />
+    <Project Path="tests/CodeBrix.Android.UI.VideoPlayer.Tests/CodeBrix.Android.UI.VideoPlayer.Tests.csproj" />
     <Project Path="tests/CodeBrix.Android.Analyzers.Tests/CodeBrix.Android.Analyzers.Tests.csproj" />
     <Project Path="tests/CodeBrix.Android.ParityScore.Tests/CodeBrix.Android.ParityScore.Tests.csproj" />
+    <Project Path="tests/UIReqsFrameCompare.Tests/UIReqsFrameCompare.Tests.csproj" />
   </Folder>
   <Folder Name="/Tests/UIReqs/">
     <File Path="tests/CodeBrix.Android.UIReqs.Device/Directory.Build.props" />

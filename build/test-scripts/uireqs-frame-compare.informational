@@ -1,13 +1,21 @@
 # UIReqs frames that compare-uireqs-frames.sh passes to the frame-compare tool as --informational: compared
 # and reported, but never failing the comparison. Everything not listed here is strict.
 # One entry per line: a whole group (the folder directly under frames/<Orientation>/), or one feature of a
-# group as <Group>/<feature file name without extension>. '#' starts a comment.
+# group as <Group>/<feature file name without extension>, or ONE frame as <Group>/<feature>/<frame file name without
+# .png>; each covers both orientations. Each may be prefixed with an orientation (Landscape/<Group>[/<feature>[/<frame>]],
+# Portrait/...) to cover that orientation only. Use the frame form only for one frame with a named cause.
+# '#' starts a comment.
 
 # Whole groups: frames depend on playback/loading timing, and the NUMBER of frames a run saves varies.
 AudioPlayer
 Lottie
 MediaPlayer
 VideoPlayer
+# AP7-C: the Android-only VideoPlayer group (its picture is sampled while a clip plays; playback timing, as the VideoPlayer group).
+AndroidVideoPlayer
+# AP9-2: the Android-only group that runs with the system animator scale at 1 (a spinning native indicator is caught at a
+# timing-dependent phase; its claim is "two frames differ", checked inside the scenario).
+AndroidAnimatorOn
 WebView
 
 # Single features, measured (2026-09-22, WP0.2): these differed between three runs of identical code
@@ -36,9 +44,34 @@ ThemeFocus/Animation
 # ANDROID-ONLY (measured 2026-09-23, AP2L2 stability s2): the wheel scenario shows the Fluent scroll
 # indicator of the mouse-scrolled ScrollViewer, caught at a timing-dependent moment of its fade
 AndroidNative/native_scrolling
-# ANDROID-ONLY (measured 2026-09-26, AP7-B TerminalView stability triple): the terminal input scenarios focus the terminal, so
-# the SYSTEM soft keyboard is in the frame, and the copy scenario's frame catches Android's clipboard overlay (the "copied"
-# preview chip at the bottom left, shown for a few seconds after a NEW clip; run 1 had it, runs 2-3 did not) and Gboard's
-# recent-clip suggestion - system UI whose presence depends on the clipboard's history and timing, not on the terminal.
-# The scenarios' own region claims (inside the terminal) stay strict pass/fail; TerminalView/TerminalPainting stays strict.
-TerminalView/TerminalInput
+# ORIENTATION-SPECIFIC [AP7-B TerminalView RE-GATE 2] (FIXLIST [AP2-M] "NEW (informational, harness/emulator rendering)",
+# recurred in AP1.11 and the AP7-B TerminalView re-gate full pass): Landscape Scenario 3 (uniform vs fill) catches the
+# emulator's FitCenter edge filtering of the scaled picture differently between runs, with no Platform load present.
+# Portrait ThemeFocus/Image stays strict.
+Landscape/ThemeFocus/Image
+# [AP7-B TerminalView RE-GATE 2, coordinator 01:30] TerminalView/TerminalInput was listed here (the system soft keyboard and
+# the clipboard overlay in its frames). It is STRICT again: the host masks the soft-keyboard rectangle in every saved frame
+# (tests/CodeBrix.Android.UIReqs TestTarget/ImeMask.cs), and its 20 baseline frames were re-captured after the keyboard
+# warm-up that follows "ime reset" (identical across full passes p1, p2 and all three touched-groups runs).
+# (REMOVED by AP8-S item 3, 2026-09-27: the one-frame entry Portrait/Text/PasswordBox/Scenario2_..._01_masked - the native
+# caret blink phase. The harness now gives every EditText its draw-nothing caret drawable on its first layout, before the
+# Editor caches the real one (TestTargetSession.InstallCaretHook): no caret is drawn in any frame, the frame is strict again.)
+# ONE FRAME per orientation [AP1.12 2026-09-27, agent; for the coordinator to confirm]: RatingControl Scenario 1 has two exact
+# rendering states on this emulator (star-edge antialiasing, max 3-4/255, ~600-900 px): the same build and pin gave the
+# baseline state in dev4a (both orientations) and dev4b portrait, the other state in dev4b landscape and full pass p1 (both
+# orientations, held platform.lock + build.lock); the .982 re-gate p4 had the baseline state. No change of this package
+# reaches it (RatingControl's Core surface is identical between the pins). The scenario's region claims stay strict;
+# FIXLIST [AP1.12] RatingControl, owner AP8-S.
+# [AP10-C] the star tiles are no longer filtered (RatingControlHandler.Tile, FilterBitmap false; frames re-baselined); kept
+# until more emulator sessions show the new frame is single-state (FIXLIST [AP10-C] ITEM 4).
+Portrait/Range/RatingControl/Scenario1_a_ratingcontrol_draws_its_stars_01
+Landscape/Range/RatingControl/Scenario1_a_ratingcontrol_draws_its_stars_01
+# ONE FRAME [AP7-B AdvancedTextEdit, coordinator ruling 2026-09-27 08:07]: native indeterminate ring animation phase at
+# capture; owner AP8-S (ProgressRing look/animator-scale items); FIXLIST [AP7-B AdvancedTextEdit] 08:07.
+Portrait/Range/ProgressRing/Scenario3_a_progressring_that_stops_being_active_clears_its_rectangle_01
+# ONE FRAME per orientation [AP8-S batch 4, coordinator ruling 2026-09-27 22:30]: Android clipboard 'Copied' chip overlay after
+# a copy chord; two-state; owner harness; FIXLIST [AP8-S batch 4]. (SystemUI draws the chip on its own timer after the app writes
+# the clipboard: the pin triple's run 2 captured the frame before it showed - a 75x41 box at (0,1515) in portrait; runs 1/3 and
+# the baseline have it.)
+Portrait/TerminalView/TerminalInput/Scenario4_the_clipboard_chord_copies_what_the_finger_selected_03_after_the_chord
+Landscape/TerminalView/TerminalInput/Scenario4_the_clipboard_chord_copies_what_the_finger_selected_03_after_the_chord

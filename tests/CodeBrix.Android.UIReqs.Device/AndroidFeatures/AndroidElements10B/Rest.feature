@@ -83,4 +83,6 @@ Scenario: Line, Polygon, Polyline and Rectangle are the native shape view
 
 Scenario: A MidiPlayer plays through the AudioPlayer add-in
 	Given the application shows the AP10B sample "midi player" named "midi"
-	Then "midi" is shown by a native MidiPlayerView
+	Then "midi" is a MidiPlayer of the Android AudioPlayer add-in
+	When "midi" is given the silent SFZ instrument and the generated MIDI sequence
+	Then "midi" opens its media within 10000 milliseconds

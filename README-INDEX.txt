@@ -25,6 +25,12 @@ MAINTAINER AND EXTRAS
   templates/TEMPLATE_INTEGRATION.md
       The Android head of the CodeBrix.Platform application template, and what
       the application template and its skill need to offer it.
+  samples/README.md
+      The samples folder's map; each sample folder has its own README.md
+      (samples/HelloPaste, samples/SimpleDebugApp_API_36 and _37).
+  tests/CodeBrix.Android.UIReqs.Device/PORTING.txt
+      Where the copied UIReqs scenario code comes from and every adaptation
+      made to it.
 
 GENERAL
 -------

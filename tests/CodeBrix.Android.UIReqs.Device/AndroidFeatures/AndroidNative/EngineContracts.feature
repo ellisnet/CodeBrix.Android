@@ -38,11 +38,26 @@ Scenario: A Lottie animation is drawn on the Android canvas supply
 	And the region of "anim" contains "Red"
 
 Scenario: A Lottie document named by an ms-appx URI loads from the app's assets
-	AP7-B (pending, FIXLIST [AP7-B Lottie]): the Lottie source opens an ms-appx:/// document with
-	StorageFile.GetFileFromApplicationUriAsync, which the pinned Core resolves to a FILE under Package.InstalledPath;
-	an APK's assets are not files, so the document is never found. The asset is in this app's APK at its ms-appx path.
+	AP7-B, passing since AP1.12: the Lottie source opens an ms-appx:/// document with
+	StorageFile.GetFileFromApplicationUriAsync; since pin 1.0.270.342 Core reads the package through the
+	IApplicationPackageFilesPlatform contract, which CodeBrix.Android implements over the APK's AssetManager. The asset is
+	in this app's APK at its ms-appx path.
 	Given the application shows an AnimatedVisualPlayer named "anim"
 	When the Lottie source of "anim" is "ms-appx:///Assets/LottieFence/pulse.json"
 	And the Lottie animation of "anim" has loaded
 	And the frame is captured
 	Then the region of "anim" contains "Red"
+
+Scenario: The Lottie frame clock is the Android display's Choreographer
+	AP1.12 (WPE1-13): CodeBrix.Android.UI.Lottie registers ILottieTickSourcePlatform, so the Lottie engine's frames are
+	ticked by Choreographer frame callbacks instead of a dispatcher timer.
+	Then the Lottie frame clock is "LottieTickSourceAndroidPlatform"
+
+Scenario: CompositionTarget.Rendering ticks while subscribed and stops when not
+	AP10-C (FIXLIST A:161): Android draws natively and has no render loop of its own, so its frame clock (Choreographer
+	frame callbacks on the UI thread) raises CompositionTarget.Rendering once per display frame for as long as anything is
+	subscribed - a Storyboard, a TeachingTip opening, app code - and asks for no frames once nothing is.
+	When app code subscribes to CompositionTarget.Rendering
+	Then CompositionTarget.Rendering is raised on display frames
+	When app code unsubscribes from CompositionTarget.Rendering
+	Then CompositionTarget.Rendering is no longer raised and the frame clock is idle

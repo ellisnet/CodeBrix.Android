@@ -31,8 +31,15 @@ internal static class DeviceSession
     private static UIReqsChannel? _channel;
     private static TcpClient? _client;
 
+    // [AP7-C 2026-09-28] One request in flight per session: the device's capture/save/shell requests are served inside the
+    // request loop, so two overlapping RequestAsync calls would read each other's replies and serve captures side by side.
+    private static readonly SemaphoreSlim _requestGate = new(1, 1);
+
     /// <summary>The emulator serial.</summary>
     internal static string Serial { get; } = Environment.GetEnvironmentVariable("UIREQS_SERIAL") is { Length: > 0 } s ? s : "emulator-5600";
+
+    /// <summary>Forbids device configuration changes when testing an existing device as it is.</summary>
+    internal static bool PreserveDeviceConfiguration { get; } = Environment.GetEnvironmentVariable("UIREQS_PRESERVE_DEVICE_CONFIGURATION") == "1";
 
     /// <summary>The orientation declared for this run.</summary>
     internal static TestDisplayOrientation Orientation { get; } =
@@ -89,7 +96,12 @@ internal static class DeviceSession
                 _client = new TcpClient { NoDelay = true };
                 await _client.ConnectAsync("127.0.0.1", port).ConfigureAwait(false);
                 _channel = new UIReqsChannel(_client.GetStream());
-                var hello = await RequestAsync(new JsonObject { ["op"] = "hello", ["orientation"] = Orientation.ToString() }).ConfigureAwait(false);
+                var hello = await RequestAsync(new JsonObject { ["op"] = "hello", ["orientation"] = Orientation.ToString(), ["preserveConfiguration"] = PreserveDeviceConfiguration }).ConfigureAwait(false);
+                if (PreserveDeviceConfiguration)
+                {
+                    Console.WriteLine("UIReqs: configuration preserved; density-changing scenarios cannot run and IME-reset isolation is unverified.");
+                }
+
                 Panel = (hello.Int("width"), hello.Int("height"), (double?)hello["density"] ?? 1.0);
                 return hello;
             }
@@ -137,6 +149,24 @@ internal static class DeviceSession
     /// </summary>
     internal static async Task<JsonObject> RequestAsync(JsonObject request)
     {
+        if (_requestGate.CurrentCount == 0)
+        {
+            Console.Error.WriteLine($"UIReqs host: request '{request.Str("op")}' arrived while another request was in flight - it waits for it");
+        }
+
+        await _requestGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            return await RequestCoreAsync(request).ConfigureAwait(false);
+        }
+        finally
+        {
+            _requestGate.Release();
+        }
+    }
+
+    private static async Task<JsonObject> RequestCoreAsync(JsonObject request)
+    {
         var channel = _channel ?? throw new InvalidOperationException("The UIReqs device app is not connected.");
         await channel.SendAsync(request).ConfigureAwait(false);
         while (true)
@@ -147,7 +177,7 @@ internal static class DeviceSession
             switch (message.Str("request"))
             {
                 case "capture":
-                    await ServeCaptureAsync(channel, message.Int("seq")).ConfigureAwait(false);
+                    await ServeCaptureAsync(channel, message.Int("seq"), ImeMask.ReadRect(message)).ConfigureAwait(false);
                     continue;
                 case "save":
                     await ServeSaveAsync(channel, message).ConfigureAwait(false);
@@ -161,13 +191,26 @@ internal static class DeviceSession
         }
     }
 
-    private static async Task ServeCaptureAsync(UIReqsChannel channel, long sequence)
+    private static async Task ServeCaptureAsync(UIReqsChannel channel, long sequence, (int Left, int Top, int Right, int Bottom)? imeRect)
     {
         try
         {
             var frame = Screencap(sequence);
-            _frames[sequence] = frame;
-            LatestFrame = frame;
+
+            // [AP7-B TerminalView RE-GATE 2] The soft keyboard is system UI whose content is not deterministic: the frame
+            // that is SAVED (frame files, archives) has the device-reported IME rectangle filled with one flat colour
+            // (ImeMask); the device still gets the unmasked pixels (its scenario assertions and the keyboard warm-up).
+            var saved = frame;
+            if (imeRect is { } rect)
+            {
+                saved = ImeMask.Apply(frame, rect, out var applied);
+                Console.WriteLine(applied is { } a
+                    ? $"UIReqs host: capture {sequence} ime-masked rect=({a.Left},{a.Top})-({a.Right},{a.Bottom}) colour=#808080 (reported ({rect.Left},{rect.Top})-({rect.Right},{rect.Bottom}))"
+                    : $"UIReqs host: capture {sequence} ime reported ({rect.Left},{rect.Top})-({rect.Right},{rect.Bottom}) outside the {frame.Width} x {frame.Height} frame: nothing masked");
+            }
+
+            _frames[sequence] = saved;
+            LatestFrame = saved;
             CaptureCount++;
             await channel.SendAsync(new JsonObject { ["w"] = frame.Width, ["h"] = frame.Height }, frame.Rgba).ConfigureAwait(false);
         }
@@ -200,13 +243,16 @@ internal static class DeviceSession
     /// that typed through a custom control's session, so its state cannot reach the next scenarios) - nothing else.
     /// </summary>
     /// <param name="args">The shell command line.</param>
+    /// <param name="preserveConfiguration">When true, only read-only display queries are permitted.</param>
     /// <returns>True when allowed.</returns>
-    internal static bool IsAllowedShell(string? args) =>
-        args != null && System.Text.RegularExpressions.Regex.IsMatch(args, @"^(wm (size( (reset|[1-9][0-9]{1,4}x[1-9][0-9]{1,4}))?|density( (reset|[1-9][0-9]{1,3}))?)|input tap [0-9]{1,4} [0-9]{1,4}|ime reset)$");
+    internal static bool IsAllowedShell(string? args, bool preserveConfiguration = false) =>
+        args != null && (preserveConfiguration
+            ? args is "wm size" or "wm density"
+            : System.Text.RegularExpressions.Regex.IsMatch(args, @"^(wm (size( (reset|[1-9][0-9]{1,4}x[1-9][0-9]{1,4}))?|density( (reset|[1-9][0-9]{1,3}))?)|input tap [0-9]{1,4} [0-9]{1,4}|ime reset)$"));
 
     private static async Task ServeShellAsync(UIReqsChannel channel, string? args)
     {
-        if (!IsAllowedShell(args))
+        if (!IsAllowedShell(args, PreserveDeviceConfiguration))
         {
             await channel.SendAsync(new JsonObject { ["exit"] = -1, ["error"] = $"shell command not allowed: \"{args}\"" }).ConfigureAwait(false);
             return;
@@ -248,10 +294,8 @@ internal static class DeviceSession
             UseShellExecute = false,
         };
         using var process = Process.Start(start) ?? throw new InvalidOperationException("adb did not start.");
-        using var buffer = new MemoryStream();
-        process.StandardOutput.BaseStream.CopyTo(buffer);
+        var bytes = ReadScreencap(process.StandardOutput.BaseStream);
         process.WaitForExit();
-        var bytes = buffer.ToArray();
         if (process.ExitCode != 0 || bytes.Length < 16)
         {
             throw new InvalidOperationException($"adb screencap failed (exit {process.ExitCode}): {process.StandardError.ReadToEnd()}");
@@ -276,5 +320,67 @@ internal static class DeviceSession
         }
 
         return new TestFrame(rgba, cropWidth, cropHeight, sequence);
+    }
+
+    /// <summary>
+    /// [AP7-C 2026-09-28] Reads one raw screencap from adb's output into a FRESH array of the capture's size (width x height x 4
+    /// plus the 12- or 16-byte header): no stream buffer is grown, reused or shared between captures (the full pass's one host
+    /// crash was an AccessViolationException inside MemoryStream.set_Capacity while a capture was being copied).
+    /// </summary>
+    /// <param name="source">adb's standard output.</param>
+    /// <returns>Every byte adb wrote.</returns>
+    internal static byte[] ReadScreencap(Stream source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        var head = new byte[12];
+        var got = ReadFully(source, head, 0, head.Length);
+        var pixels = got == head.Length ? (long)BitConverter.ToInt32(head, 0) * BitConverter.ToInt32(head, 4) * 4 : -1;
+        if (pixels <= 0 || pixels > int.MaxValue - 64)
+        {
+            // Not a screencap header (adb printed an error, or nothing): return what there is; the caller reports it.
+            using var rest = new MemoryStream();
+            rest.Write(head, 0, got);
+            source.CopyTo(rest);
+            return rest.ToArray();
+        }
+
+        var bytes = new byte[16 + pixels];
+        Buffer.BlockCopy(head, 0, bytes, 0, head.Length);
+        var total = head.Length + ReadFully(source, bytes, head.Length, bytes.Length - head.Length);
+        if (total < bytes.Length)
+        {
+            return bytes.AsSpan(0, total).ToArray();
+        }
+
+        // More than a 16-byte header's worth: keep it all (the caller rejects the unexpected size).
+        using var extra = new MemoryStream();
+        source.CopyTo(extra);
+        if (extra.Length == 0)
+        {
+            return bytes;
+        }
+
+        var all = new byte[bytes.Length + extra.Length];
+        Buffer.BlockCopy(bytes, 0, all, 0, bytes.Length);
+        extra.Position = 0;
+        ReadFully(extra, all, bytes.Length, (int)extra.Length);
+        return all;
+    }
+
+    private static int ReadFully(Stream source, byte[] target, int offset, int count)
+    {
+        var total = 0;
+        while (total < count)
+        {
+            var read = source.Read(target, offset + total, count - total);
+            if (read == 0)
+            {
+                break;
+            }
+
+            total += read;
+        }
+
+        return total;
     }
 }

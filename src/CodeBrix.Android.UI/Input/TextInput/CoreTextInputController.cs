@@ -18,8 +18,8 @@ namespace CodeBrix.Android.UI.Input.TextInput;
 /// TerminalView and AdvancedTextEdit add-ins). Registered by the CodeBrix.Android.UI bootstrap; main thread.
 /// <list type="bullet">
 /// <item>A control gains focus: the activity's <see cref="CoreTextInputView"/> opens a session with the control's
-/// profile (<see cref="CoreTextInput"/>), takes the Android focus (the input method re-reads the editor) and the
-/// keyboard is shown.</item>
+/// profile and, when its add-in registered one, its text target (<see cref="CoreTextInput"/>), takes the Android focus
+/// (the input method re-reads the editor) and the keyboard is shown.</item>
 /// <item>A control loses focus (or leaves the tree while it has it): the keyboard is hidden and the session closed on the next looper turn - unless another
 /// custom text control took the focus in between (no flicker between two of them).</item>
 /// <item>A finger or pen pressed on the focused control shows the keyboard again (the user dismissed it and tapped
@@ -67,6 +67,19 @@ internal sealed class CoreTextInputController : ITextInputFocusNotificationsSing
             return;
         }
 
+        // [AP8-S batch 3, item L; batch 4] A focused control that LEFT the tree can be handed the focus again by Core after
+        // its session closed (an AdvancedTextEdit's text area whose page was replaced: Core's focused element is still the
+        // removed text area, and it reports its focus once more, unloaded). No session for a control that is not on the
+        // page: it would hold the Android focus and the keyboard for nothing (a later text box's tap then found the window
+        // panned to an editor that is gone). "On the page" = loaded, or (not loaded yet) its parents reach the window's
+        // content - a control added and focused in the same turn is served. The rule reads the tree itself, so it also
+        // holds for a control whose Unloaded this controller never saw (it had no session when it left).
+        if (!control.IsLoaded && !IsInLiveTree(control))
+        {
+            _log.LogDebug("{Control} reported its focus while it is not on the page: no soft-keyboard session.", control.GetType().Name);
+            return;
+        }
+
         _version++;
         if (ReferenceEquals(_focused, control) && _view is { Profile: not null, IsFocused: true })
         {
@@ -101,7 +114,7 @@ internal sealed class CoreTextInputController : ITextInputFocusNotificationsSing
 
         _view = view;
         var profile = CoreTextInput.ProfileOf(control);
-        view.Open(profile, source);
+        view.Open(profile, source, CoreTextInput.CreateTarget(control), CoreTextInput.CreateCaret(control));
         if (!view.IsFocused)
         {
             view.RequestFocus();
@@ -114,7 +127,8 @@ internal sealed class CoreTextInputController : ITextInputFocusNotificationsSing
             ShowCount++;
         }
 
-        _log.LogDebug("Text input opened for {Control} (profile {Profile}).", control.GetType().Name, profile);
+        _log.LogDebug("Text input opened for {Control} (profile {Profile}, {Path}).", control.GetType().Name, profile,
+            view.TargetEditor != null ? "text target" : "key presses");
     }
 
     /// <inheritdoc />
@@ -172,6 +186,29 @@ internal sealed class CoreTextInputController : ITextInputFocusNotificationsSing
         }
 
         _log.LogDebug("Text input closed.");
+    }
+
+    // The control's parents reach its window's content (the live visual tree).
+    private static bool IsInLiveTree(Control control)
+    {
+        var content = control.XamlRoot?.Content;
+        if (content == null)
+        {
+            return false;
+        }
+
+        DependencyObject current = control;
+        while (current != null)
+        {
+            if (ReferenceEquals(current, content))
+            {
+                return true;
+            }
+
+            current = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(current);
+        }
+
+        return false;
     }
 
     private void Detach(Control control)

@@ -3,14 +3,17 @@
   <!--
     Paste-always compile head: CodeBrixVideoTool (CodeBrix.Samples CodeBrixVideoTool/src/CodeBrixVideoTool.UI).
     Pasted/ = the shared UI project's files, verbatim. Surface/ = the app's CodeBrixVideoTool.Core and its
-    Playback / Processing libraries (verbatim; same language settings as the head) and a stub of the
-    VideoPlayer add-in element, which has no Android flavor yet. See Surface/SOURCES.txt.
+    Playback / Processing libraries (verbatim; same language settings as the head). The VideoPlayer element is the
+    real Android add-in (AP7-C). The app is NotSupported on Android at run time (it needs CodeBrix.VideoPlayback.Authoring,
+    which is not supported on Android - D-O14, Jeremy 2026-09-27); this head only proves the page compiles. See
+    Surface/SOURCES.txt.
   -->
   <PropertyGroup>
     <ApplicationId>com.codebrix.pastealways.codebrixvideotool</ApplicationId>
     <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
     <RootNamespace>CodeBrixVideoTool.PasteAlways</RootNamespace>
     <AssemblyName>CodeBrixVideoTool.PasteAlways</AssemblyName>
+    <CodeBrixAndroidInRepoAddIns>VideoPlayer</CodeBrixAndroidInRepoAddIns>
   </PropertyGroup>
 
   <ItemGroup>

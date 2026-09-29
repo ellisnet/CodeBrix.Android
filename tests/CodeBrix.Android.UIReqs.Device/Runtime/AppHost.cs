@@ -12,6 +12,9 @@ internal static class AppHost
     /// <summary>The orientation the host runner declared for this run.</summary>
     internal static TestDisplayOrientation RequestedOrientation { get; set; } = TestDisplayOrientation.Portrait;
 
+    /// <summary>True when the host forbids changing the device's existing configuration.</summary>
+    internal static bool PreserveDeviceConfiguration { get; set; }
+
     /// <summary>The session over the running app.</summary>
     internal static TestTargetSession Session { get; } = new(Panel);
 

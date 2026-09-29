@@ -124,6 +124,14 @@ Scenario: A NumberBox steps its Value with its native plus button
 	Then the NumberBox "count" holds 6
 	And the native editor of "count" shows "6"
 
+# [AP8-S batch 3] Pinta.Brix's tool bar: a NumberBox with inline spin buttons and no width of its own (in a horizontal
+# StackPanel, measured with an unbounded width) drew its "12" under its - and + icons: the Material text field makes room
+# for its icons only after its first measure, which is the one Core used.
+Scenario: A NumberBox with inline spin buttons and no width of its own makes room for its value and both buttons
+	Given the application shows a NumberBox named "size" holding 12 in a horizontal StackPanel, with no width of its own
+	Then the value of the NumberBox "size" is drawn between its minus and plus buttons
+	When the frame is captured
+
 Scenario: An AutoSuggestBox reports what a real keyboard types and submits the query
 	Given the application shows an AutoSuggestBox named "search" that records its events
 	When a real finger taps "search"

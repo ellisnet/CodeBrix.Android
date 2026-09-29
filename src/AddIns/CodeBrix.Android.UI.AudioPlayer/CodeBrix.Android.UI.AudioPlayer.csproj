@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UI.AudioPlayer: the Android side of the CodeBrix.Platform AudioPlayer add-in (AP7-C). Its Core
+    (CodeBrix.Platform.UI.AudioPlayer.Core, re-shipped by the intake) holds the AudioPlayer element's control API and its
+    whole transport (Engine/AudioTransport: load off the UI thread, play/pause/stop, volume and loop, clamped and
+    debounced seeks, position polling, the natural end), SoundEffect and the source resolver. Every platform supplies
+    the SOUND through three contracts, which this assembly registers from its module initializer (AudioPlayer.Core loads
+    it BY NAME; the CodeBrix.Android.UI bootstrap also loads it at start-up):
+      IAudioPlayerPlatform  one CodeBrix.Audio AudioFilePlayer per element (the shared device output),
+      IAudioOutputPlatform  sound-effect voices (SoundEffectClip) and the Opus failure explanation,
+      IAssetLocation        where ms-appx:/// audio lives: the APK's assets, copied out on first use.
+    The output is CodeBrix.Audio.Android (the Android backend of CodeBrix.Audio, the same external API): the module
+    initializer calls CodeBrixAndroidAudio.Initialize so SharedAudioOutput plays through Android's audio path. The code
+    is the Platform's Skia-side output code with the package swapped (ported with provenance headers). MidiPlayer - a
+    public type of the Platform's Skia assembly, because its API is made of CodeBrix.Audio types - is re-provided here
+    (Public/MidiPlayer.cs, ported), in the same namespace, so a pasted page's MidiPlayer is this one.
+    AssemblyName = the name CodeBrix.Platform.UI.AudioPlayer.Core grants InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android.UI.AudioPlayer</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.AudioPlayer</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <!-- The add-in Core (re-shipped from the pinned Platform build by the intake). -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.AudioPlayer.Core.dll" />
+    <!-- The audio output: CodeBrix.Audio's Android backend (self-produced; it brings CodeBrix.Audio.Core, the shared
+         managed audio library and engine - ONE Core line, the one CodeBrix.VideoPlayback depends on too). -->
+    <PackageReference Include="CodeBrix.Audio.Android.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

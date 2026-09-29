@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using CodeBrix.Android.UI.Handlers;
 using CodeBrix.Android.UI.Input.TextInput;
 using CodeBrix.Android.UI.Portable.TextInput;
+using CodeBrix.Android.UI.TerminalView.Input;
 using CodeBrix.Platform.Foundation.Extensibility;
 using CodeBrix.Platform.UI.TerminalView;
 using CodeBrix.Platform.UI.TerminalView.Contracts;
@@ -12,7 +13,8 @@ namespace CodeBrix.Android.UI.TerminalView.Android;
 /// <summary>
 /// Registers the Android side of the TerminalView add-in: the canvas supply (IRenderCanvasPlatform,
 /// <see cref="RenderCanvasAndroidPlatform"/>), the handler of its drawing surface (the SkiaSharp.Views canvas-element
-/// handler) and the soft-keyboard profile of TerminalControl (a terminal: every key at once, no suggestions), after the
+/// handler), the soft-keyboard profile of TerminalControl (a terminal: every key at once, no suggestions) and its caret
+/// (<see cref="TerminalCaret"/>: the cursor cell, so the window pans the prompt above the keyboard), after the
 /// canvas add-in whose canvas-host factory the surface paints through. Idempotent; runs as the module initializer
 /// (TerminalView.Core loads this assembly by name the first time it needs its canvas, and the CodeBrix.Android.UI
 /// bootstrap loads it at start-up).
@@ -63,6 +65,7 @@ internal static class AndroidPlatformBootstrap
 
             CodeBrixHandlers.Register<TerminalCanvasElement>(_ => new TerminalCanvasHandler());
             CoreTextInput.RegisterProfile(typeof(TerminalControl), CoreTextInputProfile.Terminal);
+            CoreTextInput.RegisterCaret(typeof(TerminalControl), control => control is TerminalControl terminal ? new TerminalCaret(terminal) : null);
             _registered = true;
         }
     }

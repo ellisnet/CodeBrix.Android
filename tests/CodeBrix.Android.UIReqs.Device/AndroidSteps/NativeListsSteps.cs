@@ -91,6 +91,206 @@ public sealed class NativeListsSteps
         await SettleAsync().ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// [AP8-S batch 2] The KenneyAssetBrowser catalog shape: a vertical ScrollViewer ("{name} scroller") holding a CENTRED
+    /// StackPanel with an ItemsRepeater whose UniformGridLayout has fixed tiles and column spacing (ItemsStretch None).
+    /// </summary>
+    [Given("the application shows a native test ItemsRepeater named {string} with {int} tiles {int} wide spaced {int} centred in a ScrollViewer {int} by {int}")]
+    public async Task Given_a_centred_repeater(string name, int tiles, int tileWidth, int spacing, int width, int height)
+    {
+        FrameworkElement scroller = null!;
+        await TestTargetFixture.RunOnUIThreadAsync(() =>
+        {
+            var items = new ObservableCollection<object>();
+            for (var i = 1; i <= tiles; i++)
+            {
+                var tile = new Border
+                {
+                    Name = Tile(name, i),
+                    Width = tileWidth,
+                    Height = 60,
+                    Background = new SolidColorBrush(Colors.Parse(i % 2 == 0 ? "Navy" : "Lime")),
+                };
+                ElementRegistry.Register(tile.Name, tile);
+                items.Add(tile);
+            }
+
+            var repeater = new ItemsRepeater
+            {
+                Name = name,
+                ItemsSource = items,
+                Layout = new UniformGridLayout
+                {
+                    Orientation = Orientation.Horizontal,
+                    MinItemWidth = tileWidth,
+                    MinItemHeight = 60,
+                    MinColumnSpacing = spacing,
+                    MinRowSpacing = spacing,
+                    ItemsStretch = UniformGridLayoutItemsStretch.None,
+                },
+            };
+            ElementRegistry.Register(name, repeater);
+            var panel = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center };
+            panel.Children.Add(repeater);
+            scroller = new ScrollViewer
+            {
+                Name = name + " scroller",
+                Width = width,
+                Height = height,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                Content = panel,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            ElementRegistry.Register(scroller.Name, scroller);
+        }).ConfigureAwait(false);
+        await TestTargetFixture.SetContentAsync(scroller).ConfigureAwait(false);
+        await SettleAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// [AP8-S batch 2] The KenneyAssetBrowser catalog/viewer shape: a Grid "{name}" whose "{name} area" (a ScrollViewer
+    /// with a centred ItemsRepeater of templated cards: a single-line trimmed Lime TextBlock bound to the item) and
+    /// "{name} viewer" (an Orange Border, collapsed) share one cell.
+    /// </summary>
+    [Given("the application shows a native test catalog named {string} with {int} trimmed titles {string}")]
+    public async Task Given_a_catalog(string name, int count, string title)
+    {
+        FrameworkElement root = null!;
+        await TestTargetFixture.RunOnUIThreadAsync(() =>
+        {
+            var template = new DataTemplate(() =>
+            {
+                var text = new TextBlock
+                {
+                    FontSize = 22,
+                    Foreground = new SolidColorBrush(Colors.Parse("Lime")),
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    MaxLines = 1,
+                };
+                text.SetBinding(TextBlock.TextProperty, new Microsoft.UI.Xaml.Data.Binding());
+                var panel = new StackPanel { Padding = new Thickness(10) };
+                panel.Children.Add(text);
+                return new Border { Width = 200, Height = 80, Background = new SolidColorBrush(Colors.Parse("Navy")), Child = panel };
+            });
+            var repeater = new ItemsRepeater
+            {
+                Name = name + " repeater",
+                ItemsSource = Titles(title, count),
+                ItemTemplate = template,
+                Layout = new UniformGridLayout { MinItemWidth = 200, MinItemHeight = 80, MinColumnSpacing = 10, MinRowSpacing = 10 },
+            };
+            ElementRegistry.Register(repeater.Name, repeater);
+            var stack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center };
+            stack.Children.Add(repeater);
+            var area = new ScrollViewer { Name = name + " area", Content = stack };
+            var viewer = new Border { Name = name + " viewer", Background = new SolidColorBrush(Colors.Parse("Orange")), Visibility = Visibility.Collapsed };
+            var grid = new Grid { Name = name, Width = 640, Height = 420, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+            grid.Children.Add(area);
+            grid.Children.Add(viewer);
+            ElementRegistry.Register(area.Name, area);
+            ElementRegistry.Register(viewer.Name, viewer);
+            ElementRegistry.Register(name, grid);
+            root = grid;
+        }).ConfigureAwait(false);
+        await TestTargetFixture.SetContentAsync(root).ConfigureAwait(false);
+        await SettleAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>[AP8-S batch 2] The catalog's area is collapsed and its viewer shown, or the other way round.</summary>
+    [When("the catalog {string} shows its {word}")]
+    public async Task When_catalog_shows(string name, string part)
+    {
+        await TestTargetFixture.RunOnUIThreadAsync(() =>
+        {
+            var viewer = part == "viewer";
+            ((UIElement)ElementRegistry.Resolve(name + " area")).Visibility = viewer ? Visibility.Collapsed : Visibility.Visible;
+            ((UIElement)ElementRegistry.Resolve(name + " viewer")).Visibility = viewer ? Visibility.Visible : Visibility.Collapsed;
+        }).ConfigureAwait(false);
+        await SettleAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>[AP8-S batch 2] The catalog's items are replaced (a bundle switch): the realised cards re-bind.</summary>
+    [When("the catalog {string} switches to {int} trimmed titles {string}")]
+    public async Task When_catalog_switches(string name, int count, string title)
+    {
+        await TestTargetFixture.RunOnUIThreadAsync(() =>
+            ((ItemsRepeater)ElementRegistry.Resolve(name + " repeater")).ItemsSource = Titles(title, count)).ConfigureAwait(false);
+        await SettleAsync().ConfigureAwait(false);
+        await SettleAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// [AP8-S batch 2] Names the realised title TextBlock that shows a text, for the region steps (the native list's
+    /// elements are children of its Core items panel under the repeater; TryGetElement does not know them).
+    /// </summary>
+    [When("the title {string} of the catalog {string} is named {string}")]
+    public async Task When_card_title_named(string text, string name, string titleName)
+    {
+        TextBlock? found = null;
+        await TestTargetFixture.RunOnUIThreadAsync(() =>
+        {
+            found = FindText((DependencyObject)ElementRegistry.Resolve(name + " repeater"), text);
+            if (found != null)
+            {
+                ElementRegistry.Register(titleName, found);
+            }
+        }).ConfigureAwait(false);
+        found.Should().NotBeNull("a card of \"{0}\" must be realised with the title \"{1}\"", name, text);
+    }
+
+    private static ObservableCollection<object> Titles(string title, int count)
+    {
+        var items = new ObservableCollection<object>();
+        for (var i = 1; i <= count; i++)
+        {
+            items.Add(string.Create(CultureInfo.InvariantCulture, $"{title} {i}"));
+        }
+
+        return items;
+    }
+
+    private static TextBlock? FindText(DependencyObject root, string content)
+    {
+        if (root is TextBlock text && text.Text == content)
+        {
+            return text;
+        }
+
+        var count = VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++)
+        {
+            if (FindText(VisualTreeHelper.GetChild(root, i), content) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>[AP8-S batch 2] Core laid the repeater out at a width (DIPs, within half a DIP).</summary>
+    [Then("Core laid the repeater {string} out {int} wide")]
+    public async Task Then_repeater_width(string name, int width)
+    {
+        double actual = -1;
+        await TestTargetFixture.RunOnUIThreadAsync(() => actual = ((FrameworkElement)ElementRegistry.Resolve(name)).ActualWidth).ConfigureAwait(false);
+        actual.Should().BeApproximately(width, 0.5, "Core's UniformGridLayout extent of \"{0}\" is span x (item + spacing) - spacing", name);
+    }
+
+    /// <summary>[AP8-S batch 2] The native gap between two tiles on a row, in DIPs (within one device pixel).</summary>
+    [Then("tile {int} of the repeater {string} starts {int} DIPs after tile {int} ends")]
+    public async Task Then_tile_gap(int index, string name, int gap, int other)
+    {
+        var rect = await DeviceRect.OfAsync(ElementRegistry.Resolve(Tile(name, index)), 0).ConfigureAwait(false);
+        var otherRect = await DeviceRect.OfAsync(ElementRegistry.Resolve(Tile(name, other)), 0).ConfigureAwait(false);
+        double density = 1;
+        await TestTargetFixture.RunOnUIThreadAsync(() => density = AppHost.Activity!.Resources!.DisplayMetrics!.Density).ConfigureAwait(false);
+        rect.Y.Should().Be(otherRect.Y, "tile {0} must be on the row of tile {1}: {2} vs {3}", index, other, rect, otherRect);
+        var actual = rect.X - (otherRect.X + otherRect.Width);
+        ((double)actual).Should().BeApproximately(gap * density, 1.0, "tile {0} of \"{1}\" starts where Core puts it: {2} vs {3}", index, name, rect, otherRect);
+    }
+
     /// <summary>The element's native view is a RecyclerView.</summary>
     [Then("the native view of {string} is a RecyclerView")]
     public async Task Then_native_view_is_recycler(string name)
@@ -435,6 +635,59 @@ public sealed class NativeListsSteps
     private static string Block(string name, int index) => string.Create(CultureInfo.InvariantCulture, $"{name} block {index}");
 
     private static string Tile(string name, int index) => string.Create(CultureInfo.InvariantCulture, $"{name} tile {index}");
+
+    private static int _aboveClicks;
+    private static int _tallItemClicks;
+
+    /// <summary>
+    /// [AP8-S batch 1] A "Lime" Button above a native ListView of tall "Orange" button rows (each row's own Click counted):
+    /// dragged, a row is partly scrolled out ABOVE the list - under the Button (GitHubIssueFinder: a tap on a control above
+    /// a scrolled list ran a scrolled-out row's command, and the row was drawn over the header above the list).
+    /// </summary>
+    [Given("the application shows a Button named {string} above a native test ListView named {string} {int} by {int} with {int} button rows {int} pixels tall")]
+    public async Task Given_a_button_above_a_tall_list(string button, string name, int width, int height, int rows, int rowHeight)
+    {
+        FrameworkElement content = null!;
+        await TestTargetFixture.RunOnUIThreadAsync(() =>
+        {
+            _aboveClicks = 0;
+            _tallItemClicks = 0;
+            var items = new ObservableCollection<object>();
+            for (var i = 1; i <= rows; i++)
+            {
+                var row = new Button
+                {
+                    Content = string.Create(CultureInfo.InvariantCulture, $"Row {i}"),
+                    Height = rowHeight,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    Background = new SolidColorBrush(Colors.Parse("Orange")),
+                };
+                row.Click += (_, _) => _tallItemClicks++;
+                items.Add(row);
+            }
+
+            var view = new ListView { Name = name, Width = width, Height = height, ItemsSource = items, SelectionMode = ListViewSelectionMode.None };
+            var above = new Button { Name = button, Content = "Above", Width = width, Height = 60, Background = new SolidColorBrush(Colors.Parse("Lime")) };
+            above.Click += (_, _) => _aboveClicks++;
+            var stack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+            stack.Children.Add(above);
+            stack.Children.Add(view);
+            ElementRegistry.Register(name, view);
+            ElementRegistry.Register(button, above);
+            content = stack;
+        }).ConfigureAwait(false);
+        await TestTargetFixture.SetContentAsync(content).ConfigureAwait(false);
+        await SettleAsync().ConfigureAwait(false);
+        EventRecorder.Clear();
+    }
+
+    /// <summary>The Button above the list was clicked the given number of times and no row of the list was clicked.</summary>
+    [Then("the Button above the list was clicked {int} time(s) and no row of the list was")]
+    public void Then_above_clicked(int times)
+    {
+        _aboveClicks.Should().Be(times, "the tap was on the Button above the list");
+        _tallItemClicks.Should().Be(0, "a row scrolled out of the list must not take a tap outside the list");
+    }
 
     private static async Task ShowListAsync(string name, int width, int height, int rows, string? containerColor, (string Color, string Name)? header, bool clicks)
     {

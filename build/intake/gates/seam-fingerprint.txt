@@ -3,7 +3,7 @@
 # namespace; a generic type without its arity). "[Assembly] Type::Member" looks in another
 # intake assembly (since AP1.9: the Foundation, WinRT and Composition Core contracts).
 # Reconciled with the seam AS BUILT (WPH1 report, pin 1.0.266.1160) at AP1.8 and with the
-# engine pass (WPE1, pin 1.0.268.12) at AP1.9, with the Popup fix (WPE1-6, pin 1.0.268.65) at AP1.10 and with the injected-input time fix (WPE1-7, pin 1.0.269.982) at AP1.11; the gate is ON (CodeBrixIntakeSeamGate=true). Everything CodeBrix.Android.UI's handler
+# engine pass (WPE1, pin 1.0.268.12) at AP1.9, with the Popup fix (WPE1-6, pin 1.0.268.65) at AP1.10 and with the injected-input time fix (WPE1-7, pin 1.0.269.982) at AP1.11 and with the WPE1-8..WPE1-16 seams (pin 1.0.270.342) at AP1.12 and with the WPE1-18 caret seam (pin 1.0.271.248) at AP8-S batch 4; the gate is ON (CodeBrixIntakeSeamGate=true). Everything CodeBrix.Android.UI's handler
 # infrastructure calls is listed, so a Platform build that drops or renames any of it
 # fails the intake instead of the Android build.
 
@@ -144,3 +144,46 @@ Popup::MissingXamlRootReports
 # InputInjector with zero offsets and relies on it (SwipeControl flick-back, every injected fling).
 [CodeBrix.Platform.Core] InjectedInputState::GetNextTimestamp
 [CodeBrix.Platform.Core] InjectedInputState::GetCurrentTimestamp
+
+# AP1.12 (pin 1.0.270.342 = WPE1-8..WPE1-16): the seams CodeBrix.Android implements or relies on from this build.
+# - live DeviceFamily (WPE1-11): VersionInfo.DeviceFamily is read at query time from IDeviceFamilyPlatform.
+[CodeBrix.Platform.Core] AnalyticsVersionInfo::GetLiveDeviceFamily
+# - app-package files as streams (WPE1-13 a): ms-appx on Android reads the APK's assets through this contract
+#   (CodeBrix.Android: ApplicationPackageFilesAndroidPlatform over AssetManager).
+[CodeBrix.Platform.Core] IApplicationPackageFilesPlatform
+[CodeBrix.Platform.Core] IApplicationPackageFilesPlatform::FileExists
+[CodeBrix.Platform.Core] IApplicationPackageFilesPlatform::OpenRead
+# - the Lottie frame clock (WPE1-13 b): CodeBrix.Android.UI.Lottie registers a Choreographer tick source.
+[CodeBrix.Platform.UI.Lottie.Core] ILottieTickSourcePlatform
+[CodeBrix.Platform.UI.Lottie.Core] ILottieTickSourcePlatform::CreateTickSource
+[CodeBrix.Platform.UI.Lottie.Core] ITickSource::Interval
+[CodeBrix.Platform.UI.Lottie.Core] ITickSource::Tick
+[CodeBrix.Platform.UI.Lottie.Core] ITickSource::Start
+[CodeBrix.Platform.UI.Lottie.Core] ITickSource::Stop
+# - TriPaneViewDivider platform drag entry points (WPE1-13 e): the Android finger drag raises the divider's own events.
+[CodeBrix.Platform.UI.Toolkit.Core] TriPaneView::GetDivider
+[CodeBrix.Platform.UI.Toolkit.Core] TriPaneViewDivider::RaiseDragStartedFromPlatform
+[CodeBrix.Platform.UI.Toolkit.Core] TriPaneViewDivider::RaiseDragDeltaFromPlatform
+[CodeBrix.Platform.UI.Toolkit.Core] TriPaneViewDivider::RaiseDragCompletedFromPlatform
+# - the TriPaneView display override (WPE1-13 f): the adaptive form never writes the app's percent/IsMinimized properties.
+[CodeBrix.Platform.UI.Toolkit.Core] ITriPaneDisplayOverride
+[CodeBrix.Platform.UI.Toolkit.Core] ITriPaneDisplayOverride::GetDisplayWeights
+[CodeBrix.Platform.UI.Toolkit.Core] ITriPaneDisplayOverride::RestoreRequested
+[CodeBrix.Platform.UI.Toolkit.Core] TriPaneDisplayWeights
+[CodeBrix.Platform.UI.Toolkit.Core] TriPaneView::DisplayOverride
+[CodeBrix.Platform.UI.Toolkit.Core] TriPaneView::RefreshDisplayOverride
+
+# AP8-S batch 4 (pin 1.0.271.248 = WPE1-17 + WPE1-18): the TerminalControl caret seam (WPE1-18) - the TerminalView add-in lays
+# the soft-keyboard session's focus view on the terminal's cursor cell (Pan mode brings the cursor row above the keyboard).
+[CodeBrix.Platform.UI.TerminalView.Core] TerminalControl::GetCaretRectForPlatform
+[CodeBrix.Platform.UI.TerminalView.Core] TerminalControl::CaretRectChangedForPlatform
+
+# AP1.14: merge from main, WPE1-21 terminal touch handling, and WPE1-22 removed-target focus opt-in.
+MenuFlyoutItem::ShowKeyboardAcceleratorText
+FocusManager::RestrictFocusToLiveTree
+FocusProperties::IsInLiveFocusTree
+[CodeBrix.Platform.UI.TerminalView.Core] TerminalRenderer::StartSelectionAt
+[CodeBrix.Platform.UI.TerminalView.Core] TerminalTouchGesture
+[CodeBrix.Platform.UI.TerminalView.Core] TerminalTouchState
+[CodeBrix.Platform.UI.TerminalView.Core] TerminalTouchOutcome
+# SoundEffect's Core-to-Core package-files access is fenced by gate 3 (ivt-grants.txt).

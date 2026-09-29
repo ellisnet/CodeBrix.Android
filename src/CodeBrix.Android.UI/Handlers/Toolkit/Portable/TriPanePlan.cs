@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using CodeBrix.Android.UI.Policy;
 
 namespace CodeBrix.Android.UI.Handlers;
@@ -56,118 +55,103 @@ internal enum TriPaneRegion
 }
 
 /// <summary>
-/// The adaptive form of ONE TriPaneView (adaptive table row "TriPaneView", AdaptivePolicy.TriPane), as weights: pure C#, no
-/// Android or XAML type, so it is tested host-free against the Core engine itself. The form is reached THROUGH the Core
-/// engine: a region the window is too small for gets weight 0 (exactly what a divider dragged all the way over does, so
-/// Core's engine minimizes it and - under RestoreGripMode Auto or Always - leaves its restore grip on the divider for the
-/// user), and the weight it had is remembered and written back when the window is wide enough again.
+/// The adaptive form of ONE TriPaneView (adaptive table row "TriPaneView", AdaptivePolicy.TriPane) as the weights to
+/// DISPLAY (AP1.12: the answer of the Toolkit Core's display override, WPE1-13 ITriPaneDisplayOverride): pure C#, no
+/// Android or XAML type, so it is tested host-free against the Core engine itself. The application's weights (the four
+/// percent properties) and its minimized flags are NEVER written (D-P7B-TP-4 closed): a region the window is too small
+/// for is displayed with weight 0, so the engine lays it out minimized with its restore grip (RestoreGripMode Auto or
+/// Always), and a tap on that grip asks <see cref="Restore"/> to show it instead of its sibling.
 /// <list type="bullet">
-/// <item>Expanded (<see cref="TriPaneForm.ThreePanes"/>): every region this plan closed and that is still closed gets its
-/// weight back; nothing else is touched.</item>
-/// <item>Medium (<see cref="TriPaneForm.SidePaneAndOneStacked"/>): the side pane and ONE stacked pane: when both the upper
-/// and the lower pane are open, the one not chosen closes (chosen = the one the user or the app opened last, else the
-/// upper pane). The side axis is left as it is (a region closed on it in Compact reopens).</item>
-/// <item>Compact (<see cref="TriPaneForm.OnePane"/>): one pane: on the side axis either the side pane or the stack (chosen =
-/// the one opened last, else the stack), and one stacked pane as in Medium. The divider's restore grip switches panes: the
-/// engine reopens the pane behind the grip, and the plan closes its sibling.</item>
+/// <item>Expanded (<see cref="TriPaneForm.ThreePanes"/>) or no form: the application's weights, unchanged.</item>
+/// <item>Medium (<see cref="TriPaneForm.SidePaneAndOneStacked"/>): the side axis as the application has it, and ONE stacked
+/// pane when both the upper and the lower pane are open (chosen = the one the user or the app opened last or restored
+/// by its grip, else the upper pane).</item>
+/// <item>Compact (<see cref="TriPaneForm.OnePane"/>): one pane: on the side axis either the side pane or the stack (chosen as
+/// above, else the stack), and one stacked pane as in Medium. The restore grips switch panes.</item>
 /// </list>
-/// A region the app closed itself (weight 0 that this plan did not write) is never reopened by the plan. A region this
-/// plan closed and that something else reopened (a grip, the app) gets the weight it had before the plan closed it.
+/// A region the application closed itself (weight 0) stays closed in every form: the plan only ever hides more.
 /// </summary>
 internal sealed class TriPanePlan
 {
-    private readonly Dictionary<TriPaneRegion, double> _closed = new();
-    private TriPaneWeights? _last;
+    private TriPaneRegion _sideAxisChoice = TriPaneRegion.Stack;
+    private TriPaneRegion _stackAxisChoice = TriPaneRegion.Upper;
+    private TriPaneWeights? _lastApplication;
 
-    /// <summary>The regions this plan closed, with the weight each had (for diagnostics and fences).</summary>
-    internal IReadOnlyDictionary<TriPaneRegion, double> ClosedByPlan => _closed;
+    /// <summary>The form the window size class asks for (null = display the application's weights).</summary>
+    internal TriPaneForm? Form { get; set; }
 
-    /// <summary>The form the plan applied last (null before the first <see cref="Apply"/>).</summary>
-    internal TriPaneForm? Form { get; private set; }
+    /// <summary>The region shown on the side axis when only one fits (Side or Stack).</summary>
+    internal TriPaneRegion SideAxisChoice => _sideAxisChoice;
+
+    /// <summary>The stacked pane shown when only one fits (Upper or Lower).</summary>
+    internal TriPaneRegion StackAxisChoice => _stackAxisChoice;
 
     /// <summary>
-    /// Works out the weights for <paramref name="form"/> from the control's <paramref name="current"/> weights. Call it after
-    /// every change of the form or of a weight (never while a divider drag is in progress), write back the result when it
-    /// differs from <paramref name="current"/>, and call <see cref="Observe"/> with what the control holds afterwards.
+    /// The weights to display for the application's weights (called by the engine on every state pass). A region the
+    /// application opened since the previous call becomes its axis's choice.
     /// </summary>
-    /// <param name="form">The form the window size class asks for.</param>
-    /// <param name="current">The control's weights now.</param>
-    /// <returns>The weights the control should hold.</returns>
-    internal TriPaneWeights Apply(TriPaneForm form, TriPaneWeights current)
+    /// <param name="application">The application's weights.</param>
+    /// <returns>The weights to lay out.</returns>
+    internal TriPaneWeights Display(TriPaneWeights application)
     {
-        var previous = _last ?? current;
-        var target = current;
-        Form = form;
-
-        // A region the plan closed that is open again (a restore grip, the app): it gets the weight it had.
-        foreach (var region in new[] { TriPaneRegion.Side, TriPaneRegion.Stack, TriPaneRegion.Upper, TriPaneRegion.Lower })
+        if (_lastApplication is { } last)
         {
-            if (_closed.TryGetValue(region, out var weight) && !TriPaneWeights.IsClosed(current.Of(region)))
-            {
-                target = target.With(region, weight);
-                _closed.Remove(region);
-            }
+            _sideAxisChoice = OpenedLast(last, application, TriPaneRegion.Side, TriPaneRegion.Stack, _sideAxisChoice);
+            _stackAxisChoice = OpenedLast(last, application, TriPaneRegion.Upper, TriPaneRegion.Lower, _stackAxisChoice);
         }
 
-        // Regions the form has room for again: back to their weights.
-        if (form == TriPaneForm.ThreePanes)
+        _lastApplication = application;
+        if (Form is not { } form || form == TriPaneForm.ThreePanes)
         {
-            target = ReopenAll(target, TriPaneRegion.Side, TriPaneRegion.Stack, TriPaneRegion.Upper, TriPaneRegion.Lower);
-        }
-        else if (form == TriPaneForm.SidePaneAndOneStacked)
-        {
-            target = ReopenAll(target, TriPaneRegion.Side, TriPaneRegion.Stack);
+            return application;
         }
 
-        // One region per constrained axis.
+        var display = application;
         if (form == TriPaneForm.OnePane)
         {
-            target = KeepOne(target, previous, TriPaneRegion.Stack, TriPaneRegion.Side);
+            display = KeepOne(display, _sideAxisChoice, TriPaneRegion.Side, TriPaneRegion.Stack);
         }
 
-        if (form != TriPaneForm.ThreePanes)
-        {
-            target = KeepOne(target, previous, TriPaneRegion.Upper, TriPaneRegion.Lower);
-        }
-
-        return target;
+        return KeepOne(display, _stackAxisChoice, TriPaneRegion.Upper, TriPaneRegion.Lower);
     }
 
-    /// <summary>Records the weights the control holds after an <see cref="Apply"/> (what "opened last" is measured from).</summary>
-    /// <param name="weights">The control's weights.</param>
-    internal void Observe(TriPaneWeights weights) => _last = weights;
-
-    private TriPaneWeights ReopenAll(TriPaneWeights target, params TriPaneRegion[] regions)
+    /// <summary>A tap on the restore grip of a region this plan hides: show that region instead of its sibling.</summary>
+    /// <param name="region">The hidden region.</param>
+    /// <returns>True when the display changed.</returns>
+    internal bool Restore(TriPaneRegion region)
     {
-        foreach (var region in regions)
+        if (Form is not { } form || form == TriPaneForm.ThreePanes)
         {
-            if (_closed.TryGetValue(region, out var weight))
-            {
-                if (TriPaneWeights.IsClosed(target.Of(region)))
-                {
-                    target = target.With(region, weight);
-                }
-
-                _closed.Remove(region);
-            }
+            return false;
         }
 
-        return target;
+        if (region is TriPaneRegion.Side or TriPaneRegion.Stack)
+        {
+            var changed = _sideAxisChoice != region;
+            _sideAxisChoice = region;
+            return changed;
+        }
+
+        var stackChanged = _stackAxisChoice != region;
+        _stackAxisChoice = region;
+        return stackChanged;
     }
 
-    /// <summary>Closes one of the two regions of an axis when both are open: the one not chosen.</summary>
-    private TriPaneWeights KeepOne(TriPaneWeights target, TriPaneWeights previous, TriPaneRegion preferred, TriPaneRegion other)
+    private static TriPaneRegion OpenedLast(TriPaneWeights before, TriPaneWeights now, TriPaneRegion a, TriPaneRegion b, TriPaneRegion choice)
     {
-        if (TriPaneWeights.IsClosed(target.Of(preferred)) || TriPaneWeights.IsClosed(target.Of(other)))
+        var aOpened = TriPaneWeights.IsClosed(before.Of(a)) && !TriPaneWeights.IsClosed(now.Of(a));
+        var bOpened = TriPaneWeights.IsClosed(before.Of(b)) && !TriPaneWeights.IsClosed(now.Of(b));
+        return aOpened && !bOpened ? a : bOpened && !aOpened ? b : choice;
+    }
+
+    /// <summary>Hides one of the two regions of an axis when both are open: the one not chosen.</summary>
+    private static TriPaneWeights KeepOne(TriPaneWeights display, TriPaneRegion choice, TriPaneRegion a, TriPaneRegion b)
+    {
+        if (TriPaneWeights.IsClosed(display.Of(a)) || TriPaneWeights.IsClosed(display.Of(b)))
         {
-            return target;
+            return display;
         }
 
-        // Chosen: the region that was opened since the last observation; when neither (or both) was, the preferred one.
-        var preferredOpened = TriPaneWeights.IsClosed(previous.Of(preferred));
-        var otherOpened = TriPaneWeights.IsClosed(previous.Of(other));
-        var close = otherOpened && !preferredOpened ? preferred : other;
-        _closed[close] = target.Of(close);
-        return target.With(close, 0d);
+        return display.With(choice == a ? b : a, 0d);
     }
 }

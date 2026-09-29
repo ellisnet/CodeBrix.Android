@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The ProgressRing handler's theme overlay (Handlers/Inputs/ProgressHandlers.cs): the native circular indicator keeps
+  its TRACK visible while it spins, so a ProgressRing's Background (mapped to the track colour) is drawn as WinUI draws it.
+  Material 3 hides the track of an indeterminate indicator unless indeterminateTrackVisible is set, and the binding exposes
+  that only through the style. A transparent Background (the default) leaves the track invisible as before.
+-->
+<resources>
+  <style name="CodeBrix.Widget.ProgressRing" parent="Widget.Material3.CircularProgressIndicator">
+    <item name="indeterminateTrackVisible">true</item>
+  </style>
+  <style name="CodeBrix.ThemeOverlay.ProgressRing" parent="">
+    <item name="circularProgressIndicatorStyle">@style/CodeBrix.Widget.ProgressRing</item>
+  </style>
+</resources>

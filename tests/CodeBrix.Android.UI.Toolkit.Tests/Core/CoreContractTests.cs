@@ -83,16 +83,50 @@ public class CoreContractTests
         property.Should().NotBeNull();
     }
 
-    [Fact]
-    public void The_divider_has_no_platform_drag_entry_points_of_its_own()
+    [Theory]
+    [InlineData("RaiseDragStartedFromPlatform")]
+    [InlineData("RaiseDragDeltaFromPlatform", typeof(double), typeof(double))]
+    [InlineData("RaiseDragCompletedFromPlatform", typeof(bool))]
+    public void The_divider_has_the_platform_drag_entry_points_the_Android_handler_raises(string name, params Type[] parameters)
     {
         //Arrange
         //Act
-        var names = typeof(TriPaneViewDivider).GetMethods(Internal | BindingFlags.Public).Select(m => m.Name).ToList();
+        var method = typeof(TriPaneViewDivider).GetMethod(name, Internal, parameters);
 
         //Assert
-        // FIXLIST [AP7-B TriPaneView] PLATFORM: when the Core gains RaiseDrag*FromPlatform (as Thumb has), the Android
-        // handler should raise the divider's own events through them; this test then fails on purpose.
-        names.Should().NotContain("RaiseDragStartedFromPlatform");
+        // AP1.12 (WPE1-13 item e): the inverted canary of AP7-B TriPaneView (The_divider_has_no_platform_drag_entry_points_of_its_own):
+        // the Core gained the entry points, and the Android handler raises the divider's own drag events through them.
+        method.Should().NotBeNull();
+        method.IsAssembly.Should().BeTrue();
+    }
+
+    [Fact]
+    public void TriPaneView_gives_the_platform_its_dividers_and_its_display_override()
+    {
+        //Arrange
+        //Act
+        var getDivider = typeof(TriPaneView).GetMethod("GetDivider", Internal, new[] { typeof(TriPaneViewDividerKind) });
+        var displayOverride = typeof(TriPaneView).GetProperty("DisplayOverride", Internal);
+        var refresh = typeof(TriPaneView).GetMethod("RefreshDisplayOverride", Internal, Type.EmptyTypes);
+
+        //Assert
+        getDivider.Should().NotBeNull();
+        displayOverride.Should().NotBeNull();
+        displayOverride.PropertyType.FullName.Should().Be("CodeBrix.Platform.UI.Toolkit.Engine.ITriPaneDisplayOverride");
+        refresh.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void The_display_override_contract_has_the_two_members_the_Android_side_implements()
+    {
+        //Arrange
+        var contract = typeof(TriPaneView).Assembly.GetType("CodeBrix.Platform.UI.Toolkit.Engine.ITriPaneDisplayOverride");
+
+        //Act
+        var members = contract?.GetMethods().Select(m => m.Name).OrderBy(n => n).ToArray();
+
+        //Assert
+        contract.Should().NotBeNull();
+        members.Should().BeEquivalentTo(new[] { "GetDisplayWeights", "RestoreRequested" });
     }
 }

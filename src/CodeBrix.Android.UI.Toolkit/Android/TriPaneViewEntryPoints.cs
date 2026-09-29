@@ -1,42 +1,33 @@
-using System.Linq;
+using System;
 using CodeBrix.Platform.UI.Toolkit;
+using CodeBrix.Platform.UI.Toolkit.Engine;
+using CodeBrix.Platform.UI.Toolkit.Internal;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 
 namespace CodeBrix.Android.UI.Toolkit.Android;
 
 /// <summary>
-/// The Android side's door into the Toolkit Core's TriPaneView ENGINE (WPE1 C12; the TriPaneView's internal drag entry
-/// points, which forward to Engine/TriPaneLayoutState): a divider drag that Android's own touch handling recognized
-/// (CodeBrix.Android.UI's TriPaneViewHandler: a finger inside the divider's 48-dp touch target) is started, advanced and
-/// completed HERE, exactly as the control's own divider does it for a Core pointer - the pixel lengths of the two panes on
-/// the divider's axis when the drag starts, the change since the previous move, the net travel and the cancel flag - so the
-/// Core engine resolves it (tap versus drag, drag-to-minimize, restore by grip, roll-back on cancel) and raises
-/// DividerDragCompleted. Nothing of the engine is re-implemented. The divider shows its pressed state through its IsDragging
-/// property for the whole gesture.
+/// The Android side's door into the Toolkit Core's TriPaneView (its internal seams; this assembly has the Core's
+/// InternalsVisibleTo grant, CodeBrix.Android.UI has not):
+/// <list type="bullet">
+/// <item>DIVIDER DRAGS (AP1.12, WPE1-13 item e): a divider drag that Android's own touch handling recognized
+/// (CodeBrix.Android.UI's TriPaneViewHandler: a finger inside the divider's 48-dp touch target) is raised through the
+/// divider's own platform entry points (RaiseDragStarted/Delta/CompletedFromPlatform), so the divider raises its public
+/// DragStarted / DragDelta / DragCompleted exactly as for a Core pointer, TriPaneView's own divider handlers measure the
+/// panes and gate CanUserDrag*, and the engine resolves tap versus drag, drag-to-minimize, restore by grip and roll-back
+/// on cancel. The divider shows its pressed state (IsDragging) for the whole gesture.</item>
+/// <item>THE DISPLAY OVERRIDE (AP1.12, WPE1-13 item f): the adaptive form by window size class is the weights the control
+/// DISPLAYS (ITriPaneDisplayOverride); the application's percent and IsMinimized properties are never written.</item>
+/// </list>
+/// Regions cross this door as indexes in the order Side, Stack, Upper, Lower (CodeBrix.Android.UI's TriPaneRegion).
 /// </summary>
-/// <remarks>
-/// The divider's own public DragStarted / DragDelta / DragCompleted events are NOT raised for a drag recognized here: the
-/// divider has no platform entry points of its own (Thumb has RaiseDrag*FromPlatform; TriPaneViewDivider's RaiseDrag* use the
-/// drag origin that only its Core pointer handling sets, so a platform drag would report a stale travel). FIXLIST
-/// [AP7-B TriPaneView] PLATFORM line.
-/// </remarks>
 internal static class TriPaneViewEntryPoints
 {
-    private const string SideDividerPartName = "PART_SideDivider";
-    private const string StackDividerPartName = "PART_StackDivider";
-    private const string SidePaneScrollViewerPartName = "PART_SidePaneScrollViewer";
-    private const string UpperPaneScrollViewerPartName = "PART_UpperPaneScrollViewer";
-    private const string LowerPaneScrollViewerPartName = "PART_LowerPaneScrollViewer";
-    private const string StackGridPartName = "PART_StackGrid";
-
-    /// <summary>The divider template part of a kind (null before the template is applied).</summary>
+    /// <summary>The divider of a kind (null before the template is applied).</summary>
     /// <param name="view">The control.</param>
     /// <param name="kind">The divider.</param>
     /// <returns>The divider, or null.</returns>
-    internal static TriPaneViewDivider Divider(TriPaneView view, TriPaneViewDividerKind kind) =>
-        Part<TriPaneViewDivider>(view, kind == TriPaneViewDividerKind.Side ? SideDividerPartName : StackDividerPartName);
+    internal static TriPaneViewDivider Divider(TriPaneView view, TriPaneViewDividerKind kind) => view?.GetDivider(kind);
 
     /// <summary>Whether a divider takes a finger now: shown, enabled, and either draggable or a restore grip.</summary>
     /// <param name="view">The control.</param>
@@ -49,33 +40,10 @@ internal static class TriPaneViewEntryPoints
         && divider.ActualWidth > 0
         && divider.ActualHeight > 0;
 
-    /// <summary>
-    /// Starts a divider drag: the lengths of the two panes on its axis (left/upper first), as TriPaneView's own divider
-    /// handler measures them, go to the engine; the divider shows its pressed state.
-    /// </summary>
+    /// <summary>Starts a divider drag through the divider's platform entry point (ignored while one runs).</summary>
     /// <param name="view">The control.</param>
     /// <param name="kind">The divider.</param>
-    internal static void StartDrag(TriPaneView view, TriPaneViewDividerKind kind)
-    {
-        double first;
-        double second;
-        if (kind == TriPaneViewDividerKind.Side)
-        {
-            var isPlacedLeft = view.SidePanePlacement == TriPaneViewSidePanePlacement.Left;
-            var sideLength = Part<FrameworkElement>(view, SidePaneScrollViewerPartName)?.ActualWidth ?? 0d;
-            var stackLength = Part<FrameworkElement>(view, StackGridPartName)?.ActualWidth ?? 0d;
-            first = isPlacedLeft ? sideLength : stackLength;
-            second = isPlacedLeft ? stackLength : sideLength;
-        }
-        else
-        {
-            first = Part<FrameworkElement>(view, UpperPaneScrollViewerPartName)?.ActualHeight ?? 0d;
-            second = Part<FrameworkElement>(view, LowerPaneScrollViewerPartName)?.ActualHeight ?? 0d;
-        }
-
-        Divider(view, kind)?.SetValue(TriPaneViewDivider.IsDraggingProperty, true);
-        view.StartDividerDrag(kind, first, second);
-    }
+    internal static void StartDrag(TriPaneView view, TriPaneViewDividerKind kind) => Divider(view, kind)?.RaiseDragStartedFromPlatform();
 
     /// <summary>Advances a drag by the move since the previous one (DIPs along the divider's axis).</summary>
     /// <param name="view">The control.</param>
@@ -83,25 +51,50 @@ internal static class TriPaneViewEntryPoints
     /// <param name="delta">The change in DIPs (positive = away from the left/upper pane).</param>
     internal static void UpdateDrag(TriPaneView view, TriPaneViewDividerKind kind, double delta)
     {
-        // The same gate as TriPaneView's own DragDelta handlers: a divider the app does not let the user drag only
-        // answers taps (restore grip).
-        var canDrag = kind == TriPaneViewDividerKind.Side ? view.CanUserDragSideDivider : view.CanUserDragStackDivider;
-        if (canDrag)
+        if (kind == TriPaneViewDividerKind.Side)
         {
-            view.UpdateDividerDrag(kind, delta);
+            Divider(view, kind)?.RaiseDragDeltaFromPlatform(delta, 0d);
+        }
+        else
+        {
+            Divider(view, kind)?.RaiseDragDeltaFromPlatform(0d, delta);
         }
     }
 
-    /// <summary>Ends a drag; the engine decides tap / drag / cancel and raises DividerDragCompleted when the layout changed.</summary>
+    /// <summary>Ends a drag; the divider reports the sum of this gesture's deltas and the engine decides tap / drag / cancel.</summary>
     /// <param name="view">The control.</param>
     /// <param name="kind">The divider.</param>
-    /// <param name="totalTravel">The net travel in DIPs along the divider's axis.</param>
     /// <param name="canceled">Whether the gesture was cancelled.</param>
-    internal static void CompleteDrag(TriPaneView view, TriPaneViewDividerKind kind, double totalTravel, bool canceled)
+    internal static void CompleteDrag(TriPaneView view, TriPaneViewDividerKind kind, bool canceled) =>
+        Divider(view, kind)?.RaiseDragCompletedFromPlatform(canceled);
+
+    /// <summary>
+    /// Sets (or, with null delegates, removes) the control's display override. <paramref name="display"/> maps the
+    /// application's weights to the weights to lay out; <paramref name="restore"/> answers a tap on the restore grip of a
+    /// region the override hides (region index Side 0, Stack 1, Upper 2, Lower 3) and returns whether the display changed.
+    /// </summary>
+    /// <param name="view">The control.</param>
+    /// <param name="display">The weights to display for the application's weights.</param>
+    /// <param name="restore">The grip-tap answer.</param>
+    internal static void SetDisplayOverride(
+        TriPaneView view,
+        Func<(double Side, double Stack, double Upper, double Lower), (double Side, double Stack, double Upper, double Lower)> display,
+        Func<int, bool> restore)
     {
-        Divider(view, kind)?.SetValue(TriPaneViewDivider.IsDraggingProperty, false);
-        view.CompleteDividerDrag(kind, totalTravel, canceled);
+        if (view != null)
+        {
+            view.DisplayOverride = display == null ? null : new DisplayOverride(display, restore);
+        }
     }
+
+    /// <summary>Whether the control has a display override (diagnostics and fences).</summary>
+    /// <param name="view">The control.</param>
+    /// <returns>True when one is set.</returns>
+    internal static bool HasDisplayOverride(TriPaneView view) => view?.DisplayOverride != null;
+
+    /// <summary>Runs the engine's state pass after the display override's answer changed (a new size class).</summary>
+    /// <param name="view">The control.</param>
+    internal static void RefreshDisplayOverride(TriPaneView view) => view?.RefreshDisplayOverride();
 
     /// <summary>What the engine's last state pass laid out (diagnostics and the device fences).</summary>
     /// <param name="view">The control.</param>
@@ -118,42 +111,26 @@ internal static class TriPaneViewEntryPoints
     internal static bool IsRestoreGrip(TriPaneView view, TriPaneViewDividerKind kind) =>
         kind == TriPaneViewDividerKind.Side ? view.IsSideRestoreGripVisible : view.IsStackRestoreGripVisible;
 
-    private static T Part<T>(TriPaneView view, string name)
-        where T : FrameworkElement
+    /// <summary>The Core display override over the two delegates.</summary>
+    private sealed class DisplayOverride : ITriPaneDisplayOverride
     {
-        if (view == null || VisualTreeHelper.GetChildrenCount(view) == 0 || VisualTreeHelper.GetChild(view, 0) is not FrameworkElement root)
+        private readonly Func<(double Side, double Stack, double Upper, double Lower), (double Side, double Stack, double Upper, double Lower)> _display;
+        private readonly Func<int, bool> _restore;
+
+        internal DisplayOverride(
+            Func<(double Side, double Stack, double Upper, double Lower), (double Side, double Stack, double Upper, double Lower)> display,
+            Func<int, bool> restore)
         {
-            return null;
+            _display = display;
+            _restore = restore;
         }
 
-        // The template's own namescope: the parts are found by name from the template root (not in a nested TriPaneView).
-        return root.FindName(name) as T ?? Descendants(root).OfType<T>().FirstOrDefault(e => e.Name == name && Owner(e) == view);
-    }
-
-    private static TriPaneView Owner(FrameworkElement element)
-    {
-        for (var parent = VisualTreeHelper.GetParent(element); parent != null; parent = VisualTreeHelper.GetParent(parent))
+        public TriPaneDisplayWeights GetDisplayWeights(TriPaneDisplayWeights applicationWeights)
         {
-            if (parent is TriPaneView owner)
-            {
-                return owner;
-            }
+            var (side, stack, upper, lower) = _display((applicationWeights.Side, applicationWeights.Stack, applicationWeights.Upper, applicationWeights.Lower));
+            return new TriPaneDisplayWeights(side, stack, upper, lower);
         }
 
-        return null;
-    }
-
-    private static System.Collections.Generic.IEnumerable<DependencyObject> Descendants(DependencyObject root)
-    {
-        var count = VisualTreeHelper.GetChildrenCount(root);
-        for (var i = 0; i < count; i++)
-        {
-            var child = VisualTreeHelper.GetChild(root, i);
-            yield return child;
-            foreach (var deeper in Descendants(child))
-            {
-                yield return deeper;
-            }
-        }
+        public bool RestoreRequested(TriPaneViewRegion region) => _restore != null && _restore((int)region);
     }
 }

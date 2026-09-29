@@ -17,7 +17,7 @@ namespace CodeBrix.Android.UI.Policy;
 /// <summary>
 /// Live re-pointing of re-keyed brushes (plan 2.11, D-O4; corpus section 3.1 pattern 3): an app repaints its
 /// colour scheme by assigning <c>SolidColorBrush.Color</c> on the brushes its resource dictionaries hold
-/// (GitHubIssueFinder re-points 163 control keys and its own palette at run time). A Fluent template repaints by
+/// (an app may re-point many control keys and its own palette at run time). A Fluent template repaints by
 /// itself (its parts hold those brushes); a native widget got its state lists from the keys when it was mapped,
 /// so this watcher follows every SolidColorBrush of the application's and the live elements' resource
 /// dictionaries and, once per frame after any of them changed, re-maps the colours of every native control

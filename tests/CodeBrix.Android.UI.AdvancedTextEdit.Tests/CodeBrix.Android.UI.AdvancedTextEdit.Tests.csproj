@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Host-free tests (net10.0) of the Android side of the AdvancedTextEdit add-in (AP7-B):
+    - Core/: the contract the Android assembly implements and relies on, read from the pinned AdvancedTextEdit Core's
+      metadata (the grants to the Android assembly name, the by-name load, the canvas-supply contract, the drawing
+      surfaces that use it, the engine types, the SoftwareKeyboardFocus seam of UI.Core the TextArea reports its focus
+      through, and the TextArea members the soft keyboard's text target uses).
+    The input method's side of the text target is tested host-free with CodeBrix.Android.UI's tests
+    (TextInput/TextInputTargetEditorTests). The editor's text target on a REAL TextArea (a TextArea lays its document out
+    through the text engine the moment it gets one: fonts and ICU of the device), the canvas element, its native view,
+    the painting and the real keyboards run on the emulator (the AdvancedTextEdit UIReqs group, the
+    AndroidAdvancedTextEdit fences and the sample gate).
+
+    AssemblyName = the name CodeBrix.Platform.UI.AdvancedTextEdit.Core grants InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>CodeBrix.Android.UI.AdvancedTextEdit.Tests</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.AdvancedTextEdit.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\CodeBrix.Android.UI\CodeBrix.Android.UI.csproj" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)build/intake/CodeBrix.Android.Intake.proj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\CoreMetadata.cs" Link="Shared\CoreMetadata.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Read as metadata only (PEReader), never loaded. -->
+    <AssemblyMetadata Include="CodeBrix.Android.Tests.CoreLib" Value="$(CodeBrixPlatformIntakeLibDir)" />
+    <!-- The member tests load the AdvancedTextEdit Core's types (reflection only: no TextArea is built on the host - its
+         document and caret lay text out through the text engine, which needs the device's fonts and ICU). -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.AdvancedTextEdit.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.TextLayout.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Foundation.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Core.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="SilverAssertions.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

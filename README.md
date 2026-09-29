@@ -34,8 +34,9 @@ Each CodeBrix.Platform add-in has an Android package of its own, named after the
 * Adaptive layout by window size class: a NavigationView becomes a bottom bar, a rail or a drawer, dialogs and menus change form, and the app switches live when a phone is docked to a desktop or a window is resized
 * Material 3 theming from the app's own Fluent resources, light and dark themes, dynamic colour, and the user's font scale
 * Touch, mouse, stylus and hardware keyboard input through the CodeBrix.Platform routed events, keyboard accelerators, focus, and the Android back button and predictive back gesture
+* The soft keyboard: the window pans to keep the focused text field in view (the default), or the page is laid out again above the keyboard - one app-wide setting
 * File pickers (the Storage Access Framework), the clipboard, sharing, the launcher, connectivity and haptics
-* Build-time warnings (CBAND0001-CBAND0008, never errors) for the CodeBrix.Platform constructs Android accepts and ignores, at the C# or XAML line that uses them
+* Build-time warnings (the CBAND diagnostics, never errors) for the CodeBrix.Platform constructs Android accepts and ignores, at the C# or XAML line that uses them
 * `ApplicationData` folders and settings, preferred languages, `SoftwareBitmap` and PNG/JPEG encoding, and device and display information backed by Android
 * App and library assets addressed by `ms-appx:///` URIs, including the fonts of the CodeBrix font packages
 * The app's own fonts everywhere: a font family named by a page resolves to the app's default font file, never to a system font

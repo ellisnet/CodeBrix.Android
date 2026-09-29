@@ -51,6 +51,7 @@ internal sealed class NumberBoxHandler : ViewHandler<NumberBox, TextBoxView>
 
     private readonly CorePointerBridge _bridge;
     private bool _updating;
+    private int _iconRoom = -1;
 
     /// <summary>Creates the handler.</summary>
     public NumberBoxHandler()
@@ -209,9 +210,39 @@ internal sealed class NumberBoxHandler : ViewHandler<NumberBox, TextBoxView>
         element.InvalidateMeasure();
     }
 
+    // [AP8-S batch 3] The Material text field makes room for its start and end (minus / plus) icons by giving its editor
+    // dummy compound drawables AFTER a measure, and lays itself out again later: a NumberBox without a width of its own
+    // (a pasted app's tool bar - a horizontal StackPanel) kept the size of the first measure and drew its value under the
+    // icons. When the room the editor keeps for them changes, Core measures the box again (the new measure includes it).
+    private void OnEditorLayoutChange(object sender, AView.LayoutChangeEventArgs e)
+    {
+        if (PlatformView?.Editor is not { } editor)
+        {
+            return;
+        }
+
+        var room = editor.TotalPaddingLeft + editor.TotalPaddingRight;
+        if (_iconRoom < 0 || room == _iconRoom)
+        {
+            return;
+        }
+
+        // Measured with less room than the editor keeps now: measure again (Measure records the new room).
+        _iconRoom = room;
+        Element?.InvalidateMeasure();
+    }
+
     /// <inheritdoc />
-    public override Size Measure(Size availableSize) =>
-        ViewHandlerExtensions.GetDesiredSizeFromView(NativeView, availableSize, Density);
+    public override Size Measure(Size availableSize)
+    {
+        var size = ViewHandlerExtensions.GetDesiredSizeFromView(NativeView, availableSize, Density);
+        if (PlatformView?.Editor is { } editor)
+        {
+            _iconRoom = editor.TotalPaddingLeft + editor.TotalPaddingRight;
+        }
+
+        return size;
+    }
 
     /// <inheritdoc />
     protected override TextBoxView CreatePlatformView() => new(MaterialWidgets.Material3(Context)) { HeaderGap = MaterialWidgets.Px(8, Density) };
@@ -224,6 +255,7 @@ internal sealed class NumberBoxHandler : ViewHandler<NumberBox, TextBoxView>
         platformView.Editor.FocusChange += OnFocusChange;
         platformView.Editor.Touch += OnTouch;
         platformView.Field.Touch += OnTouch;
+        platformView.Editor.LayoutChange += OnEditorLayoutChange;
         if (Element != null)
         {
             _bridge.Attach(Element);
@@ -238,6 +270,8 @@ internal sealed class NumberBoxHandler : ViewHandler<NumberBox, TextBoxView>
         platformView.Editor.FocusChange -= OnFocusChange;
         platformView.Editor.Touch -= OnTouch;
         platformView.Field.Touch -= OnTouch;
+        platformView.Editor.LayoutChange -= OnEditorLayoutChange;
+        _iconRoom = -1;
         base.DisconnectHandler(platformView);
     }
 

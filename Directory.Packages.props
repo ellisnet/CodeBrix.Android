@@ -50,6 +50,9 @@
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.152.0" />
     <PackageVersion Include="HarfBuzzSharp" Version="14.2.1.200" />
     <PackageVersion Include="HarfBuzzSharp.NativeAssets.Android" Version="14.2.1.200" />
+    <!-- Host-free tests only (never in a package): HarfBuzz's Linux native library, for tests that shape text on the host
+         (the PlotterView engine test, AP7-C). -->
+    <PackageVersion Include="HarfBuzzSharp.NativeAssets.Linux" Version="14.2.1.200" />
   </ItemGroup>
 
   <!--
@@ -75,6 +78,14 @@
          pinned Platform build's TerminalView package declares. -->
     <PackageVersion Include="CodeBrix.Terminal.MitLicenseForever" Version="1.0.262.971" />
     <PackageVersion Include="CodeBrix.Platform.Fonts.RobotoMono.OflLicenseForever" Version="1.0.248.1223" />
+    <!-- The PlotterView add-in Core (AP7-C): the chart engine (self-produced, not a CodeBrix.Platform repository package;
+         the version the pinned Platform build's PlotterView package declares - D7 touch pan/pinch). -->
+    <PackageVersion Include="CodeBrix.Plotter.MitLicenseForever" Version="1.0.269.1424" />
+    <!-- The AudioPlayer and VideoPlayer add-ins (AP7-C): CodeBrix.Audio's Android backend (self-produced; it depends on
+         CodeBrix.Audio.Core.MitLicenseForever 1.0.271.1165, the shared managed audio library - the ONE Core line every audio
+         package here resolves) and the video engine (self-produced; its only audio dependency is that same Core). -->
+    <PackageVersion Include="CodeBrix.Audio.Android.ApacheLicenseForever" Version="1.0.271.1201" />
+    <PackageVersion Include="CodeBrix.VideoPlayback.MitLicenseForever" Version="1.0.271.1195" />
   </ItemGroup>
 
   <!--
@@ -86,7 +97,7 @@
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.12" />
     <PackageVersion Include="CodeBrix.Cryptography.MitLicenseForever" Version="1.0.249.1433" />
-    <PackageVersion Include="CodeBrix.PdfRasterizer.MitLicenseForever" Version="1.0.254.196" />
+    <PackageVersion Include="CodeBrix.PdfRasterizer.MitLicenseForever" Version="1.0.271.1182" />
     <PackageVersion Include="CodeBrix.Platform.Fonts.OpenSans.ApacheLicenseForever" Version="1.0.248.1181" />
     <PackageVersion Include="CodeBrix.Platform.Fonts.Roboto.OflLicenseForever" Version="1.0.248.1219" />
   </ItemGroup>

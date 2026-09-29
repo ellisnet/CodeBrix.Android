@@ -34,6 +34,13 @@
       asset as an AndroidAsset whose logical name is its ms-appx path.
     -->
     <EnableDefaultAndroidAssetItems Condition="'$(EnableDefaultAndroidAssetItems)' == ''">false</EnableDefaultAndroidAssetItems>
+    <!--
+      AP1.12 FIX: the SDK's asset step (AndroidComputeResPaths) ALSO strips the MonoAndroidAssetsPrefix
+      ("Assets") from every AndroidAsset's logical name, so ms-appx:///Assets/pulse.json landed at the asset
+      "pulse.json" (library assets under CodeBrix.Platform.Fonts.*/ were never affected). A prefix no
+      ms-appx path starts with keeps the logical names exactly as the targets file writes them.
+    -->
+    <MonoAndroidAssetsPrefix Condition="'$(MonoAndroidAssetsPrefix)' == ''">CodeBrixAndroidNoAssetsPrefix</MonoAndroidAssetsPrefix>
   </PropertyGroup>
 
 </Project>

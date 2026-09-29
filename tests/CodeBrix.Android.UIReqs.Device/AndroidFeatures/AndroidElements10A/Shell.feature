@@ -2,7 +2,7 @@ Feature: Navigation and shell elements
 	Android-only (AP10-A). NavigationView's items, headers and separators are the rows of its native Material
 	navigation container (their NavigationViewItemPresenter template part is never built); SplitView keeps its
 	Fluent template with the adaptive table's Compact form (an Inline pane shown as an Overlay pane); TwoPaneView keeps
-	its template (its own width rules are the size-class behaviour); TitleBar is NotImplemented in the Platform.
+	its template (its own width rules are the size-class behaviour); TitleBar is a Core control since AP1.12 (WPE1-10) and keeps its template.
 
 Scenario: A NavigationView's items, header and separator (every NavigationViewItemBase) are rows of its native navigation drawer
 	Given the application shows the AP10 sample "navigation view" named "nav"
@@ -40,10 +40,12 @@ Scenario: A SplitView goes back to its declared Inline form when the window wide
 	When the window size classes are no longer simulated
 	Then the SplitView "split" shows the state OpenInlineLeft
 
-Scenario: TitleBar is NotImplemented in the Platform and takes no room on Android either
-	Then the Platform marks TitleBar as not implemented
+Scenario: TitleBar is a Core control and shows its title through its template
+	AP1.12 (pin 1.0.270.342): WPE1-10 implemented TitleBar in the Platform Core (AP10-A pinned it as NotImplemented, taking no
+	room); on Android it keeps its Fluent template (no window chrome to integrate with: its insets are 0).
+	Then the Platform implements TitleBar
 	Given the application shows the AP10 sample "title bar" named "title"
-	Then "title" takes no room
+	Then "title" shows the native text "Title"
 
 Scenario: A TwoPaneView wide enough for both panes keeps its template and puts them side by side
 	Given the application shows the AP10 sample "two pane view" named "two"

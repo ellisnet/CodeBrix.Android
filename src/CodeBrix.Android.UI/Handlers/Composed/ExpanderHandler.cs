@@ -29,7 +29,7 @@ using AViewGroup = global::Android.Views.ViewGroup;
 namespace CodeBrix.Android.UI.Handlers;
 
 /// <summary>
-/// The native Expander (plan 3 row Expander; Pinta's error dialog): a Material card surface whose header row is a
+/// The native Expander (plan 3 row Expander; e.g. an error dialog): a Material card surface whose header row is a
 /// native row - the header text and a chevron that turns over, with a ripple - and whose content box under it hosts
 /// the Expander's Core content (HostsContent: the content's own native views, laid out here), shown while
 /// <see cref="Expander.IsExpanded"/> and faded/slid in by the system animator. Tapping the header (a real finger,

@@ -5,160 +5,199 @@ using Xunit;
 
 namespace CodeBrix.Android.UI.Toolkit.Tests.Handlers;
 
+/// <summary>AP1.12: the adaptive form as DISPLAY weights (the answer of the Core's display override; nothing is written).</summary>
 public class TriPanePlanTests
 {
     private static readonly TriPaneWeights Default = new(33.3, 66.7, 50, 50);
 
-    private static TriPaneWeights Step(TriPanePlan plan, TriPaneForm form, TriPaneWeights current)
+    private static TriPanePlan Plan(TriPaneForm? form) => new() { Form = form };
+
+    [Fact]
+    public void Without_a_form_the_application_weights_are_displayed()
     {
-        var target = plan.Apply(form, current);
-        plan.Observe(target);
-        return target;
+        //Arrange
+        var plan = Plan(null);
+
+        //Act
+        var display = plan.Display(Default);
+
+        //Assert
+        display.Should().Be(Default);
     }
 
     [Fact]
-    public void Three_panes_leave_the_weights_alone()
+    public void Three_panes_display_the_application_weights()
     {
         //Arrange
-        var plan = new TriPanePlan();
+        var plan = Plan(TriPaneForm.ThreePanes);
 
         //Act
-        var target = Step(plan, TriPaneForm.ThreePanes, Default);
+        var display = plan.Display(Default);
 
         //Assert
-        target.Should().Be(Default);
-        plan.ClosedByPlan.Should().BeEmpty();
+        display.Should().Be(Default);
     }
 
     [Fact]
-    public void One_pane_closes_the_side_pane_and_the_lower_pane()
+    public void One_pane_hides_the_side_pane_and_the_lower_pane()
     {
         //Arrange
-        var plan = new TriPanePlan();
+        var plan = Plan(TriPaneForm.OnePane);
 
         //Act
-        var target = Step(plan, TriPaneForm.OnePane, Default);
+        var display = plan.Display(Default);
 
         //Assert
-        target.Should().Be(new TriPaneWeights(0, 66.7, 50, 0));
-        plan.ClosedByPlan[TriPaneRegion.Side].Should().Be(33.3);
-        plan.ClosedByPlan[TriPaneRegion.Lower].Should().Be(50);
+        display.Should().Be(new TriPaneWeights(0, 66.7, 50, 0));
     }
 
     [Fact]
-    public void Side_pane_and_one_stacked_closes_only_the_lower_pane()
+    public void Side_pane_and_one_stacked_hides_only_the_lower_pane()
     {
         //Arrange
-        var plan = new TriPanePlan();
+        var plan = Plan(TriPaneForm.SidePaneAndOneStacked);
 
         //Act
-        var target = Step(plan, TriPaneForm.SidePaneAndOneStacked, Default);
+        var display = plan.Display(Default);
 
         //Assert
-        target.Should().Be(new TriPaneWeights(33.3, 66.7, 50, 0));
+        display.Should().Be(new TriPaneWeights(33.3, 66.7, 50, 0));
     }
 
     [Fact]
-    public void Widening_again_gives_every_closed_region_its_weight_back()
+    public void Widening_again_displays_the_application_weights_unchanged()
     {
         //Arrange
-        var plan = new TriPanePlan();
-        var compact = Step(plan, TriPaneForm.OnePane, new TriPaneWeights(25, 75, 60, 40));
+        var plan = Plan(TriPaneForm.OnePane);
+        plan.Display(Default);
+        plan.Restore(TriPaneRegion.Side);
+        plan.Display(Default);
 
         //Act
-        var medium = Step(plan, TriPaneForm.SidePaneAndOneStacked, compact);
-        var expanded = Step(plan, TriPaneForm.ThreePanes, medium);
+        plan.Form = TriPaneForm.ThreePanes;
+        var display = plan.Display(Default);
 
         //Assert
-        medium.Should().Be(new TriPaneWeights(25, 75, 60, 0));
-        expanded.Should().Be(new TriPaneWeights(25, 75, 60, 40));
-        plan.ClosedByPlan.Should().BeEmpty();
+        display.Should().Be(Default);
     }
 
     [Fact]
-    public void Reopening_the_side_pane_in_one_pane_form_closes_the_stack_and_gives_the_side_its_weight()
+    public void Restoring_the_side_pane_in_one_pane_form_hides_the_stack()
     {
         //Arrange
-        var plan = new TriPanePlan();
-        var compact = Step(plan, TriPaneForm.OnePane, Default);
+        var plan = Plan(TriPaneForm.OnePane);
+        plan.Display(Default);
 
         //Act
-        // A restore grip reopens the side pane at the engine's default weight.
-        var target = Step(plan, TriPaneForm.OnePane, compact with { Side = 33.333 });
+        var changed = plan.Restore(TriPaneRegion.Side);
+        var display = plan.Display(Default);
 
         //Assert
-        target.Should().Be(new TriPaneWeights(33.3, 0, 50, 0));
-        plan.ClosedByPlan[TriPaneRegion.Stack].Should().Be(66.7);
+        changed.Should().BeTrue();
+        display.Should().Be(new TriPaneWeights(33.3, 0, 50, 0));
     }
 
     [Fact]
-    public void Reopening_the_stack_again_closes_the_side_pane()
+    public void Restoring_the_stack_again_hides_the_side_pane_and_shows_the_stacked_pane_it_had()
     {
         //Arrange
-        var plan = new TriPanePlan();
-        var side = Step(plan, TriPaneForm.OnePane, Step(plan, TriPaneForm.OnePane, Default) with { Side = 33.333 });
+        var plan = Plan(TriPaneForm.OnePane);
+        plan.Restore(TriPaneRegion.Lower);
+        plan.Restore(TriPaneRegion.Side);
 
         //Act
-        var target = Step(plan, TriPaneForm.OnePane, side with { Stack = 66.667 });
+        plan.Restore(TriPaneRegion.Stack);
+        var display = plan.Display(Default);
 
         //Assert
-        target.Should().Be(new TriPaneWeights(0, 66.7, 50, 0));
+        display.Should().Be(new TriPaneWeights(0, 66.7, 0, 50));
     }
 
     [Fact]
-    public void Reopening_the_lower_pane_closes_the_upper_pane()
+    public void Restoring_the_lower_pane_hides_the_upper_pane()
     {
         //Arrange
-        var plan = new TriPanePlan();
-        var compact = Step(plan, TriPaneForm.OnePane, Default);
+        var plan = Plan(TriPaneForm.SidePaneAndOneStacked);
 
         //Act
-        var target = Step(plan, TriPaneForm.OnePane, compact with { Lower = 50 });
+        var changed = plan.Restore(TriPaneRegion.Lower);
+        var display = plan.Display(Default);
 
         //Assert
-        target.Should().Be(new TriPaneWeights(0, 66.7, 0, 50));
+        changed.Should().BeTrue();
+        display.Should().Be(new TriPaneWeights(33.3, 66.7, 0, 50));
     }
 
     [Fact]
-    public void A_region_the_app_closed_itself_is_never_reopened()
+    public void A_restore_in_three_panes_form_changes_nothing()
     {
         //Arrange
-        var plan = new TriPanePlan();
-        var appClosedSide = Default with { Side = 0 };
+        var plan = Plan(TriPaneForm.ThreePanes);
 
         //Act
-        var compact = Step(plan, TriPaneForm.OnePane, appClosedSide);
-        var expanded = Step(plan, TriPaneForm.ThreePanes, compact);
+        var changed = plan.Restore(TriPaneRegion.Side);
 
         //Assert
-        compact.Should().Be(new TriPaneWeights(0, 66.7, 50, 0));
-        expanded.Should().Be(new TriPaneWeights(0, 66.7, 50, 50));
+        changed.Should().BeFalse();
+        plan.Display(Default).Should().Be(Default);
+    }
+
+    [Fact]
+    public void A_region_the_app_closed_itself_stays_closed_in_every_form()
+    {
+        //Arrange
+        var closedSide = Default with { Side = 0 };
+
+        //Act
+        var one = Plan(TriPaneForm.OnePane).Display(closedSide);
+        var medium = Plan(TriPaneForm.SidePaneAndOneStacked).Display(closedSide);
+        var three = Plan(TriPaneForm.ThreePanes).Display(closedSide);
+
+        //Assert
+        one.Side.Should().Be(0);
+        medium.Side.Should().Be(0);
+        three.Side.Should().Be(0);
     }
 
     [Fact]
     public void An_app_that_shows_only_the_lower_pane_keeps_it_in_one_pane_form()
     {
         //Arrange
-        var plan = new TriPanePlan();
+        var plan = Plan(TriPaneForm.OnePane);
 
         //Act
-        var target = Step(plan, TriPaneForm.OnePane, Default with { Upper = 0 });
+        var display = plan.Display(new TriPaneWeights(0, 100, 0, 100));
 
         //Assert
-        target.Should().Be(new TriPaneWeights(0, 66.7, 0, 50));
+        display.Should().Be(new TriPaneWeights(0, 100, 0, 100));
     }
 
     [Fact]
-    public void The_plan_never_closes_both_regions_of_a_pair()
+    public void The_region_the_app_opened_last_is_the_one_shown()
     {
         //Arrange
-        var plan = new TriPanePlan();
+        var plan = Plan(TriPaneForm.SidePaneAndOneStacked);
+        plan.Display(Default with { Lower = 0 });
 
         //Act
-        var target = Step(plan, TriPaneForm.OnePane, Default with { Stack = 0 });
+        var display = plan.Display(Default);
 
         //Assert
-        target.Should().Be(new TriPaneWeights(33.3, 0, 50, 0));
+        display.Should().Be(new TriPaneWeights(33.3, 66.7, 0, 50));
+        plan.StackAxisChoice.Should().Be(TriPaneRegion.Lower);
+    }
+
+    [Fact]
+    public void The_plan_never_hides_both_regions_of_a_pair()
+    {
+        //Arrange
+        var plan = Plan(TriPaneForm.OnePane);
+
+        //Act
+        var display = plan.Display(Default with { Stack = 0 });
+
+        //Assert
+        display.Should().Be(new TriPaneWeights(33.3, 0, 50, 0));
     }
 
     [Theory]

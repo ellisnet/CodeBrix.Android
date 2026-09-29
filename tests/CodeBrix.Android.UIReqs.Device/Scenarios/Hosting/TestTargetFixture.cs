@@ -259,6 +259,10 @@ public static class TestTargetFixture
 		await BoundAsync(idle.Task, "the UI thread to go idle").ConfigureAwait(false);
 	}
 
+	/// <summary>Waits for a newly rendered frame without recording a scenario capture.</summary>
+	/// <returns>A task that completes when queued UI changes have reached a rendered frame.</returns>
+	public static Task WaitForRenderAsync() => Session.WaitForRenderAsync(FrameTimeout);
+
 	/// <summary>
 	/// The frame handshake: lay the tree out on the UI thread, let the dispatcher drain, then
 	/// ask for ONE frame. The session only completes such a request with a frame whose

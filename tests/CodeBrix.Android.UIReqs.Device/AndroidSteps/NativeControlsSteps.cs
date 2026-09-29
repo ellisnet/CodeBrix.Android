@@ -231,6 +231,53 @@ public sealed class NativeControlsSteps
         await TestTargetFixture.WaitForIdleAsync().ConfigureAwait(false);
     }
 
+    /// <summary>[AP8-S batch 3] A NumberBox with inline spin buttons and no Width, in a horizontal StackPanel (an unbounded width).</summary>
+    [Given("the application shows a NumberBox named {string} holding {int} in a horizontal StackPanel, with no width of its own")]
+    public async Task Given_a_NumberBox_without_width(string name, int value)
+    {
+        StackPanel panel = null!;
+        await TestTargetFixture.RunOnUIThreadAsync(() =>
+        {
+            var box = new NumberBox { Name = name, Value = value, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline, VerticalAlignment = VerticalAlignment.Center };
+            panel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(16), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top };
+            panel.Children.Add(new TextBlock { Text = "Size:", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) });
+            panel.Children.Add(box);
+            ElementRegistry.Register(name, box);
+        }).ConfigureAwait(false);
+        await TestTargetFixture.SetContentAsync(panel).ConfigureAwait(false);
+        await TestTargetFixture.WaitForIdleAsync().ConfigureAwait(false);
+        await Task.Delay(300).ConfigureAwait(false);
+        await TestTargetFixture.WaitForIdleAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// [AP8-S batch 3] The value's text (the editor's text area: its left edge + its total left padding, + the text's width)
+    /// lies between the start (minus) icon's right edge and the end (plus) icon's left edge, in window pixels.
+    /// </summary>
+    [Then("the value of the NumberBox {string} is drawn between its minus and plus buttons")]
+    public async Task Then_value_between_buttons(string name)
+    {
+        var (startRight, textLeft, textRight, endLeft) = (0, 0, 0, 0);
+        await TestTargetFixture.RunOnUIThreadAsync(() =>
+        {
+            var field = Views(ElementRegistry.Resolve(name)).OfType<Google.Android.Material.TextField.TextInputLayout>().First();
+            var resources = field.Context!.Resources!;
+            var start = field.FindViewById(resources.GetIdentifier("text_input_start_icon", "id", field.Context.PackageName)) ?? throw new InvalidOperationException("no start icon");
+            var end = field.FindViewById(resources.GetIdentifier("text_input_end_icon", "id", field.Context.PackageName)) ?? throw new InvalidOperationException("no end icon");
+            var editor = field.EditText ?? throw new InvalidOperationException("no editor");
+            var at = new int[2];
+            start.GetLocationInWindow(at);
+            startRight = at[0] + start.Width;
+            end.GetLocationInWindow(at);
+            endLeft = at[0];
+            editor.GetLocationInWindow(at);
+            textLeft = at[0] + editor.TotalPaddingLeft;
+            textRight = textLeft + (int)Math.Ceiling(editor.Paint!.MeasureText(editor.Text ?? string.Empty));
+        }).ConfigureAwait(false);
+        textLeft.Should().BeGreaterThanOrEqualTo(startRight, "the value (from x {0}) must start after the minus button (ends at x {1})", textLeft, startRight);
+        textRight.Should().BeLessThanOrEqualTo(endLeft, "the value (to x {0}) must end before the plus button (starts at x {1})", textRight, endLeft);
+    }
+
     /// <summary>Asserts a NumberBox's Value.</summary>
     [Then("the NumberBox {string} holds {int}")]
     public async Task Then_the_NumberBox_holds(string name, int value)
