@@ -7,4 +7,12 @@
   -->
   <Import Project="$(MSBuildThisFileDirectory)../../Directory.Build.props" />
 
+  <PropertyGroup>
+    <!--
+      As CodeBrix.Platform does (and as src/Directory.Build.props sets for the runtime assemblies): the package version
+      is stamped at pack time; the assemblies carry the stable 255.255.255.255 + the commit in the informational version.
+    -->
+    <Version>255.255.255.255</Version>
+  </PropertyGroup>
+
 </Project>

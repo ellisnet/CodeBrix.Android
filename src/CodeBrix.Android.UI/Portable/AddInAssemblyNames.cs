@@ -11,7 +11,7 @@ internal static class AddInAssemblyNames
     internal static readonly string[] All =
     [
         "CodeBrix.Android.SkiaSharp.Views",
-        "CodeBrix.Android.WinUI.Graphics2DSK",
+        "CodeBrix.Android.UI.Graphics2DSK",
         "CodeBrix.Android.UI.Svg",
         "CodeBrix.Android.UI.Lottie",
         "CodeBrix.Android.UI.TextLayout",
@@ -25,6 +25,6 @@ internal static class AddInAssemblyNames
         "CodeBrix.Android.UI.VideoPlayer",
         "CodeBrix.Android.UI.MediaPlayer",
         "CodeBrix.Android.UI.WebView",
-        "CodeBrix.Android.WinUI.Graphics3DGL",
+        "CodeBrix.Android.UI.Graphics3DGL",
     ];
 }

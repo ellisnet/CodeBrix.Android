@@ -17,6 +17,12 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
+    <!--
+      As CodeBrix.Platform does: the package version is stamped at pack time; the assemblies carry the stable
+      255.255.255.255 (AssemblyVersion and FileVersion) + the commit in the informational version
+      (255.255.255.255+<commit>, from the .NET SDK's source control information).
+    -->
+    <Version>255.255.255.255</Version>
   </PropertyGroup>
 
   <ItemGroup>

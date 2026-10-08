@@ -64,7 +64,7 @@ public class NoSkiaTwinGateTests
         using var packages = new FakePackages()
             .AddPackage("CodeBrix.Android.Graphics3DGL.ApacheLicenseForever", entries: new[]
             {
-                FakePackages.LibAssembly("CodeBrix.Android.WinUI.Graphics3DGL", "CodeBrix.Platform.OpenGL", "CodeBrix.Platform.WinUI.Graphics3DGL.Core"),
+                FakePackages.LibAssembly("CodeBrix.Android.UI.Graphics3DGL", "CodeBrix.Platform.OpenGL", "CodeBrix.Platform.WinUI.Graphics3DGL.Core"),
             });
 
         //Act

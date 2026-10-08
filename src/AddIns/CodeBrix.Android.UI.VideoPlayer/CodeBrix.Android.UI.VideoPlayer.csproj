@@ -29,7 +29,7 @@
     <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
     <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.SkiaSharp.Views/CodeBrix.Android.SkiaSharp.Views.csproj" />
     <!-- The graphics path of the picture (SkiaGpuContext over EGL / OpenGL ES), as the Platform's VideoPlayer references Graphics3DGL. -->
-    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.WinUI.Graphics3DGL/CodeBrix.Android.WinUI.Graphics3DGL.csproj" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.Graphics3DGL/CodeBrix.Android.UI.Graphics3DGL.csproj" />
     <!-- The add-in Cores (re-shipped from the pinned Platform build by the intake). -->
     <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.SkiaSharp.Views.Core.dll" />
     <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.WinUI.Graphics3DGL.Core.dll" />

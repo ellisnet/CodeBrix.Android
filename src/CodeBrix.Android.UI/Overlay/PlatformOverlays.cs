@@ -12,8 +12,8 @@ namespace CodeBrix.Android.UI.Overlay;
 /// not list them (Core opens no popup for them), so diagnostics and app self-checks look here.
 /// </summary>
 /// <remarks>
-/// Internal (no new public API before the handler-API decision D-O1): the in-repo sample's self-check and the
-/// UIReqs device app read it through InternalsVisibleTo.
+/// Internal (no new public API before the handler-API decision D-O1): the UIReqs device app reads it through
+/// InternalsVisibleTo; an app's own self-check can only read it by reflection.
 /// </remarks>
 internal static class PlatformOverlays
 {

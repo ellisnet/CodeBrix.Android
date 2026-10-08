@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -352,8 +354,19 @@ internal static class PageChecks
         return VisualTreeHelper.GetOpenPopupsForXamlRoot(root)
             .SelectMany(p => Descendants(p.Child))
             .OfType<ContentDialog>()
-            .Concat(CodeBrix.Android.UI.Overlay.PlatformOverlays.ContentDialogs)
+            .Concat(PlatformOverlayContentDialogs())
             .Distinct()
             .ToList();
+    }
+
+    // The ContentDialogs CodeBrix.Android shows as Material dialogs. Its overlay registry
+    // (CodeBrix.Android.UI.Overlay.PlatformOverlays) is internal, so the self-check reads it by
+    // reflection; the DynamicDependency keeps the property in the trimmed Release build.
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, "CodeBrix.Android.UI.Overlay.PlatformOverlays", "CodeBrix.Android.UI")]
+    private static IEnumerable<ContentDialog> PlatformOverlayContentDialogs()
+    {
+        var registry = Type.GetType("CodeBrix.Android.UI.Overlay.PlatformOverlays, CodeBrix.Android.UI", throwOnError: true);
+        var property = registry.GetProperty("ContentDialogs", BindingFlags.Public | BindingFlags.Static);
+        return (IEnumerable<ContentDialog>)property.GetValue(null);
     }
 }

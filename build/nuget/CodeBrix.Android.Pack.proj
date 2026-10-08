@@ -78,7 +78,7 @@
   <!--
     THE ADD-IN PACKAGES: one line per src/AddIns/<project folder>. Adding an add-in = adding its line.
     Package id = CodeBrix.Android.<PackageName>.ApacheLicenseForever, where PackageName is the folder name
-    without "CodeBrix.Android." and a leading "UI." / "WinUI." (the CodeBrix.Platform add-in package's
+    without "CodeBrix.Android." and a leading "UI." (the CodeBrix.Platform add-in package's
     name: CodeBrix.Android.UI.Svg -> CodeBrix.Android.Svg.ApacheLicenseForever). Optional metadata:
     PackageName (override), Description (default: a sentence naming the add-in).
     Every src/AddIns folder must be listed here or in CodeBrixAndroidAddInNotPacked (with a reason);
@@ -99,8 +99,8 @@
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.TextLayout" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.VideoPlayer" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.WebView" />
-    <CodeBrixAndroidAddIn Include="CodeBrix.Android.WinUI.Graphics2DSK" />
-    <CodeBrixAndroidAddIn Include="CodeBrix.Android.WinUI.Graphics3DGL" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.Graphics2DSK" />
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.Graphics3DGL" />
   </ItemGroup>
 
   <!-- Add-in folders deliberately not packed (none today). Form: <CodeBrixAndroidAddInNotPacked Include="<folder>" Reason="..." /> -->
@@ -201,7 +201,6 @@
       <_CbaName>$(CbaPackageName)</_CbaName>
       <_CbaName Condition="'$(_CbaName)' == ''">$(CbaAddIn.Substring(17))</_CbaName>
       <_CbaName Condition="'$(CbaPackageName)' == '' and $(_CbaName.StartsWith('UI.'))">$(_CbaName.Substring(3))</_CbaName>
-      <_CbaName Condition="'$(CbaPackageName)' == '' and $(_CbaName.StartsWith('WinUI.'))">$(_CbaName.Substring(6))</_CbaName>
       <_CbaId>CodeBrix.Android.$(_CbaName).$(_CbaPackageSuffix)</_CbaId>
       <_CbaDescription>$(CbaDescription)</_CbaDescription>
       <_CbaDescription Condition="'$(_CbaDescription)' == ''">The $(_CbaName) add-in for CodeBrix.Android applications: the platform-neutral assembly of the CodeBrix.Platform $(_CbaName) add-in and its Android implementation, so code and XAML written against the add-in run unchanged on Android.</_CbaDescription>
@@ -255,7 +254,7 @@
       <!-- Dependencies. -->
       <_CbaDepAddIn Include="@(_CbaAddInRef->'%(Filename)')" />
       <_CbaDepAddIn>
-        <Short>$([System.Text.RegularExpressions.Regex]::Replace('%(Identity)', '^CodeBrix\.Android\.((UI|WinUI)\.)?', ''))</Short>
+        <Short>$([System.Text.RegularExpressions.Regex]::Replace('%(Identity)', '^CodeBrix\.Android\.(UI\.)?', ''))</Short>
       </_CbaDepAddIn>
       <_CbaDepAddInName Include="@(_CbaDepAddIn->'%(Short)')" />
       <_CbaDepPackage Include="@(_CbaInfo->WithMetadataValue('Kind', 'Package'))" />

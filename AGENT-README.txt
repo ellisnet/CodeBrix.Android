@@ -268,8 +268,10 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     The other AutomationProperties are accepted and not mapped. In a page whose
     default xmlns is the clr-namespace form (as in the application template),
     declare xmlns:auto="using:Microsoft.UI.Xaml.Automation" and write
-    auto:AutomationProperties.Name="..." (the owner type must resolve; with the
-    WinUI presentation xmlns as the default it resolves without a prefix).
+    auto:AutomationProperties.Name="..."; without the prefix the owner type does
+    not resolve and the build reports XAML error UXAML0001 at the attribute
+    (with the WinUI presentation xmlns as the default it resolves without a
+    prefix).
 
 MyApp.Core must not bring the CodeBrix.Platform desktop packages into the
 Android build. Multi-target it and choose the package per target framework:

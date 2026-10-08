@@ -31,8 +31,8 @@ CodeBrix.Android.UI.TerminalView  <- CodeBrix.Platform.UI.TerminalView.Core, Cod
 CodeBrix.Android.UI.TextLayout    <- CodeBrix.Platform.UI.TextLayout.Core, CodeBrix.Platform.UI.Core, CodeBrix.Platform.Foundation.Core
 CodeBrix.Android.UI.VideoPlayer   <- CodeBrix.Platform.UI.VideoPlayer.Core, CodeBrix.Platform.UI.Core
 CodeBrix.Android.SkiaSharp.Views  <- CodeBrix.Platform.SkiaSharp.Views.Core, CodeBrix.Platform.UI.Core
-CodeBrix.Android.WinUI.Graphics2DSK <- CodeBrix.Platform.WinUI.Graphics2DSK.Core, CodeBrix.Platform.UI.Core
-CodeBrix.Android.WinUI.Graphics3DGL <- CodeBrix.Platform.WinUI.Graphics3DGL.Core, CodeBrix.Platform.UI.Core
+CodeBrix.Android.UI.Graphics2DSK  <- CodeBrix.Platform.WinUI.Graphics2DSK.Core, CodeBrix.Platform.UI.Core
+CodeBrix.Android.UI.Graphics3DGL  <- CodeBrix.Platform.WinUI.Graphics3DGL.Core, CodeBrix.Platform.UI.Core
 # The two add-ins that are whole in the framework (WPC5: WebView2 / CoreWebView2 and MediaPlayerElement are UI.Core,
 # INativeWebView and IMediaPlayerExtension are Platform.Core); UI.Core and Platform.Core grant their Android names.
 CodeBrix.Android.UI.WebView       <- CodeBrix.Platform.UI.Core, CodeBrix.Platform.Core

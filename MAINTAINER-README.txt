@@ -661,8 +661,9 @@ and logs one warning otherwise; D12 is the owner's). Fenced by the copied
 Popups/Popup.feature scenarios 4-6.
 OverlayPresentation switches the Material forms off (the UIReqs device app does so
 for every scenario not tagged @native-overlays); PlatformOverlays lists what is shown
-natively - INTERNAL (no new public API before D-O1), read by the UIReqs device app and
-HelloPaste's self-check through InternalsVisibleTo. AcrylicBrush (and every
+natively - INTERNAL (no new public API before D-O1), read by the UIReqs device app
+through InternalsVisibleTo and by the HelloPaste sample's self-check by reflection
+(no library grants InternalsVisibleTo to a sample app). AcrylicBrush (and every
 XamlCompositionBrushBase) paints its FallbackColor (no blur on Android - what WinUI
 shows with transparency effects off; Portable/Drawing/BrushPaint). The presenter, the
 activity bridge and the lifecycle listener are registered by AndroidPlatformBootstrap
@@ -1398,6 +1399,22 @@ CODEBRIX_ANDROID_BUILD_LOCK=~/ClaudeHome/android-buildout-work/build.lock so eac
 dotnet command runs under the track's build lock. Jeremy publishes; nothing in
 the repository pushes a package.
 
+PACKING ON ANOTHER MACHINE. A fresh clone packs with the .NET 10 SDK with the
+"android" workload, and the Android SDK (with the JDK the workload builds with;
+the projects target net10.0-android36.1; global.json pins no SDK version) - no
+Android device, emulator or build/test-scripts are needed to pack. The intake
+downloads the pinned Platform packages (build/PlatformPin.props) from nuget.org
+by itself: the local feed folder (CodeBrixPlatformFeed, default
+~/ClaudeHome/android-feed/<version>/) simply does not exist there and is then
+not used. Two commands, from the repository
+root (or build/pack.sh -c Release on Linux/macOS, which runs both):
+    dotnet build CodeBrix.Android.slnx -c Release
+    dotnet build build/nuget/CodeBrix.Android.Pack.proj -c Release
+The packages and package-gates.txt land in
+artifacts/packages/Release/<version>/, at the date-stamped version of that run;
+that version is the one to publish and to tag. Nothing in the repository is
+edited per pack.
+
 THE PACKAGES. Every id carries the .ApacheLicenseForever suffix (decision D-O13
 is Jeremy's; built to the recommendation: the suffix for every package,
 MediaPlayer and SkiaSharp.Views included, whose CodeBrix.Platform counterparts
@@ -1431,25 +1448,29 @@ package's notices/ folder).
   of each owned Core. Dependencies: the framework package and every add-in
   project it references, at exactly the run's version ([v]); each
   PackageReference it passes on that the framework does not bring.
-  <AddIn> is the project folder without "CodeBrix.Android." and a leading "UI." /
-  "WinUI." - the CodeBrix.Platform add-in package's name.
+  <AddIn> is the project folder without "CodeBrix.Android." and a leading "UI." -
+  the CodeBrix.Platform add-in package's name.
 The net10.0 flavors of the multi-targeted projects are never packed (tests only).
 
 VERSIONS. One date-stamped version per pack run, stamped on every package: the
 family's canonical formula 1.<years since 2026>.<day of year>.<minute of day>
 (UTC), computed once in the driver as in the CodeBrix.Platform pack driver
-(-p:BuildVersion / --version re-packs an existing version). The assemblies are
-not re-stamped (the pack takes the built outputs). Dependency versions are never
-written by hand: the nuspecs use $dep_<Package_Id>$ tokens that the driver fills
-from Directory.Packages.props, and the driver stops when the framework nuspec
-lacks a dependency the framework projects reference.
+(-p:BuildVersion / --version re-packs an existing version). As CodeBrix.Platform
+does, the package version is stamped at pack time only: every packed assembly
+carries the stable Version 255.255.255.255 (src/Directory.Build.props and the
+analyzer's Directory.Build.props) and the commit in its informational version
+(255.255.255.255+<commit>), and the pack takes the built outputs unchanged.
+Dependency versions are never written by hand: the nuspecs use
+$dep_<Package_Id>$ tokens that the driver fills from Directory.Packages.props,
+and the driver stops when the framework nuspec lacks a dependency the framework
+projects reference.
 
 PUBLISHING. Jeremy publishes the packages of one pack folder, all at its one
 version, to nuget.org: the framework package first, then the add-ins in
 dependency order (SkiaSharp.Views, TextLayout, Svg and Graphics3DGL before the
 add-in packages that depend on them; package-gates.txt lists every package's
-dependencies). Before the pack that is to be published, move the Unshipped
-CBAND rows (ADDING A PACKAGE); before publishing, check that every external
+dependencies). Unshipped CBAND rows move to a new analyzer release line before
+a published pack (ADDING A PACKAGE); before publishing, check that every external
 dependency id and version in package-gates.txt exists on nuget.org. After
 publishing: tag the repository with the package version and refresh the
 template head's consumers (templates/TEMPLATE_INTEGRATION.md).
@@ -1484,9 +1505,12 @@ ADDING A PACKAGE
   * A new CBAND diagnostic: add its row to
     src/CodeBrix.Android.Analyzers/AnalyzerReleases.Unshipped.md (the Roslyn
     release-tracking format; the analyzer build reports RS2xxx otherwise).
-    Before the next published pack, move the Unshipped rows to AnalyzerReleases.Shipped.md
-    under a new "## Release <version>" heading (the version of the packages
-    being published) and leave Unshipped.md with its header lines only.
+    AnalyzerReleases.Shipped.md tracks the ANALYZER's own release line, independent
+    of the date-stamped package versions: the first set shipped as "## Release 1.0";
+    the next CBAND additions move from Unshipped.md to a new "## Release 1.1" heading
+    (then 1.2, ...) before the pack that publishes them, leaving Unshipped.md with
+    its header lines only. Never rename a heading to a package version - nothing in
+    the repository is edited per pack.
 
 APPLICATION TEMPLATE. templates/AndroidHead/ is the Android head of the
 CodeBrix.Platform application template (token TemplateApp, as in the template
