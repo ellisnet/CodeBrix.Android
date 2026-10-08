@@ -50,6 +50,8 @@ Every CodeBrix.Android package of one release depends on the others of the
 same release at exactly that version; keep them on one version.
 
 Requirements: the .NET 10 SDK with the "android" workload, and the Android SDK.
+SDK 10.0.400 or later for the CBAND build diagnostics (BUILD DIAGNOSTICS below);
+an older SDK still builds the app, without them.
 
 
 KEY NAMESPACES / USINGS
@@ -333,7 +335,9 @@ BUILD DIAGNOSTICS (CBAND)
 The package's analyzer reports, as WARNINGS that never fail a build (they are
 kept out of TreatWarningsAsErrors), the CodeBrix.Platform constructs Android
 accepts but does not show as they look on the desktop, at the C# line or the
-XAML file and line that uses them:
+XAML file and line that uses them. The analyzer is built against the compiler
+of SDK 10.0.4xx (Roslyn 5.9): an older SDK's compiler cannot load it, reports
+CS8032 and the CBAND warnings are off (the app still builds):
   CBAND0001  a ControlTemplate on a control Android shows as a native control
   CBAND0002  template members (OnApplyTemplate, GetTemplateChild,
              VisualStateManager.GoToState) used on such a control

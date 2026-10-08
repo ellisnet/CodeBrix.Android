@@ -105,8 +105,10 @@
   <!-- Build tooling -->
   <ItemGroup>
     <PackageVersion Include="CodeBrix.AssemblyTools.MitLicenseForever" Version="1.0.252.4" />
-    <!-- The CBAND analyzer (src/CodeBrix.Android.Analyzers) and its tests: the compiler API of the first .NET 10 SDK, so
-         every .NET 10 SDK can load the analyzer (a newer version would not load in an older compiler: CS8032). -->
+    <!-- The CBAND analyzer (src/CodeBrix.Android.Analyzers) and its tests: the compiler API of the .NET SDK the packages
+         are built with (Roslyn 5.9 = SDK 10.0.4xx). A compiler older than this version cannot load the analyzer (CS8032,
+         the CBAND diagnostics are then silently off), so consumers need SDK 10.0.400 or later for them; the apps still
+         build. Bump it together with the SDK on the packing machine. -->
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
   </ItemGroup>
 

@@ -1044,7 +1044,10 @@ build/nuget/buildTransitive/CodeBrix.Android.ApacheLicenseForever.props and
   * report the CBAND diagnostics (plan section 3.3, decision D-P12): the
     package's analyzer (analyzers/dotnet/cs/CodeBrix.Android.Analyzers.dll,
     src/CodeBrix.Android.Analyzers; netstandard2.0, Microsoft.CodeAnalysis.CSharp
-    5.0.0 so every .NET 10 SDK loads it) reports, as WARNINGS, the constructs
+    at the compiler version of the SDK the packages are built with - 5.9.0 =
+    SDK 10.0.4xx; an older compiler cannot load it (CS8032) and the CBAND
+    diagnostics are silently off, so consumers need SDK 10.0.400 or later for
+    them) reports, as WARNINGS, the constructs
     Android accepts and ignores: CbandCSharpAnalyzer in hand-written C#,
     CbandXamlAnalyzer in the Page / ApplicationDefinition XAML (the additional
     files the XAML generator's build logic passes to the compiler), at the XAML

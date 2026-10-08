@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using SilverAssertions;
 using Xunit;
 
@@ -17,7 +18,14 @@ public class IntakeOptionsTests
         });
 
         //Assert
-        options.IntakeDirectory.Should().Be("/tmp/i");
+        // Path options are normalised with Path.GetFullPath, which is host-specific ("/tmp/i" stays as is on
+        // Linux and macOS, becomes "C:\tmp\i" on Windows), so the expected values go through the same call.
+        options.IntakeDirectory.Should().Be(Path.GetFullPath("/tmp/i"));
+        options.GatesDirectory.Should().Be(Path.GetFullPath("/tmp/g"));
+        options.BclDirectory.Should().Be(Path.GetFullPath("/tmp/b"));
+        options.SourceDirectory.Should().Be(Path.GetFullPath("/tmp/s"));
+        options.SourcesFile.Should().Be(Path.GetFullPath("/tmp/i/s.txt"));
+        options.PackagesFile.Should().Be(Path.GetFullPath("/tmp/i/p.txt"));
         options.PlatformVersion.Should().Be("1.2.3");
         options.SeamGateEnabled.Should().BeTrue();
     }
