@@ -1417,6 +1417,16 @@ The packages and package-gates.txt land in
 artifacts/packages/Release/<version>/, at the date-stamped version of that run;
 that version is the one to publish and to tag. Nothing in the repository is
 edited per pack.
+NUSPEC PATHS USE BACKSLASHES. Every <file src> in the framework nuspec is
+written with '\' separators (artifacts\intake\$platformversion$\lib\...): NuGet
+converts them to '/' on Linux and macOS, but on Windows a wildcard src written
+with '/' matches NOTHING (NuGet finds the folder to enumerate by the last '\';
+with none it enumerates the base path only) and a '**' src keeps the whole
+relative path under its target. The pack then succeeds and the gates pass with
+the re-shipped Cores, generator and build files missing from the framework
+package (seen 2026-10-08, the first Windows pack). After every pack, check the
+framework package's lib/ holds the CodeBrix.Platform.*.Core.* files and
+analyzers/dotnet/cs/ holds CodeBrix.Platform.UI.SourceGenerators.dll.
 
 THE PACKAGES. Every id carries the .ApacheLicenseForever suffix (decision D-O13
 is Jeremy's; built to the recommendation: the suffix for every package,
