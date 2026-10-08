@@ -8,7 +8,7 @@
     logic passes to the compiler as additional files). Shipped through the consumer buildTransitive logic
     (build/nuget/buildTransitive) and, in this repository, build/inrepo/CodeBrix.Android.InRepo.targets.
     netstandard2.0: the analyzer-host exception to the family's net10.0-only rule (the compiler loads analyzers
-    as netstandard2.0 assemblies). Microsoft.CodeAnalysis.CSharp 5.0.0 = the compiler of the first .NET 10 SDK, so
+    as netstandard2.0 assemblies). Microsoft.CodeAnalysis.CSharp 5.9.0 = the compiler of the first .NET 10 SDK, so
     every .NET 10 SDK can load it.
   -->
   <PropertyGroup>
