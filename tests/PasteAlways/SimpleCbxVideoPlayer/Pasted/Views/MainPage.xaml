@@ -4,6 +4,7 @@
     xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
     xmlns:m="clr-namespace:Microsoft.UI.Xaml.Media;assembly=CodeBrix.Platform.UI"
     xmlns:ui="clr-namespace:Microsoft.UI.Xaml;assembly=CodeBrix.Platform.UI"
+    xmlns:a="using:Microsoft.UI.Xaml.Automation"
     xmlns:skia="clr-namespace:SkiaSharp.Views.Windows;assembly=CodeBrix.Platform.SkiaSharp.Views"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vm="clr-namespace:SimpleCbxVideoPlayer.ViewModels;assembly=SimpleCbxVideoPlayer.Core"
@@ -17,6 +18,7 @@
 
     <Page.Resources>
         <m:SolidColorBrush x:Key="PanelBrush" Color="#1C1F26" />
+        <m:SolidColorBrush x:Key="PanelTextBrush" Color="#E6E9EF" />
         <m:SolidColorBrush x:Key="HairlineBrush" Color="#333944" />
         <m:SolidColorBrush x:Key="SubtleTextBrush" Color="#9AA3B2" />
         <m:SolidColorBrush x:Key="MessageBrush" Color="#F2B155" />
@@ -31,19 +33,22 @@
                 </Grid.ColumnDefinitions>
 
                 <CheckBox Grid.Column="0"
+                          a:AutomationProperties.Name="{d:Binding DisplayName}"
                           MinWidth="32"
                           IsChecked="{d:Binding IsChecked, Mode=TwoWay}"
                           VerticalAlignment="Center" />
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="{d:Binding DisplayName}" FontSize="13" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{d:Binding DisplayName}" FontSize="13" TextTrimming="CharacterEllipsis"
+                               Foreground="{StaticResource PanelTextBrush}" />
                     <TextBlock Text="{d:Binding SubtitleText}" FontSize="11"
                                Foreground="{StaticResource SubtleTextBrush}"
                                TextTrimming="CharacterEllipsis" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                    <TextBox Text="{d:Binding PercentText, Mode=TwoWay}" Width="54" FontSize="13"
+                    <TextBox a:AutomationProperties.Name="{d:Binding DisplayName}"
+                             Text="{d:Binding PercentText, Mode=TwoWay}" Width="54" FontSize="13"
                              TextAlignment="Right" />
                     <TextBlock Text="%" FontSize="13" Foreground="{StaticResource SubtleTextBrush}"
                                VerticalAlignment="Center" />
@@ -70,7 +75,8 @@
 
             <StackPanel Grid.Column="0" Spacing="4">
                 <TextBlock Text="Video" FontSize="12" Foreground="{StaticResource SubtleTextBrush}" />
-                <ComboBox Width="330"
+                <ComboBox a:AutomationProperties.AutomationId="VideoList" a:AutomationProperties.Name="Video"
+                          Width="330"
                           ItemsSource="{d:Binding Videos}"
                           SelectedItem="{d:Binding SelectedVideo, Mode=TwoWay}"
                           DisplayMemberPath="DisplayName"
@@ -79,14 +85,16 @@
 
             <StackPanel Grid.Column="1" Spacing="4">
                 <TextBlock Text="Render path" FontSize="12" Foreground="{StaticResource SubtleTextBrush}" />
-                <ComboBox Width="230"
+                <ComboBox a:AutomationProperties.AutomationId="RenderPathList" a:AutomationProperties.Name="Render path"
+                          Width="230"
                           ItemsSource="{d:Binding RenderPathChoices}"
                           SelectedItem="{d:Binding SelectedRenderPath, Mode=TwoWay}"
                           DisplayMemberPath="Label" />
             </StackPanel>
 
             <StackPanel Grid.Column="2" Spacing="4" VerticalAlignment="Bottom">
-                <TextBlock Text="{d:Binding RenderPathText}" FontSize="12"
+                <TextBlock a:AutomationProperties.AutomationId="RenderPathText"
+                           Text="{d:Binding RenderPathText}" FontSize="12"
                            Foreground="{StaticResource SubtleTextBrush}" TextWrapping="Wrap" />
             </StackPanel>
         </Grid>
@@ -101,12 +109,16 @@
             <!-- The canvases live here: the GPU one is added by the page when the graphics device starts -->
             <Border Grid.Column="0" Background="Black" BorderBrush="{StaticResource HairlineBrush}"
                     BorderThickness="1" CornerRadius="4">
-                <Grid x:Name="VideoHost" Background="Black">
+                <Grid x:Name="VideoHost" a:AutomationProperties.AutomationId="VideoHost" Background="Black">
                     <skia:SKXamlCanvas x:Name="CpuCanvas" PaintSurface="OnCpuPaintSurface" />
                 </Grid>
             </Border>
 
-            <Border Grid.Column="1" Background="{StaticResource PanelBrush}"
+            <!-- The panel has its own dark background whatever the theme. It asks for the dark theme so its
+                 tick boxes, percentages and button are drawn for a dark surface, and its plain text takes
+                 PanelTextBrush, because a TextBlock's default colour follows the page's theme, not this -->
+            <Border x:Name="LutPanel" Grid.Column="1" RequestedTheme="Dark"
+                    Background="{StaticResource PanelBrush}"
                     BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1" CornerRadius="4">
                 <Grid Padding="12,10">
                     <Grid.RowDefinitions>
@@ -117,12 +129,15 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="Colour lookup tables" FontSize="14" FontWeight="SemiBold" />
+                    <TextBlock Grid.Row="0" Text="Colour lookup tables" FontSize="14" FontWeight="SemiBold"
+                               Foreground="{StaticResource PanelTextBrush}" />
 
-                    <TextBlock Grid.Row="1" Text="{d:Binding LutSummaryText}" FontSize="11" Margin="0,2,0,6"
+                    <TextBlock Grid.Row="1" a:AutomationProperties.AutomationId="LutSummaryText"
+                               Text="{d:Binding LutSummaryText}" FontSize="11" Margin="0,2,0,6"
                                Foreground="{StaticResource SubtleTextBrush}" TextWrapping="Wrap" />
 
-                    <TextBlock Grid.Row="2" Text="{d:Binding LutPanelNote}"
+                    <TextBlock Grid.Row="2" a:AutomationProperties.AutomationId="LutPanelNote"
+                               Text="{d:Binding LutPanelNote}"
                                Visibility="{d:Binding LutPanelNoteVisibility}"
                                FontSize="11" Margin="0,0,0,8" TextWrapping="Wrap"
                                Foreground="{StaticResource MessageBrush}" />
@@ -137,7 +152,8 @@
                     <StackPanel Grid.Row="4" Spacing="6" Margin="0,10,0,0">
                         <Button Content="Bake chain to .cube" HorizontalAlignment="Stretch"
                                 Command="{d:Binding BakeCommand}" />
-                        <TextBlock Text="{d:Binding BakeStatusText}"
+                        <TextBlock a:AutomationProperties.AutomationId="BakeStatusText"
+                                   Text="{d:Binding BakeStatusText}"
                                    Visibility="{d:Binding BakeStatusVisibility}"
                                    FontSize="11" TextWrapping="Wrap"
                                    Foreground="{StaticResource SubtleTextBrush}" />
@@ -160,20 +176,24 @@
             <Button Grid.Column="1" Content="Pause" Width="82" Command="{d:Binding PauseCommand}" />
             <Button Grid.Column="2" Content="Stop" Width="82" Command="{d:Binding StopCommand}" />
 
-            <Slider Grid.Column="3" Minimum="0" StepFrequency="0.05"
+            <Slider Grid.Column="3" a:AutomationProperties.AutomationId="ScrubBar"
+                    a:AutomationProperties.Name="Position" Minimum="0" StepFrequency="0.05"
                     Maximum="{d:Binding DurationSeconds}"
                     Value="{d:Binding PositionSeconds, Mode=TwoWay}"
                     VerticalAlignment="Center" />
 
-            <TextBlock Grid.Column="4" Text="{d:Binding TimeText}" FontSize="13" VerticalAlignment="Center"
+            <TextBlock Grid.Column="4" a:AutomationProperties.AutomationId="TimeText"
+                       Text="{d:Binding TimeText}" FontSize="13" VerticalAlignment="Center"
                        MinWidth="96" TextAlignment="Right" />
         </Grid>
 
         <!-- Where the corpus came from, and anything the video libraries had to say, word for word -->
         <StackPanel Grid.Row="3" Padding="16,0,16,12" Spacing="4">
-            <TextBlock Text="{d:Binding CorpusText}" FontSize="11"
+            <TextBlock a:AutomationProperties.AutomationId="CorpusText"
+                       Text="{d:Binding CorpusText}" FontSize="11"
                        Foreground="{StaticResource SubtleTextBrush}" TextWrapping="Wrap" />
-            <TextBlock Text="{d:Binding MessageText}" Visibility="{d:Binding MessageVisibility}"
+            <TextBlock a:AutomationProperties.AutomationId="MessageText"
+                       Text="{d:Binding MessageText}" Visibility="{d:Binding MessageVisibility}"
                        FontSize="12" Foreground="{StaticResource MessageBrush}" TextWrapping="Wrap" />
         </StackPanel>
     </Grid>

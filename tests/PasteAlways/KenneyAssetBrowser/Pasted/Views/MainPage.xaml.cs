@@ -119,7 +119,8 @@ public sealed partial class MainPage : Page
     //surface the failure (status + reason) in a dialog instead of leaving a silently empty pane.
     private async Task MaybeReportRenderingUnavailableAsync()
     {
-        if (_renderingUnavailableReported || ViewModel is not { IsViewerActive: true } viewModel)
+        if (_renderingUnavailableReported || ViewModel is not { IsViewerActive: true } viewModel
+            || viewModel.ModelViewerVisibility != Microsoft.UI.Xaml.Visibility.Visible)
         {
             return;
         }

@@ -6,6 +6,7 @@
     xmlns:m="clr-namespace:Microsoft.UI.Xaml.Media;assembly=CodeBrix.Platform.UI"
     xmlns:ui="clr-namespace:Microsoft.UI.Xaml;assembly=CodeBrix.Platform.UI"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:a="clr-namespace:Microsoft.UI.Xaml.Automation;assembly=CodeBrix.Platform.UI"
     xmlns:local="using:NotionDocumentCreator.Views"
     xmlns:vm="clr-namespace:NotionDocumentCreator.ViewModels;assembly=NotionDocumentCreator.Core"
     xmlns:flex="clr-namespace:CodeBrix.Platform.UI.FlexPanel;assembly=CodeBrix.Platform.UI.FlexPanel"
@@ -79,10 +80,12 @@
              parent/child propagation), the page icon in a rounded well, and the title.
              Tapping the title area (not the checkbox) previews the page. -->
         <ui:DataTemplate x:Key="PageNodeTemplate">
-            <TreeViewItem ItemsSource="{d:Binding Children}"
+            <TreeViewItem a:AutomationProperties.Name="{d:Binding Title}"
+                          ItemsSource="{d:Binding Children}"
                           IsExpanded="{d:Binding IsExpanded, Mode=TwoWay}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
-                    <CheckBox IsChecked="{d:Binding IsChecked, Mode=TwoWay}"
+                    <CheckBox a:AutomationProperties.Name="{d:Binding CheckBoxName}"
+                              IsChecked="{d:Binding IsChecked, Mode=TwoWay}"
                               MinWidth="0"
                               Visibility="{d:Binding CheckBoxVisibility}" />
                     <Button Background="Transparent" BorderThickness="0" Padding="6,3"
@@ -136,19 +139,25 @@
                                    Foreground="{StaticResource TextPrimaryBrush}"
                                    VerticalAlignment="Center" />
                     </StackPanel>
-                    <TextBlock Text="{d:Binding ConnectionStatus}"
+                    <TextBlock a:AutomationProperties.AutomationId="ConnectionStatus"
+                               Text="{d:Binding ConnectionStatus}"
                                FontSize="11.5" Foreground="{StaticResource TextTertiaryBrush}" />
                 </StackPanel>
 
                 <!-- Token + page ID + Connect travel as one unit when the panel wraps -->
                 <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,6,0,6">
-                    <PasswordBox Width="250" VerticalAlignment="Center" CornerRadius="8"
+                    <PasswordBox a:AutomationProperties.AutomationId="IntegrationToken"
+                                 a:AutomationProperties.Name="Notion integration token"
+                                 Width="250" VerticalAlignment="Center" CornerRadius="8"
                                  PlaceholderText="Notion integration token"
                                  Password="{d:Binding IntegrationToken, Mode=TwoWay}" />
-                    <TextBox Width="230" VerticalAlignment="Center" CornerRadius="8"
+                    <TextBox a:AutomationProperties.AutomationId="PageOrDatabaseId"
+                             a:AutomationProperties.Name="Page or database ID"
+                             Width="230" VerticalAlignment="Center" CornerRadius="8"
                              PlaceholderText="Page or database ID"
                              Text="{d:Binding PageOrDatabaseId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <Button Style="{StaticResource PrimaryButtonStyle}"
+                    <Button a:AutomationProperties.AutomationId="Connect"
+                            Style="{StaticResource PrimaryButtonStyle}"
                             VerticalAlignment="Center"
                             Content="Connect"
                             Command="{d:Binding ConnectCommand}" />
@@ -182,10 +191,13 @@
                             <TextBlock Text="PAGES" FontSize="11" FontWeight="SemiBold"
                                        CharacterSpacing="80"
                                        Foreground="{StaticResource AccentBrush}" />
-                            <TextBlock Text="{d:Binding CheckedCountText}" FontSize="11"
+                            <TextBlock a:AutomationProperties.AutomationId="CheckedCountText"
+                                       Text="{d:Binding CheckedCountText}" FontSize="11"
                                        Foreground="{StaticResource TextTertiaryBrush}" />
                         </StackPanel>
-                        <Button Grid.Column="1" CornerRadius="6" Padding="12,5" BorderThickness="1"
+                        <Button a:AutomationProperties.AutomationId="LoadWholeTree"
+                                a:AutomationProperties.Name="Load whole tree"
+                                Grid.Column="1" CornerRadius="6" Padding="12,5" BorderThickness="1"
                                 VerticalAlignment="Center"
                                 Command="{d:Binding LoadWholeTreeCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
@@ -256,13 +268,16 @@
                             <Image Source="{d:Binding PreviewCoverSource}" Stretch="UniformToFill" />
                         </Border>
 
-                        <TextBlock Text="{d:Binding PreviewTitle}" FontSize="15.5" FontWeight="SemiBold"
+                        <TextBlock a:AutomationProperties.AutomationId="PreviewTitle"
+                                   Text="{d:Binding PreviewTitle}" FontSize="15.5" FontWeight="SemiBold"
                                    Foreground="{StaticResource TextPrimaryBrush}"
                                    TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap" />
-                        <TextBlock Text="{d:Binding PreviewMeta}" FontSize="11"
+                        <TextBlock a:AutomationProperties.AutomationId="PreviewMeta"
+                                   Text="{d:Binding PreviewMeta}" FontSize="11"
                                    Foreground="{StaticResource TextTertiaryBrush}"
                                    TextTrimming="CharacterEllipsis" MaxLines="1" />
-                        <TextBlock Text="{d:Binding PreviewSnippets}" FontSize="12.5" LineHeight="20"
+                        <TextBlock a:AutomationProperties.AutomationId="PreviewSnippets"
+                                   Text="{d:Binding PreviewSnippets}" FontSize="12.5" LineHeight="20"
                                    Foreground="{StaticResource TextSecondaryBrush}"
                                    TextWrapping="Wrap"
                                    TextTrimming="CharacterEllipsis" MaxLines="9" />
@@ -281,7 +296,8 @@
                          Minimum="0" Maximum="100"
                          Foreground="{StaticResource AccentBrush}" Background="#262B34"
                          Value="{d:Binding ProgressValue}" />
-            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="12"
+            <TextBlock a:AutomationProperties.AutomationId="StatusText"
+                       Grid.Column="1" VerticalAlignment="Center" FontSize="12"
                        Foreground="{StaticResource TextSecondaryBrush}"
                        TextTrimming="CharacterEllipsis" MaxLines="1"
                        Text="{d:Binding StatusText}" />
@@ -305,11 +321,14 @@
                     <TextBlock Grid.Column="0" Text="Save PDF to:" FontSize="12.5"
                                Foreground="{StaticResource TextSecondaryBrush}"
                                VerticalAlignment="Center" />
-                    <TextBox Grid.Column="1" Height="34" CornerRadius="8"
+                    <TextBox a:AutomationProperties.AutomationId="OutputFilePath"
+                             a:AutomationProperties.Name="Save PDF to"
+                             Grid.Column="1" Height="34" CornerRadius="8"
                              VerticalAlignment="Center" VerticalContentAlignment="Center"
                              PlaceholderText="Click Select… (or type a full .pdf path)"
                              Text="{d:Binding OutputFilePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <Button Grid.Column="2" Height="34" CornerRadius="8" BorderThickness="1"
+                    <Button a:AutomationProperties.AutomationId="SelectOutputFile"
+                            Grid.Column="2" Height="34" CornerRadius="8" BorderThickness="1"
                             Content="Select…"
                             Command="{d:Binding SelectOutputFileCommand}" />
                 </Grid>
@@ -319,11 +338,14 @@
                     <TextBlock Text="Page size:" FontSize="12.5"
                                Foreground="{StaticResource TextSecondaryBrush}"
                                VerticalAlignment="Center" />
-                    <ComboBox Width="200" VerticalAlignment="Center" CornerRadius="8"
+                    <ComboBox a:AutomationProperties.AutomationId="SelectedPageSize"
+                              a:AutomationProperties.Name="Page size"
+                              Width="200" VerticalAlignment="Center" CornerRadius="8"
                               ItemsSource="{d:Binding PageSizes}"
                               DisplayMemberPath="DisplayName"
                               SelectedItem="{d:Binding SelectedPageSize, Mode=TwoWay}" />
-                    <Button MinWidth="110" Style="{StaticResource PrimaryButtonStyle}"
+                    <Button a:AutomationProperties.AutomationId="Create"
+                            MinWidth="110" Style="{StaticResource PrimaryButtonStyle}"
                             VerticalAlignment="Center"
                             Content="Create!"
                             Command="{d:Binding CreateCommand}" />

@@ -17,3 +17,5 @@ Surface/WebcamPainter.Vision/HandTrackingResult.cs  <- CodeBrix.Samples/WebcamPa
 Surface/WebcamPainter.Vision/Internal/HandLandmarker.cs  <- CodeBrix.Samples/WebcamPainter/src/libs/WebcamPainter.Vision/Internal/HandLandmarker.cs  (verbatim)
 Surface/WebcamPainter.Vision/Internal/OpenPalmClassifier.cs  <- CodeBrix.Samples/WebcamPainter/src/libs/WebcamPainter.Vision/Internal/OpenPalmClassifier.cs  (verbatim)
 Surface/WebcamPainter.Vision/Internal/PalmDetector.cs  <- CodeBrix.Samples/WebcamPainter/src/libs/WebcamPainter.Vision/Internal/PalmDetector.cs  (verbatim)
+Surface/WebcamPainter.Vision/IHandTracker.cs  <- CodeBrix.Samples/WebcamPainter/src/libs/WebcamPainter.Vision/IHandTracker.cs  (verbatim)
+Surface/WebcamPainter.Webcam/ICameraSource.cs  <- CodeBrix.Samples/WebcamPainter/src/libs/WebcamPainter.Webcam/ICameraSource.cs  (verbatim)

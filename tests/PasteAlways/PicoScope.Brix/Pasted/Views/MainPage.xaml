@@ -3,6 +3,7 @@
     xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
     xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:a="using:Microsoft.UI.Xaml.Automation"
     xmlns:vm="clr-namespace:PicoScope.Brix.ViewModels;assembly=PicoScope.Brix.Core"
     xmlns:plot="clr-namespace:CodeBrix.Platform.UI.PlotterView;assembly=CodeBrix.Platform.UI.PlotterView"
     xmlns:local="using:PicoScope.Brix.Views"
@@ -26,7 +27,7 @@
         <!-- Header -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
             <TextBlock Text="PicoScope.Brix" FontSize="22" FontWeight="SemiBold" Foreground="#F0F0F5" />
-            <TextBlock Text="{d:Binding DeviceText}" FontSize="13" Foreground="#9A9AA8"
+            <TextBlock a:AutomationProperties.AutomationId="DeviceText" Text="{d:Binding DeviceText}" FontSize="13" Foreground="#9A9AA8"
                        VerticalAlignment="Bottom" Margin="12,0,0,3" />
         </StackPanel>
 
@@ -40,7 +41,7 @@
             <Button Content="Stop" Command="{d:Binding StopStreamingCommand}" MinWidth="80" />
 
             <TextBlock Text="Range" Foreground="#C0C0CC" VerticalAlignment="Center" Margin="12,0,0,0" />
-            <ComboBox ItemsSource="{d:Binding AvailableRanges}"
+            <ComboBox a:AutomationProperties.AutomationId="SelectedRangeOption" ItemsSource="{d:Binding AvailableRanges}"
                       SelectedItem="{d:Binding SelectedRangeOption, Mode=TwoWay}"
                       MinWidth="110" VerticalAlignment="Center" />
 
@@ -55,10 +56,10 @@
         <!-- Signal generator and device controls -->
         <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,10" Spacing="8">
             <TextBlock Text="Generator" Foreground="#C0C0CC" VerticalAlignment="Center" />
-            <ComboBox ItemsSource="{d:Binding AvailableWaveTypes}"
+            <ComboBox a:AutomationProperties.AutomationId="SelectedWaveType" ItemsSource="{d:Binding AvailableWaveTypes}"
                       SelectedItem="{d:Binding SelectedWaveType, Mode=TwoWay}"
                       MinWidth="110" VerticalAlignment="Center" />
-            <TextBox Text="{d:Binding GeneratorFrequencyText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            <TextBox a:AutomationProperties.AutomationId="GeneratorFrequencyText" Text="{d:Binding GeneratorFrequencyText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      MinWidth="80" VerticalAlignment="Center" />
             <TextBlock Text="Hz" Foreground="#C0C0CC" VerticalAlignment="Center" />
             <Button Content="Toggle" Command="{d:Binding SignalGeneratorCommand}" MinWidth="70" />
@@ -68,7 +69,7 @@
 
         <!-- The chart. A bounded star cell, so the control has a real size to render into. -->
         <Border Grid.Row="4" BorderBrush="#3A3A46" BorderThickness="1">
-            <plot:PlotterControl x:Name="Plotter" Model="{d:Binding Plot.Model}" />
+            <plot:PlotterControl x:Name="Plotter" a:AutomationProperties.AutomationId="Plotter" Model="{d:Binding Plot.Model}" />
         </Border>
 
         <!-- Status -->
@@ -77,9 +78,9 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="{d:Binding StatusText}" Foreground="#C0C0CC"
+            <TextBlock a:AutomationProperties.AutomationId="StatusText" Grid.Column="0" Text="{d:Binding StatusText}" Foreground="#C0C0CC"
                        VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-            <TextBlock Grid.Column="1" Text="{d:Binding SimulatedBadge}" Foreground="#E0A030"
+            <TextBlock a:AutomationProperties.AutomationId="SimulatedBadge" Grid.Column="1" Text="{d:Binding SimulatedBadge}" Foreground="#E0A030"
                        FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0,0,0" />
         </Grid>
     </Grid>

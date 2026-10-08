@@ -1,16 +1,22 @@
 using CodeBrix.Platform.Simple;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using WebcamPainter.Helpers;
+using WebcamPainter.Vision;
+using WebcamPainter.Webcam;
 
 namespace WebcamPainter;
 
 public partial class App : Application
 {
-    public App()
+    public App() : this(null) { }
+
+    // Alternate hosts may replace external services before any view models are constructed.
+    public App(Action<IServiceCollection> configureServices)
     {
         //Set Roboto as the default font for all text in the application
         global::CodeBrix.Platform.UI.FeatureConfiguration.Font.DefaultTextFontFamily =
@@ -18,8 +24,10 @@ public partial class App : Application
 
         SimpleServiceResolver.CreateInstance(HostHelper.GetHost(), services =>
         {
-            //No custom services needed - the webcam, vision, and painting models
-            //  live in the view model
+            //The webcam and the hand tracker; each view model resolves its own and disposes it
+            services.AddTransient<ICameraSource, WebcamCaptureService>();
+            services.AddTransient<IHandTracker, HandTracker>();
+            configureServices?.Invoke(services);
         });
         SimpleViewModel.SetIsDesignMode(false);
 

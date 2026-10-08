@@ -136,6 +136,12 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     activity that declares its own [Activity(WindowSoftInputMode =
     ...Adjust...)] keeps that. InputPane.OccludedRect reports the keyboard
     in every mode.
+    A custom text control (AdvancedTextEdit, TerminalView) opens the keyboard
+    whenever it gets the focus, programmatic focus included - also the focus
+    Core gives the first focusable control when a page appears, so on a phone
+    a page whose first focusable control is a terminal or an editor can open
+    with the keyboard up (a text box does not: it opens the keyboard only
+    when it is touched).
     In Pan mode a custom text control (AdvancedTextEdit, TerminalView) is
     panned by its CARET too (a terminal by its cursor cell, while the hosted
     program shows the cursor); Resize remains the choice when the whole
@@ -242,6 +248,23 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     Tab, Escape and accelerators still reach the page). The soft keyboard opens
     when a text box is touched, not when a page first shows. The diagnostic projection viewer is off by
     default; override UseProjectionViewer => true only to inspect a page.
+  * Accessibility / automation names: AutomationProperties.Name is the one to
+    set. On Android it becomes the content description of the element's native
+    view - what TalkBack speaks and what UI Automator matches as the content
+    description (content-desc, By.desc) - and for a control whose view hosts
+    the interactive widget (Button, TextBox, a Material widget drawn over a
+    template) the widget gets it. It is applied when the element appears and
+    follows every later change (binding, style, code); a cleared or blank name
+    removes it, so TalkBack reads the view's own text again (a control that
+    labels its widget itself, such as RatingControl or PersonPicture, shows its
+    own label again). Leading and trailing spaces are trimmed.
+    AutomationProperties.AutomationId becomes the view's tag (Android has no
+    resource id an app can set at run time; UI Automator does not read tags).
+    The other AutomationProperties are accepted and not mapped. In a page whose
+    default xmlns is the clr-namespace form (as in the application template),
+    declare xmlns:auto="using:Microsoft.UI.Xaml.Automation" and write
+    auto:AutomationProperties.Name="..." (the owner type must resolve; with the
+    WinUI presentation xmlns as the default it resolves without a prefix).
 
 MyApp.Core must not bring the CodeBrix.Platform desktop packages into the
 Android build. Multi-target it and choose the package per target framework:

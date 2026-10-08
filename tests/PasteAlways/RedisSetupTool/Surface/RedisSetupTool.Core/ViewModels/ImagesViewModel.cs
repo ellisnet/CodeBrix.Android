@@ -136,6 +136,18 @@ public class ImagesViewModel : SectionViewModel
         : base(shell)
     {
         _docker = GetService<IDockerManager>();
+
+        //The right-hand pane shows whenever it has something to show: a selected image, the output of
+        //an operation, or an error. A pull needs no selection, so seeing how it went must not either.
+        PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName is nameof(HasSelectionVisibility) or nameof(ToolOutputVisibility)
+                or nameof(ErrorVisibility))
+            {
+                NotifyPropertyChanged(nameof(DetailPaneVisibility));
+                NotifyPropertyChanged(nameof(EmptyPaneVisibility));
+            }
+        };
     }
 
     #region | Bindable properties |
@@ -168,6 +180,18 @@ public class ImagesViewModel : SectionViewModel
     /// <summary>Whether nothing is selected.</summary>
     public Visibility NoSelectionVisibility =>
         GetVisibility(string.IsNullOrEmpty(_selectedReference));
+
+    /// <summary>
+    /// Whether the right-hand pane has anything to show: a selected image, the output of an
+    /// operation, or an error.
+    /// </summary>
+    public Visibility DetailPaneVisibility => GetVisibility(HasPaneContent);
+
+    /// <summary>Whether the right-hand pane is empty, so only the hint to select an image shows.</summary>
+    public Visibility EmptyPaneVisibility => GetVisibility(!HasPaneContent);
+
+    private bool HasPaneContent =>
+        !string.IsNullOrEmpty(_selectedReference) || ToolOutput.Count > 0 || !string.IsNullOrEmpty(ErrorText);
 
     /// <summary>The selected image's name.</summary>
     public string Title
@@ -285,8 +309,8 @@ public class ImagesViewModel : SectionViewModel
         BeginTool("Pulling " + PullReference);
         var reference = PullReference.Trim();
         var progress = new Progress<string>(line => InvokeOnMainThread(() => AppendOutput(line)));
-        await RunAsync(() => _docker.PullImageAsync(reference, progress)).ConfigureAwait(true);
-        AppendOutput("done.");
+        var pulled = await RunAsync(() => _docker.PullImageAsync(reference, progress)).ConfigureAwait(true);
+        AppendOutcome(pulled);
     }
 
     private async Task TagAsync()
@@ -294,8 +318,21 @@ public class ImagesViewModel : SectionViewModel
         BeginTool("Tagging " + _selectedReference + " as " + NewTag);
         var target = NewTag.Trim();
         var source = _selectedReference;
-        await RunAsync(() => _docker.TagImageAsync(source, target)).ConfigureAwait(true);
-        AppendOutput("done.");
+        var tagged = await RunAsync(() => _docker.TagImageAsync(source, target)).ConfigureAwait(true);
+        AppendOutcome(tagged);
+    }
+
+    //Closes a tool's output with how the operation ended, so a failed one never reads as "done.".
+    private void AppendOutcome(bool succeeded)
+    {
+        if (succeeded)
+        {
+            AppendOutput("done.");
+        }
+        else if (!string.IsNullOrEmpty(ErrorText))
+        {
+            AppendOutput("failed: " + ErrorText);
+        }
     }
 
     private async Task RemoveAsync()
@@ -418,6 +455,11 @@ public class ImagesViewModel : SectionViewModel
             candidate.IsSelected = ReferenceEquals(candidate, row);
         }
         _selectedReference = row.DisplayName;
+        //These commands depend on the selection, which no bound property carries, so say so here.
+        RaiseCanExecuteChanged(TagCommand);
+        RaiseCanExecuteChanged(RemoveCommand);
+        RaiseCanExecuteChanged(ScanCommand);
+        RaiseCanExecuteChanged(EfficiencyCommand);
         Title = row.DisplayName;
         Subtitle = row.SizeText + "   ·   " + row.CreatedText + "   ·   " + row.ShortId;
         NotifyPropertyChanged(nameof(HasSelectionVisibility));

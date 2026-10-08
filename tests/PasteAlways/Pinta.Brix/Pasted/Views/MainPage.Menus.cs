@@ -8,6 +8,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Pinta.Brix.Controls;
@@ -172,10 +173,25 @@ public sealed partial class MainPage
         }
 
         //Unmodified keys upstream handles globally rather than as commands.
-        if (TryHandlePaletteKey(args.Key))
+        if (TryHandleToolShortcutKey(args) || TryHandlePaletteKey(args.Key))
         {
             args.Handled = true;
         }
+    }
+
+    /// <summary>
+    /// Upstream handles the toolbox shortcut keys globally: an unmodified letter
+    /// selects the tool that claims it, and pressing it again moves on to the next
+    /// tool sharing that letter. A text box being typed into and the active tool
+    /// (the text tool while it is editing) get the key first.
+    /// </summary>
+    private bool TryHandleToolShortcutKey(KeyRoutedEventArgs args)
+    {
+        bool typing = args.OriginalSource is TextBox or PasswordBox;
+
+        return InputMapper.TryGetToolShortcut(
+                   args.Key, acceleratorTable.CurrentModifiers, args.Handled, typing, out Key shortcut)
+               && PintaCore.Tools.SetCurrentTool(shortcut);
     }
 
     private void OnGlobalKeyUp(object sender, KeyRoutedEventArgs args)
@@ -248,6 +264,8 @@ public sealed partial class MainPage
             };
         }
 
+        //The icon carries no text, so the button is named after its command.
+        AutomationProperties.SetName(button, ToolbarLabel(command));
         ToolTipService.SetToolTip(button, ToolbarTooltip(command));
         button.Click += (_, _) => command.Activate();
         command.SensitiveChanged += (_, _) => button.IsEnabled = command.Sensitive;
@@ -255,13 +273,14 @@ public sealed partial class MainPage
         MainToolbarPanel.Children.Add(button);
     }
 
+    //Trim the trailing ellipsis that marks a dialog-opening command; a tooltip
+    //and a button name do not need it.
+    private static string ToolbarLabel(Command command) =>
+        (command.ShortLabel ?? command.Label).TrimEnd('.');
+
     private static string ToolbarTooltip(Command command)
     {
-        string label = command.ShortLabel ?? command.Label;
-
-        //Trim the trailing ellipsis that marks a dialog-opening command; a
-        //tooltip does not need it.
-        label = label.TrimEnd('.');
+        string label = ToolbarLabel(command);
 
         string shortcut = command.Shortcuts.FirstOrDefault() ?? string.Empty;
 
@@ -334,6 +353,7 @@ public sealed partial class MainPage
             button.Content = new Image { Width = PadIconSize, Height = PadIconSize, Source = source };
         }
 
+        AutomationProperties.SetName(button, ToolbarLabel(command));
         ToolTipService.SetToolTip(button, ToolbarTooltip(command));
         button.Click += (_, _) => command.Activate();
         command.SensitiveChanged += (_, _) => button.IsEnabled = command.Sensitive;

@@ -3,6 +3,7 @@
     xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
     xmlns:c="clr-namespace:CodeBrix.Platform.UI.Converters;assembly=CodeBrix.Platform.UI.Toolkit"
     xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+    xmlns:a="clr-namespace:Microsoft.UI.Xaml.Automation;assembly=CodeBrix.Platform.UI"
     xmlns:ui="clr-namespace:Microsoft.UI.Xaml;assembly=CodeBrix.Platform.UI"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:WebcamPainter.Views"
@@ -43,7 +44,8 @@
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,8">
             <TextBlock Text="Webcam Painter" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" />
-            <ComboBox MinWidth="280" VerticalAlignment="Center"
+            <ComboBox a:AutomationProperties.AutomationId="Camera" a:AutomationProperties.Name="Camera"
+                      MinWidth="280" VerticalAlignment="Center"
                       ItemsSource="{d:Binding Cameras}"
                       SelectedItem="{d:Binding SelectedCamera, Mode=TwoWay}"
                       IsEnabled="{d:Binding IsCaptureMode}" />
@@ -58,7 +60,7 @@
             <!-- The main viewer: the mirrored live preview in Capture Mode; the captured
                  still being painted (plus the hand crosshair) in Paint Mode -->
             <Border Grid.Column="0" BorderBrush="Gray" BorderThickness="1" Background="Black">
-                <painting:PaintCanvas x:Name="MainCanvas" />
+                <painting:PaintCanvas x:Name="MainCanvas" a:AutomationProperties.AutomationId="MainCanvas" />
             </Border>
 
             <!-- Paint Mode side panel: the little mirrored self-view (so the user can see
@@ -66,10 +68,11 @@
             <StackPanel Grid.Column="1" Width="200" Margin="12,0,0,0" Spacing="8"
                         Visibility="{d:Binding IsPaintMode, Converter={StaticResource VisibleWhenTrue}}">
                 <Border BorderBrush="Gray" BorderThickness="1" Background="Black" Height="150">
-                    <webcam:CameraCanvas x:Name="SelfViewCanvas" />
+                    <webcam:CameraCanvas x:Name="SelfViewCanvas" a:AutomationProperties.AutomationId="SelfView" />
                 </Border>
 
-                <TextBlock Text="{d:Binding ActiveColorText}" FontSize="13" TextWrapping="Wrap" />
+                <TextBlock a:AutomationProperties.AutomationId="ActiveColor"
+                           Text="{d:Binding ActiveColorText}" FontSize="13" TextWrapping="Wrap" />
 
                 <!-- Highlighter colors: one button per palette entry, so the palette is the
                      only place the colors are written down -->
@@ -94,6 +97,7 @@
             </StackPanel>
         </Grid>
 
-        <TextBlock Grid.Row="3" Text="{d:Binding StatusText}" Margin="0,8,0,0" TextWrapping="Wrap" />
+        <TextBlock Grid.Row="3" a:AutomationProperties.AutomationId="Status"
+                   Text="{d:Binding StatusText}" Margin="0,8,0,0" TextWrapping="Wrap" />
     </Grid>
 </Page>

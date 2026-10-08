@@ -41,18 +41,18 @@
     moves.
   -->
   <ItemGroup>
-    <PackageVersion Include="SkiaSharp" Version="4.152.0" />
-    <PackageVersion Include="SkiaSharp.Views" Version="4.152.0" />
-    <PackageVersion Include="SkiaSharp.NativeAssets.Android" Version="4.152.0" />
+    <PackageVersion Include="SkiaSharp" Version="4.153.1" />
+    <PackageVersion Include="SkiaSharp.Views" Version="4.153.1" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Android" Version="4.153.1" />
     <!-- The Lottie add-in's decoder (Skottie + its scene graph; native code in SkiaSharp's native library). -->
-    <PackageVersion Include="SkiaSharp.Skottie" Version="4.152.0" />
+    <PackageVersion Include="SkiaSharp.Skottie" Version="4.153.1" />
     <!-- Host-free tests only (never in a package): SkiaSharp's Linux native library, for tests that render on the host. -->
-    <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.152.0" />
-    <PackageVersion Include="HarfBuzzSharp" Version="14.2.1.200" />
-    <PackageVersion Include="HarfBuzzSharp.NativeAssets.Android" Version="14.2.1.200" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.153.1" />
+    <PackageVersion Include="HarfBuzzSharp" Version="14.2.1.301" />
+    <PackageVersion Include="HarfBuzzSharp.NativeAssets.Android" Version="14.2.1.301" />
     <!-- Host-free tests only (never in a package): HarfBuzz's Linux native library, for tests that shape text on the host
          (the PlotterView engine test, AP7-C). -->
-    <PackageVersion Include="HarfBuzzSharp.NativeAssets.Linux" Version="14.2.1.200" />
+    <PackageVersion Include="HarfBuzzSharp.NativeAssets.Linux" Version="14.2.1.301" />
   </ItemGroup>
 
   <!--
@@ -67,25 +67,25 @@
     <PackageVersion Include="CodeBrix.ServiceLocator.MsplLicenseForever" Version="1.0.251.1433" />
     <PackageVersion Include="CodeBrix.Platform.Fonts.Fluent.ApacheLicenseForever" Version="1.0.248.1204" />
     <!-- The Svg add-in Core draws with CodeBrix.SkiaSvg (self-produced; the version the pinned Platform build declares). -->
-    <PackageVersion Include="CodeBrix.SkiaSvg.MitLicenseForever" Version="1.0.252.363" />
+    <PackageVersion Include="CodeBrix.SkiaSvg.MitLicenseForever" Version="1.0.278.1152" />
     <!-- The AppSettings add-in's storage (self-produced; the version the pinned Platform build declares). It brings
          Microsoft.Data.Sqlite and SQLitePCLRaw (e_sqlite3, Android natives included) - the accepted SQLitePCLRaw exception. -->
-    <PackageVersion Include="CodeBrix.Sqlite.ApacheLicenseForever" Version="1.0.250.22" />
+    <PackageVersion Include="CodeBrix.Sqlite.ApacheLicenseForever" Version="1.0.275.125" />
     <!-- The Graphics3DGL add-in Core renders through this managed OpenGL binding (self-produced, not a CodeBrix.Platform
          repository package; the version the pinned Platform build declares). -->
     <PackageVersion Include="CodeBrix.Platform.OpenGL.MitLicenseForever" Version="1.0.252.16" />
     <!-- The TerminalView add-in Core (AP7-B): the VT engine (self-produced) and the terminal font, at the versions the
          pinned Platform build's TerminalView package declares. -->
-    <PackageVersion Include="CodeBrix.Terminal.MitLicenseForever" Version="1.0.262.971" />
+    <PackageVersion Include="CodeBrix.Terminal.MitLicenseForever" Version="1.0.275.130" />
     <PackageVersion Include="CodeBrix.Platform.Fonts.RobotoMono.OflLicenseForever" Version="1.0.248.1223" />
     <!-- The PlotterView add-in Core (AP7-C): the chart engine (self-produced, not a CodeBrix.Platform repository package;
          the version the pinned Platform build's PlotterView package declares - D7 touch pan/pinch). -->
-    <PackageVersion Include="CodeBrix.Plotter.MitLicenseForever" Version="1.0.269.1424" />
+    <PackageVersion Include="CodeBrix.Plotter.MitLicenseForever" Version="1.0.278.1156" />
     <!-- The AudioPlayer and VideoPlayer add-ins (AP7-C): CodeBrix.Audio's Android backend (self-produced; it depends on
          CodeBrix.Audio.Core.MitLicenseForever 1.0.271.1165, the shared managed audio library - the ONE Core line every audio
          package here resolves) and the video engine (self-produced; its only audio dependency is that same Core). -->
     <PackageVersion Include="CodeBrix.Audio.Android.ApacheLicenseForever" Version="1.0.271.1201" />
-    <PackageVersion Include="CodeBrix.VideoPlayback.MitLicenseForever" Version="1.0.271.1195" />
+    <PackageVersion Include="CodeBrix.VideoPlayback.MitLicenseForever" Version="1.0.280.1149" />
   </ItemGroup>
 
   <!--

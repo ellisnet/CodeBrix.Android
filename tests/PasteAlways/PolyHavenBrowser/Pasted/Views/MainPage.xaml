@@ -1,4 +1,4 @@
-<Page
+<Page xmlns:a="using:Microsoft.UI.Xaml.Automation"
     x:Class="PolyHavenBrowser.Views.MainPage"
     xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
     xmlns:c="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
@@ -122,6 +122,7 @@
                             </StackPanel>
                         </StackPanel>
                         <Button Grid.Column="1" Content="Download"
+                                a:AutomationProperties.Name="{d:Binding DownloadButtonName}"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 VerticalAlignment="Center"
                                 Command="{d:Binding DownloadCommand}" />
@@ -180,11 +181,11 @@
 
                     <!-- Search and sort travel as one unit when the panel wraps -->
                     <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,6,16,6">
-                        <TextBox Width="300" VerticalAlignment="Center"
+                        <TextBox a:AutomationProperties.AutomationId="SearchText" a:AutomationProperties.Name="Search Text" Width="300" VerticalAlignment="Center"
                                  PlaceholderText="Search models…"
                                  Text="{d:Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                  CornerRadius="8" />
-                        <ComboBox Width="150" VerticalAlignment="Center"
+                        <ComboBox a:AutomationProperties.AutomationId="SelectedSortOption" a:AutomationProperties.Name="Selected Sort Option" Width="150" VerticalAlignment="Center"
                                   CornerRadius="8"
                                   ItemsSource="{d:Binding SortOptions}"
                                   SelectedItem="{d:Binding SelectedSortOption, Mode=TwoWay}" />
@@ -194,7 +195,7 @@
                             BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1"
                             CornerRadius="8" Padding="14,8" Margin="0,6,0,6"
                             MaxWidth="280"
-                            Command="{d:Binding PickFolderCommand}">
+                            a:AutomationProperties.Name="{d:Binding DownloadFolderLabel}" Command="{d:Binding PickFolderCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xE8B7;" FontSize="13"
                                       Foreground="{StaticResource AccentBrush}"
@@ -273,6 +274,7 @@
                             BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1"
                             CornerRadius="8" Width="42" Height="38"
                             Padding="0" VerticalAlignment="Center"
+                            a:AutomationProperties.AutomationId="BackCommand" a:AutomationProperties.Name="Back"
                             Command="{d:Binding BackCommand}"
                             Content="←" FontSize="17" />
                     <StackPanel VerticalAlignment="Center" Spacing="2">
@@ -356,6 +358,7 @@
                            Foreground="{StaticResource TextTertiaryBrush}"
                            VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                 <Button Grid.Column="1" HorizontalAlignment="Right"
+                        a:AutomationProperties.AutomationId="DocumentCommand" a:AutomationProperties.Name="Document"
                         Style="{StaticResource PrimaryButtonStyle}"
                         Command="{d:Binding DocumentCommand}"
                         ToolTipService.ToolTip="Create a glossy marketing one-sheet PDF about this model">

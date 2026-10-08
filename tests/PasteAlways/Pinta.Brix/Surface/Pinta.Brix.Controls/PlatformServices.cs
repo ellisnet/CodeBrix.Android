@@ -61,8 +61,8 @@ public sealed class PlatformClipboardService : IClipboardService
 
 	public async Task<string?> GetTextAsync ()
 	{
-		DataPackageView view = Clipboard.GetContent ();
-		if (!view.Contains (StandardDataFormats.Text))
+		DataPackageView? view = Clipboard.GetContent ();
+		if (view is null || !view.Contains (StandardDataFormats.Text))
 			return null;
 		return await view.GetTextAsync ();
 	}
@@ -75,11 +75,13 @@ public sealed class PlatformClipboardService : IClipboardService
 		using SKImage image = SKImage.FromBitmap (surface.Bitmap);
 		using SKData data = image.Encode (SKEncodedImageFormat.Png, 100);
 
+		// The write adapter is deliberately NOT disposed: disposing it closes
+		// the stream underneath, which the clipboard still has to read from
+		// (the Seek below threw ObjectDisposedException, so Copy never worked).
 		InMemoryRandomAccessStream stream = new ();
-		using (Stream outStream = stream.AsStreamForWrite ()) {
-			data.SaveTo (outStream);
-			outStream.Flush ();
-		}
+		Stream outStream = stream.AsStreamForWrite ();
+		data.SaveTo (outStream);
+		outStream.Flush ();
 		stream.Seek (0);
 
 		DataPackage package = new ();
@@ -89,8 +91,8 @@ public sealed class PlatformClipboardService : IClipboardService
 
 	public async Task<ImageSurface?> GetImageAsync ()
 	{
-		DataPackageView view = Clipboard.GetContent ();
-		if (!view.Contains (StandardDataFormats.Bitmap))
+		DataPackageView? view = Clipboard.GetContent ();
+		if (view is null || !view.Contains (StandardDataFormats.Bitmap))
 			return null;
 
 		RandomAccessStreamReference reference = await view.GetBitmapAsync ();

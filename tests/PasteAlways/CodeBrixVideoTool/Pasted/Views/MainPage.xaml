@@ -6,6 +6,7 @@
     xmlns:m="clr-namespace:Microsoft.UI.Xaml.Media;assembly=CodeBrix.Platform.UI"
     xmlns:ui="clr-namespace:Microsoft.UI.Xaml;assembly=CodeBrix.Platform.UI"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:a="clr-namespace:Microsoft.UI.Xaml.Automation;assembly=CodeBrix.Platform.UI"
     xmlns:vm="clr-namespace:CodeBrixVideoTool.ViewModels;assembly=CodeBrixVideoTool.Core"
     xmlns:conv="clr-namespace:CodeBrixVideoTool.Converters;assembly=CodeBrixVideoTool.Core"
     xmlns:cv="clr-namespace:CodeBrix.Platform.UI.Converters;assembly=CodeBrix.Platform.UI.Toolkit"
@@ -170,13 +171,16 @@
 
                     <Grid Grid.Row="1">
                         <ListView x:Name="LibraryList"
+                                  a:AutomationProperties.AutomationId="LibraryList"
+                                  a:AutomationProperties.Name="Files"
                                   ItemsSource="{d:Binding Library}"
                                   SelectedItem="{d:Binding SelectedItem, Mode=TwoWay}"
                                   ItemTemplate="{StaticResource LibraryItemTemplate}"
                                   SelectionMode="Single"
                                   Background="Transparent" />
 
-                        <TextBlock Text="Nothing here yet. Open an MP4 to import it, or a .mkv, .webm or .cbv file to play or convert it."
+                        <TextBlock a:AutomationProperties.AutomationId="EmptyLibraryHint"
+                                   Text="Nothing here yet. Open an MP4 to import it, or a .mkv, .webm or .cbv file to play or convert it."
                                    Visibility="{d:Binding EmptyLibraryVisibility}"
                                    TextWrapping="Wrap"
                                    FontSize="12"
@@ -244,6 +248,7 @@
                             </Grid.ColumnDefinitions>
 
                             <TextBlock Grid.Column="0"
+                                       a:AutomationProperties.AutomationId="PositionText"
                                        Text="{d:Binding Position, ElementName=Player, Converter={StaticResource Timecode}}"
                                        Width="58"
                                        FontSize="12"
@@ -251,6 +256,8 @@
                                        Foreground="{StaticResource AppTextBrush}" />
 
                             <Slider Grid.Column="1"
+                                    a:AutomationProperties.AutomationId="Scrubber"
+                                    a:AutomationProperties.Name="Position"
                                     Maximum="{d:Binding DurationSeconds, ElementName=Player}"
                                     Value="{d:Binding PositionSeconds, ElementName=Player, Mode=TwoWay}"
                                     StepFrequency="0.1"
@@ -258,6 +265,7 @@
                                     Margin="6,0" />
 
                             <TextBlock Grid.Column="2"
+                                       a:AutomationProperties.AutomationId="DurationText"
                                        Text="{d:Binding Duration, ElementName=Player, Converter={StaticResource Timecode}}"
                                        Width="58"
                                        FontSize="12"
@@ -286,14 +294,17 @@
                             </StackPanel>
 
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <CheckBox Content="Mute"
+                                <CheckBox a:AutomationProperties.AutomationId="Mute"
+                                          Content="Mute"
                                           IsChecked="{d:Binding IsMuted, ElementName=Player, Mode=TwoWay}"
                                           VerticalAlignment="Center" />
                                 <TextBlock Text="Volume"
                                            FontSize="12"
                                            VerticalAlignment="Center"
                                            Foreground="{StaticResource AppMutedTextBrush}" />
-                                <Slider Width="130"
+                                <Slider a:AutomationProperties.AutomationId="Volume"
+                                        a:AutomationProperties.Name="Volume"
+                                        Width="130"
                                         Minimum="0"
                                         Maximum="1"
                                         StepFrequency="0.01"
@@ -313,6 +324,8 @@
                             </Grid.ColumnDefinitions>
 
                             <ComboBox Grid.Column="0"
+                                      a:AutomationProperties.AutomationId="Chapter"
+                                      a:AutomationProperties.Name="Chapter"
                                       Width="230"
                                       Margin="0,0,10,0"
                                       PlaceholderText="Chapter"
@@ -322,6 +335,8 @@
                                       ItemTemplate="{StaticResource LabelTemplate}" />
 
                             <ComboBox Grid.Column="1"
+                                      a:AutomationProperties.AutomationId="Captions"
+                                      a:AutomationProperties.Name="Captions"
                                       Width="210"
                                       PlaceholderText="Captions"
                                       Visibility="{d:Binding Playback.CaptionVisibility}"
@@ -356,7 +371,9 @@
 
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="Destination format" Style="{StaticResource FieldLabel}" />
-                        <ComboBox HorizontalAlignment="Stretch"
+                        <ComboBox a:AutomationProperties.AutomationId="Destination"
+                                  a:AutomationProperties.Name="Destination format"
+                                  HorizontalAlignment="Stretch"
                                   PlaceholderText="Choose a format"
                                   ItemsSource="{d:Binding Conversion.Destinations}"
                                   SelectedItem="{d:Binding Conversion.SelectedDestination, Mode=TwoWay}"
@@ -365,7 +382,9 @@
 
                     <StackPanel Grid.Column="2">
                         <TextBlock Text="Resolution" Style="{StaticResource FieldLabel}" />
-                        <ComboBox HorizontalAlignment="Stretch"
+                        <ComboBox a:AutomationProperties.AutomationId="Resolution"
+                                  a:AutomationProperties.Name="Resolution"
+                                  HorizontalAlignment="Stretch"
                                   PlaceholderText="Choose a size"
                                   ItemsSource="{d:Binding Conversion.Resolutions}"
                                   SelectedItem="{d:Binding Conversion.SelectedResolution, Mode=TwoWay}"
@@ -377,6 +396,8 @@
                     <StackPanel Grid.Column="4">
                         <TextBlock Text="Quality" Style="{StaticResource FieldLabel}" />
                         <ComboBox x:Name="QualityBox"
+                                  a:AutomationProperties.AutomationId="Quality"
+                                  a:AutomationProperties.Name="Quality"
                                   HorizontalAlignment="Stretch"
                                   PlaceholderText="Choose a quality"
                                   ItemsSource="{d:Binding Conversion.QualityLevels}"
@@ -384,7 +405,8 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="6" VerticalAlignment="Bottom">
-                        <Button Content="{d:Binding Conversion.ActionLabel}"
+                        <Button a:AutomationProperties.AutomationId="ActionButton"
+                                Content="{d:Binding Conversion.ActionLabel}"
                                 MinWidth="140"
                                 Padding="20,9"
                                 Background="{StaticResource AppAccentBrush}"
@@ -393,15 +415,18 @@
                 </Grid>
 
                 <StackPanel Orientation="Horizontal" Spacing="14">
-                    <TextBlock Text="{d:Binding Conversion.VideoCodecText}"
+                    <TextBlock a:AutomationProperties.AutomationId="VideoCodecText"
+                               Text="{d:Binding Conversion.VideoCodecText}"
                                FontSize="11"
                                Foreground="{StaticResource AppMutedTextBrush}" />
-                    <TextBlock Text="{d:Binding Conversion.AudioCodecText}"
+                    <TextBlock a:AutomationProperties.AutomationId="AudioCodecText"
+                               Text="{d:Binding Conversion.AudioCodecText}"
                                FontSize="11"
                                Foreground="{StaticResource AppMutedTextBrush}" />
                 </StackPanel>
 
-                <TextBlock Text="{d:Binding Conversion.RouteText}"
+                <TextBlock a:AutomationProperties.AutomationId="RouteText"
+                           Text="{d:Binding Conversion.RouteText}"
                            FontSize="12"
                            TextWrapping="Wrap"
                            Foreground="{StaticResource AppMutedTextBrush}" />
@@ -414,6 +439,7 @@
                     </Grid.ColumnDefinitions>
 
                     <ProgressBar Grid.Column="0"
+                                 a:AutomationProperties.AutomationId="ConversionProgress"
                                  Height="6"
                                  Minimum="0"
                                  Maximum="100"
@@ -423,6 +449,7 @@
                                  Margin="0,0,14,0" />
 
                     <TextBlock Grid.Column="1"
+                               a:AutomationProperties.AutomationId="ProgressText"
                                Text="{d:Binding Conversion.ProgressText}"
                                FontSize="12"
                                MinWidth="240"
@@ -452,12 +479,14 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0"
+                           a:AutomationProperties.AutomationId="StatusText"
                            Text="{d:Binding StatusText}"
                            FontSize="12"
                            TextTrimming="CharacterEllipsis"
                            Foreground="{StaticResource AppTextBrush}" />
 
                 <TextBlock Grid.Column="1"
+                           a:AutomationProperties.AutomationId="PlaybackStatus"
                            Text="{d:Binding Playback.StatusText}"
                            FontSize="12"
                            Margin="20,0,0,0"
@@ -476,6 +505,7 @@
                 Padding="20,6,20,10"
                 Visibility="{d:Binding Conversion.LastRunNotesVisibility}">
             <ItemsControl x:Name="LastRunNotesList"
+                          a:AutomationProperties.AutomationId="LastRunNotes"
                           ItemsSource="{d:Binding Conversion.LastRunNotes}"
                           ItemTemplate="{StaticResource RunNoteTemplate}" />
         </Border>

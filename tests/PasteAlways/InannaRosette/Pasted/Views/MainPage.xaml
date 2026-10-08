@@ -38,10 +38,12 @@
                         Margin="0,0,22,4" Spacing="9">
                 <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
                     <TextBox x:Name="QuerentBox" Width="196" Height="31"
+                             AutomationProperties.AutomationId="Querent"
                              PlaceholderText="Querent"
                              Style="{StaticResource TempleTextBoxStyle}"
                              Text="{d:Binding Querent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     <TextBox x:Name="QuestionBox" Width="452" Height="31"
+                             AutomationProperties.AutomationId="Question"
                              PlaceholderText="The question put to the rosette"
                              Style="{StaticResource TempleTextBoxStyle}"
                              Text="{d:Binding Question, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
@@ -96,8 +98,10 @@
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0" Margin="18,16,18,0" Spacing="4">
                         <TextBlock x:Name="InterpTitleText" Style="{StaticResource TitleTextStyle}"
+                                   AutomationProperties.AutomationId="InterpretationTitle"
                                    Text="{d:Binding InterpretationTitle}" />
                         <TextBlock x:Name="InterpSubtitleText" Style="{StaticResource CaptionTextStyle}"
+                                   AutomationProperties.AutomationId="InterpretationSubtitle"
                                    Text="{d:Binding InterpretationSubtitle}" />
                         <Rectangle Height="1.2" Fill="#70C9A14A" Margin="0,9,0,0" />
                         <Rectangle Height="0.8" Fill="#33C9A14A" Margin="0,3,0,0" />
@@ -131,6 +135,7 @@
             <Rectangle VerticalAlignment="Top" Height="0.8" Fill="#33C9A14A" Grid.ColumnSpan="2" />
 
             <TextBlock Grid.Column="0" Margin="22,0,12,0" VerticalAlignment="Center"
+                       AutomationProperties.AutomationId="StatusText"
                        Style="{StaticResource CaptionTextStyle}" TextWrapping="NoWrap"
                        TextTrimming="CharacterEllipsis"
                        Text="{d:Binding StatusText}" />
@@ -138,6 +143,7 @@
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10"
                         VerticalAlignment="Center" Margin="0,0,20,0">
                 <Border x:Name="StaleBadge" CornerRadius="2" Padding="7,2,7,3"
+                        AutomationProperties.AutomationId="StaleBadge"
                         BorderBrush="#99B6402E" BorderThickness="1" Background="#33B6402E"
                         Visibility="{d:Binding StaleVisibility}">
                     <TextBlock x:Name="StaleBadgeText" FontSize="9.5" Foreground="#D9634E" />
@@ -150,6 +156,7 @@
                         Command="{d:Binding OpenReadingCommand}" />
                 <Rectangle Width="0.8" Height="16" Fill="#33C9A14A" />
                 <TextBlock x:Name="StationsCountText" Style="{StaticResource CaptionTextStyle}"
+                           AutomationProperties.AutomationId="StationsCount"
                            TextWrapping="NoWrap" Foreground="#E6C476"
                            Text="{d:Binding StationsText}" />
             </StackPanel>

@@ -8,10 +8,10 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <ItemGroup>
-    <!-- SkiaSharp 4.152.0: pinned by the repository's Directory.Packages.props since AP7-A (same version). -->
+    <!-- SkiaSharp 4.153.1: pinned by the repository's Directory.Packages.props since AP7-A (same version). -->
     <PackageVersion Include="CodeBrix.PolygonTools.MitLicenseForever" Version="1.0.252.1257" />
     <PackageVersion Include="CodeBrix.Imaging.ApacheLicenseForever" Version="1.0.248.1113" />
-    <!-- CodeBrix.SkiaSvg 1.0.252.363: pinned by the repository's Directory.Packages.props since AP7-A (same version). -->
+    <!-- CodeBrix.SkiaSvg 1.0.278.1152: pinned by the repository's Directory.Packages.props since AP7-A (same version). -->
   </ItemGroup>
 
 </Project>

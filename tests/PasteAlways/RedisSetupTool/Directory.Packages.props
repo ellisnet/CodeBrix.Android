@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <!-- SKColor in RedisSetupTool.TerminalView's palette (Microsoft; the family's locked SkiaSharp release) -->
-    <!-- SkiaSharp 4.152.0: pinned by the repository's Directory.Packages.props since AP7-A (same version). -->
+    <!-- SkiaSharp 4.153.1: pinned by the repository's Directory.Packages.props since AP7-A (same version). -->
     <!-- The Docker Engine client under RedisSetupTool.DockerManagement (self-produced CodeBrix package, the version the sample pins) -->
     <PackageVersion Include="CodeBrix.Docker.MitLicenseForever" Version="1.0.254.1406" />
     <!-- The Redis client under RedisSetupTool.RedisManagement (self-produced CodeBrix package, the version the sample pins) -->

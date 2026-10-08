@@ -344,6 +344,8 @@ public class NetworksVolumesViewModel : SectionViewModel
             candidate.IsSelected = ReferenceEquals(candidate, row);
         }
         _selectedNetwork = row.Name;
+        //Remove depends on the selection, which no bound property carries, so say so here.
+        RaiseCanExecuteChanged(RemoveNetworkCommand);
         NetworkTitle = row.Name;
 
         NetworkDetail.Clear();
@@ -377,6 +379,7 @@ public class NetworksVolumesViewModel : SectionViewModel
             candidate.IsSelected = ReferenceEquals(candidate, row);
         }
         _selectedVolume = row.Name;
+        RaiseCanExecuteChanged(RemoveVolumeCommand);
         VolumeTitle = row.Name;
 
         VolumeDetail.Clear();

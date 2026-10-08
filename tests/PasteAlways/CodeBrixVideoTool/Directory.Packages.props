@@ -10,7 +10,7 @@
   <ItemGroup>
     <!-- AP7-C: CodeBrix.VideoPlayback is pinned by the repository (1.0.271.97, the VideoPlayer add-in's); the packages below
          moved with it to their versions on the same CodeBrix.Audio.Core 1.0.269.1270 line (the sample pins the 1.0.256 line). -->
-    <PackageVersion Include="CodeBrix.VideoPlayback.Authoring.MitLicenseForever" Version="1.0.271.1195" />
+    <PackageVersion Include="CodeBrix.VideoPlayback.Authoring.MitLicenseForever" Version="1.0.280.1149" />
     <PackageVersion Include="CodeBrix.VideoPlayback.Dav1d.BsdLicenseForever" Version="1.0.271.1206" />
     <PackageVersion Include="CodeBrix.Audio.Opus.BsdLicenseForever" Version="1.0.271.1185" />
     <!-- Referenced directly only to exclude its native assets (the desktop backend facade; nothing else of it is used). -->

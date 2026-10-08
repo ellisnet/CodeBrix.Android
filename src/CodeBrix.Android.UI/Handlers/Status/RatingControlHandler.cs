@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using CodeBrix.Android.UI.Android;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using AAppCompatRatingBar = AndroidX.AppCompat.Widget.AppCompatRatingBar;
@@ -117,7 +118,7 @@ internal sealed class RatingControlHandler : TemplateOverlayHandler<RatingContro
             bar.Rating = StatusMath.ShownRating(element.Value, element.PlaceholderValue, stars);
             bar.IsIndicator = element.IsReadOnly || !element.IsEnabled;
             bar.Enabled = element.IsEnabled;
-            bar.ContentDescription = $"Rating {Math.Max(0, element.Value)} of {stars}";
+            bar.ContentDescription = AutomationText.ContentDescriptionOr(AutomationProperties.GetName(element), $"Rating {Math.Max(0, element.Value)} of {stars}");
         }
         finally
         {

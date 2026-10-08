@@ -1,6 +1,7 @@
 using CodeBrix.Platform.Simple;
 using InannaRosette.Helpers;
 using InannaRosette.Reading;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -21,7 +22,10 @@ public partial class App : Application
     private const int MinimumWidth = 1180;
     private const int MinimumHeight = 760;
 
-    public App()
+    public App() : this(null) { }
+
+    // Alternate hosts may replace services before any view models are constructed.
+    public App(Action<IServiceCollection> configureServices)
     {
         //Merriweather is the app's voice: an old-style serif for a temple oracle
         global::CodeBrix.Platform.UI.FeatureConfiguration.Font.DefaultTextFontFamily =
@@ -29,6 +33,10 @@ public partial class App : Application
 
         SimpleServiceResolver.CreateInstance(HostHelper.GetHost(), services =>
         {
+            //An alternate host's registrations go first: AddReading() only adds what is not
+            //  already registered, so a replacement made here is the one that is used
+            configureServices?.Invoke(services);
+
             //Register the app's services here
             services.AddReading();
         });
@@ -48,7 +56,7 @@ public partial class App : Application
         InitializeComponent();
     }
 
-    protected Window? MainWindow { get; private set; }
+    protected Window MainWindow { get; private set; }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {

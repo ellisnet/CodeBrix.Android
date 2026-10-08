@@ -59,6 +59,15 @@ public sealed partial class MainPage : Page
         browser.NotifyBrowserReady();
     }
 
+    private void SaveTargetGroup_SizeChanged(object sender, Microsoft.UI.Xaml.SizeChangedEventArgs e)
+    {
+        //FlexPanel measures natural sizes before assigning flex widths. Bound the path entry
+        //to its assigned share so a long file name cannot push Select outside the group.
+        OutputPathBox.MaxWidth = Math.Max(0, e.NewSize.Width
+            - SaveTargetLabel.ActualWidth - SaveTargetLabel.Margin.Left - SaveTargetLabel.Margin.Right
+            - SelectOutputButton.ActualWidth - SelectOutputButton.Margin.Left - SelectOutputButton.Margin.Right);
+    }
+
     //Pressing Enter in the search box runs Search, just like clicking the button.
     private void SearchBox_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
     {

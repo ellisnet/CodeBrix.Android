@@ -1,4 +1,4 @@
-<Page x:Class="WikipediaPublisher.Views.MainPage"
+<Page xmlns:a="using:Microsoft.UI.Xaml.Automation" x:Class="WikipediaPublisher.Views.MainPage"
       xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
       xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -30,7 +30,7 @@
 
             <TextBlock Grid.Column="0" Text="Search Wikipedia:"
                        VerticalAlignment="Center" Margin="0,0,12,0" />
-            <TextBox Grid.Column="1" Height="36"
+            <TextBox a:AutomationProperties.AutomationId="SearchTerms" a:AutomationProperties.Name="Search Terms" Grid.Column="1" Height="36"
                      VerticalAlignment="Center" VerticalContentAlignment="Center"
                      PlaceholderText="e.g. cuneiform writing"
                      KeyDown="SearchBox_KeyDown"
@@ -43,7 +43,8 @@
         <!-- Center: embedded browser. Every Skia head now has a WebView2 - the Windows,
              Skia-on-WPF and macOS runtimes have it built in, and the Linux heads get it
              from the CodeBrix.Platform.WebView.ApacheLicenseForever add-in (WPE WebKit). -->
-        <WebView2 Grid.Row="1" x:Name="Browser" />
+        <WebView2 Grid.Row="1" x:Name="Browser" a:AutomationProperties.AutomationId="Browser"
+                  a:AutomationProperties.Name="Wikipedia article browser" />
 
         <!-- Status line -->
         <Grid Grid.Row="2" Margin="0,12,0,0">
@@ -60,26 +61,28 @@
         </Grid>
 
         <!-- Bottom bar: output file path (+ Select dialog), page size, Publish.
-             A wrapping FlexPanel: one row while the window is wide enough; in portrait
-             the save-target group and the page-size/Publish group split onto two rows -->
+             A wrapping FlexPanel: the save-target group and the page-size/Publish group
+             share one row while there is room for both - a portrait screen included - and
+             split onto two rows in a window too narrow for both -->
         <flex:FlexPanel Grid.Row="3" Margin="0,8,0,0" Direction="Row" Wrap="Wrap"
                         AlignItems="Center">
 
             <!-- Save-target group; Grow=1 so the path box stretches into whatever
                  width its row has, Basis so the wrap point is deterministic -->
-            <Grid Margin="0,4,16,4" flex:FlexPanel.Grow="1" flex:FlexPanel.Basis="420">
+            <Grid x:Name="SaveTargetGroup" Margin="0,4,16,4" flex:FlexPanel.Grow="1" flex:FlexPanel.Basis="420"
+                  SizeChanged="SaveTargetGroup_SizeChanged">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Save PDF to:"
+                <TextBlock x:Name="SaveTargetLabel" Grid.Column="0" Text="Save PDF to:"
                            VerticalAlignment="Center" Margin="0,0,12,0" />
-                <TextBox Grid.Column="1" Height="36"
+                <TextBox x:Name="OutputPathBox" a:AutomationProperties.AutomationId="OutputFilePath" a:AutomationProperties.Name="Output File Path" Grid.Column="1" Height="36"
                          VerticalAlignment="Center" VerticalContentAlignment="Center"
                          PlaceholderText="Click Select… (or type a full .pdf path)"
                          Text="{d:Binding OutputFilePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <Button Grid.Column="2" Height="36" Margin="8,0,0,0"
+                <Button x:Name="SelectOutputButton" Grid.Column="2" Height="36" Margin="8,0,0,0"
                         Content="Select…"
                         Command="{d:Binding SelectOutputFileCommand}" />
             </Grid>
@@ -88,7 +91,7 @@
             <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
                 <TextBlock Text="Page size:"
                            VerticalAlignment="Center" Margin="0,0,12,0" />
-                <ComboBox Width="210" Height="36" VerticalAlignment="Center"
+                <ComboBox a:AutomationProperties.AutomationId="SelectedPageSize" a:AutomationProperties.Name="Selected Page Size" Width="210" Height="36" VerticalAlignment="Center"
                           ItemsSource="{d:Binding PageSizes}"
                           DisplayMemberPath="DisplayName"
                           SelectedItem="{d:Binding SelectedPageSize, Mode=TwoWay}" />

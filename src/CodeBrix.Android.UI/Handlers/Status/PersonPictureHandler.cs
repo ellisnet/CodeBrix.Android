@@ -4,6 +4,7 @@ using CodeBrix.Platform.UI.Contracts;
 using CodeBrix.Platform.UI.Xaml.Media;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
@@ -167,7 +168,7 @@ internal sealed class PersonPictureHandler : ViewHandler<PersonPicture, PersonPi
         view.Initials.Typeface = global::CodeBrix.Android.UI.Android.AndroidPlatformBootstrap.Fonts?.Resolve(glyph ? symbolFont : element.FontFamily, Microsoft.UI.Text.FontWeights.SemiBold, Windows.UI.Text.FontStyle.Normal, Windows.UI.Text.FontStretch.Normal);
         view.Initials.SetTextColor(new AColor(foreground));
         view.Initials.SetTextSize(AComplexUnitType.Px, (float)(StatusMath.InitialsFontSize(diameter) * density));
-        view.ContentDescription = string.IsNullOrEmpty(element.DisplayName) ? (element.IsGroup ? "Group" : "Person") : element.DisplayName;
+        view.ContentDescription = AutomationText.ContentDescriptionOr(AutomationProperties.GetName(element), string.IsNullOrEmpty(element.DisplayName) ? (element.IsGroup ? "Group" : "Person") : element.DisplayName);
 
         var badgeText = StatusMath.PictureBadgeText(element.BadgeText, element.BadgeNumber);
         var badgeGlyph = badgeText == null && !string.IsNullOrEmpty(element.BadgeGlyph) ? element.BadgeGlyph : null;
@@ -201,6 +202,15 @@ internal sealed class PersonPictureHandler : ViewHandler<PersonPicture, PersonPi
         var height = double.IsInfinity(availableSize.Height) ? 100 : availableSize.Height;
         var side = Math.Min(width, height);
         return new Size(side, side);
+    }
+
+    /// <inheritdoc />
+    protected override void OnAutomationNameCleared()
+    {
+        if (Element is PersonPicture element)
+        {
+            MapContent(this, element);
+        }
     }
 
     /// <inheritdoc />

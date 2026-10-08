@@ -23,7 +23,10 @@ public partial class App : Application
     private const int MinimumWidth = 760;
     private const int MinimumHeight = 520;
 
-    public App()
+    public App() : this(null) { }
+
+    // Alternate hosts may replace external services before any view models are constructed.
+    public App(Action<IServiceCollection> configureServices, string settingsDirectory = null)
     {
         //Set Roboto as the default font for all text in the application
         global::CodeBrix.Platform.UI.FeatureConfiguration.Font.DefaultTextFontFamily =
@@ -41,12 +44,14 @@ public partial class App : Application
         {
             //Register the app's services here
             services.AddGitHubIssueSearch(new GitHubSearchOptions());
+            configureServices?.Invoke(services);
         });
         SimpleViewModel.SetIsDesignMode(false);
 
         //The first page's view model is built during InitializeComponent() and reads its
         //remembered values in its own constructor, so the store has to be open before that.
-        SettingsService.Initialize();
+        if (settingsDirectory == null) SettingsService.Initialize();
+        else SettingsService.Initialize(settingsDirectory);
 
         //Application.RequestedTheme may be set only here, before initialization completes, and
         //setting it at all is what makes the platform stop following the operating system. So it

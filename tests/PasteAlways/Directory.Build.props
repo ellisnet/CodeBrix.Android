@@ -29,6 +29,15 @@
     <OutputType>Exe</OutputType>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <!--
+      [AP1.16, coordinator ruling 2026-10-07] The CodeBrix.Platform XAML generator's own WARNINGS (Uno-prefixed ids;
+      today Uno0008 "binding target property not found", new in Platform 1.0.280.1176, severity Warning) stay warnings
+      here although the repository treats warnings as errors: the Platform raises them identically on every head, so a
+      pasted page that triggers one still "compiles on Android" (the paste-always contract). The paste-always script
+      COUNTS them (UNO column, uno-counts.tsv, uno-findings.txt), as it counts CBAND - never a failure. The generator's
+      Error-severity ids are not listed: they stay errors.
+    -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);Uno0008</WarningsNotAsErrors>
   </PropertyGroup>
 
   <Import Project="$(CodeBrixAndroidRepoRoot)build/inrepo/CodeBrix.Android.InRepo.props" />

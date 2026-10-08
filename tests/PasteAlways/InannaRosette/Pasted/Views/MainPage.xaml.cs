@@ -9,6 +9,7 @@ using InannaRosette.ViewModels;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -61,7 +62,7 @@ public sealed partial class MainPage : Page
     private readonly List<Rectangle> _slotRects = new();
     private readonly List<TextBlock> _slotLabels = new();
 
-    private MainViewModel? _wiredViewModel;
+    private MainViewModel _wiredViewModel;
 
     //Set once the page has unloaded and disposed its view model; everything that reaches for
     //  the view model after that gets null instead of a disposed object
@@ -70,8 +71,8 @@ public sealed partial class MainPage : Page
     private ILogger _log = NullLogger.Instance;
 
     // the hand-drawn rail captions, refreshed in place when the view model says they changed
-    private TextBlock? _deckCountText;
-    private TextBlock? _trayCaptionText;
+    private TextBlock _deckCountText;
+    private TextBlock _trayCaptionText;
 
     //A resize that lands while the interpretation panel is up leaves the rail chrome behind;
     //  this remembers that it has to be rebuilt when the panel goes away
@@ -96,17 +97,17 @@ public sealed partial class MainPage : Page
     private double _trayY, _trayW, _trayH;
 
     // drag state
-    private CardItem? _dragItem;
+    private CardItem _dragItem;
     private Point _grab;
     private bool _dragging;
     private bool _dragMoved;
     private int _topZ = 20;
-    private Rectangle? _dragShadow;
+    private Rectangle _dragShadow;
     private int _highlightStation = -1;
-    private CardItem? _lastClickItem;
+    private CardItem _lastClickItem;
     private DateTime _lastClickAt = DateTime.MinValue;
 
-    private Border? _detailPanel;
+    private Border _detailPanel;
 
     public MainPage()
     {
@@ -168,7 +169,7 @@ public sealed partial class MainPage : Page
         BuildLogo();
     }
 
-    private MainViewModel? ViewModel => _viewModelDisposed ? null : DataContext as MainViewModel;
+    private MainViewModel ViewModel => _viewModelDisposed ? null : DataContext as MainViewModel;
 
     // ==================================================================== watching the view model
 
@@ -212,7 +213,7 @@ public sealed partial class MainPage : Page
 
     //The chrome that is drawn by hand onto the rail canvas cannot be bound, so the few pieces
     //  of it that follow view model state are refreshed from here
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnViewModelPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
         switch (e.PropertyName)
         {
@@ -433,6 +434,7 @@ public sealed partial class MainPage : Page
                 StrokeDashArray = new DoubleCollection { 4, 4 },
                 Fill = Ornament.Brush(Ornament.Kohl, 0.3),
             };
+            AutomationProperties.SetAutomationId(rect, $"Station{i}");
             Canvas.SetLeft(rect, centre.X - _cardW / 2);
             Canvas.SetTop(rect, centre.Y - _cardH / 2);
             SlotLayer.Children.Add(rect);
@@ -557,6 +559,7 @@ public sealed partial class MainPage : Page
 
         var count = Caption(ViewModel?.DeckCountText ?? string.Empty, _railX + 18, _deckY + _deckH + 12,
             RailWidth - 36, 12, Ornament.Gold);
+        AutomationProperties.SetAutomationId(count, "DeckCount");
         RailLayer.Children.Add(count);
         _deckCountText = count;
 
@@ -568,6 +571,7 @@ public sealed partial class MainPage : Page
 
         var tray = Caption(ViewModel?.TrayCaption ?? string.Empty, _railX + 18, _trayY + _trayH + 6,
             RailWidth - 36, 10.5, Ornament.Ivory, 0.55);
+        AutomationProperties.SetAutomationId(tray, "TrayCaption");
         RailLayer.Children.Add(tray);
         _trayCaptionText = tray;
 
@@ -657,6 +661,10 @@ public sealed partial class MainPage : Page
                 EnableHover = i == DeckStackDepth - 1,
             };
             view.Rebuild();
+
+            //The top card of the stack is the one a click lands on
+            if (i == DeckStackDepth - 1) { AutomationProperties.SetAutomationId(view, "DeckStack"); }
+
             var offset = (DeckStackDepth - 1 - i) * 3.5;
             Canvas.SetLeft(view, _deckX + offset);
             Canvas.SetTop(view, _deckY - offset);
@@ -707,9 +715,9 @@ public sealed partial class MainPage : Page
 
     // ==================================================================== what the view model says changed
 
-    private CardItem? ItemFor(ReadingCard model) => _items.FirstOrDefault(i => ReferenceEquals(i.Model, model));
+    private CardItem ItemFor(ReadingCard model) => _items.FirstOrDefault(i => ReferenceEquals(i.Model, model));
 
-    private CardItem? ItemAtStation(int index) =>
+    private CardItem ItemAtStation(int index) =>
         index < 0 ? null : _items.FirstOrDefault(i => i.Model.Station == index);
 
     /// <summary>A card has left the deck: build its visual where the view model says it belongs.</summary>
@@ -724,6 +732,7 @@ public sealed partial class MainPage : Page
             CardHeight = inTray ? Math.Round(_cardH * 0.86) : _cardH,
         };
         view.Rebuild();
+        AutomationProperties.SetName(view, model.Card.Name);
         AttachCardHandlers(view);
 
         var item = new CardItem { Model = model, View = view };
@@ -1319,11 +1328,11 @@ public sealed partial class MainPage : Page
         view.CloseRequested += OnCardCloseRequested;
     }
 
-    private CardItem? ItemOf(object sender) => _items.FirstOrDefault(i => ReferenceEquals(i.View, sender));
+    private CardItem ItemOf(object sender) => _items.FirstOrDefault(i => ReferenceEquals(i.View, sender));
 
-    private void OnCardCloseRequested(object? sender, EventArgs e)
+    private void OnCardCloseRequested(object sender, EventArgs e)
     {
-        var item = ItemOf(sender!);
+        var item = ItemOf(sender);
         if (item is null || item.Model.InTray) { return; }
         CloseDetail();
         ViewModel?.ReturnToTray(item.Model, announce: true);
@@ -1515,6 +1524,7 @@ public sealed partial class MainPage : Page
 
         const double panelW = 330;
         var panel = BuildDetailPanel(item);
+        AutomationProperties.SetAutomationId(panel, "CardDetail");
         panel.Width = panelW;
         panel.MaxHeight = Math.Max(240, ContentCanvas.ActualHeight - 40);
 
@@ -1753,7 +1763,7 @@ public sealed partial class MainPage : Page
         }
     }
 
-    private void RenderInterpretation(ReadingInterpretation? interpretation)
+    private void RenderInterpretation(ReadingInterpretation interpretation)
     {
         //The title and the subtitle are bound to the view model; the body below is built by hand
         InterpStack.Children.Clear();
@@ -1856,7 +1866,7 @@ public sealed partial class MainPage : Page
 
     // ==================================================================== file dialogs
 
-    private static async Task<string?> PickSavePathAsync(string suggestedFileName, string typeName, string extension)
+    private static async Task<string> PickSavePathAsync(string suggestedFileName, string typeName, string extension)
     {
         var picker = new FileSavePicker
         {
@@ -1876,7 +1886,7 @@ public sealed partial class MainPage : Page
         return path;
     }
 
-    private static async Task<string?> PickReadingPathAsync()
+    private static async Task<string> PickReadingPathAsync()
     {
         var picker = new FileOpenPicker
         {

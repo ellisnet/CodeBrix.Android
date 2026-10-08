@@ -200,6 +200,12 @@ internal abstract class TemplateOverlayHandler<TElement, TOverlay> : ViewGroupHa
         PostRefresh();
     }
 
+    /// <summary>AP9-3: the overlaid native widget carries the element's automation name (not the host view).</summary>
+    public override AView AccessibilityView => (NativeView as TemplateOverlayHostView)?.NativeOverlay ?? NativeView;
+
+    /// <inheritdoc />
+    protected override void OnAutomationNameCleared() => Refresh();
+
     /// <summary>Re-reads the control now: the widget's rectangle, the covered parts, the widget's content.</summary>
     protected void Refresh()
     {

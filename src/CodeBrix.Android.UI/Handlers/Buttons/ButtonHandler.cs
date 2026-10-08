@@ -118,6 +118,9 @@ internal sealed class ButtonHandler : ViewGroupHandler<ButtonBase, ButtonHostVie
     /// <summary>The Material button of text content (null in content mode).</summary>
     internal AMaterialButton MaterialButton => _button;
 
+    /// <summary>AP9-3: the Material button carries the automation name in text mode; the clickable host in content mode.</summary>
+    public override AView AccessibilityView => (AView)_button ?? NativeView;
+
     /// <inheritdoc />
     public override ElementHandlerCapabilities Capabilities => _contentMode
         ? ElementHandlerCapabilities.OwnsVisuals | ElementHandlerCapabilities.MeasuresNatively | ElementHandlerCapabilities.HostsContent | ElementHandlerCapabilities.OwnsChildren
@@ -395,6 +398,10 @@ internal sealed class ButtonHandler : ViewGroupHandler<ButtonBase, ButtonHostVie
         }
 
         Recolor();
+
+        // AP9-3: the accessibility view changed with the mode (the Material button, or the host itself).
+        ApplyAutomationName();
+        ApplyAutomationId();
     }
 
     private AMaterialButton CreateMaterialButton()

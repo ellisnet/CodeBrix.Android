@@ -21,4 +21,16 @@ internal interface IViewHandler : IAndroidElementHandler
 
     /// <summary>Follows changes inside the element's render transform (null stops following).</summary>
     void WatchRenderTransform(Transform transform);
+
+    /// <summary>The view that carries the element's automation name and id (see ViewHandler.AccessibilityView).</summary>
+    AView AccessibilityView { get; }
+
+    /// <summary>
+    /// AP9-3: applies AutomationProperties.Name to <see cref="AccessibilityView"/>'s content description (null
+    /// when the name is null, empty or white space, so TalkBack falls back to the view's own text).
+    /// </summary>
+    void ApplyAutomationName();
+
+    /// <summary>AP9-3: applies AutomationProperties.AutomationId to <see cref="AccessibilityView"/>'s tag (a string tag only).</summary>
+    void ApplyAutomationId();
 }

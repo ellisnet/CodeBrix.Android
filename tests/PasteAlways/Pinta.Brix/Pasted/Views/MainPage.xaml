@@ -2,6 +2,7 @@
     x:Class="Pinta.Brix.Views.MainPage"
     xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
     xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+    xmlns:a="using:Microsoft.UI.Xaml.Automation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Pinta.Brix.Views"
     xmlns:vm="clr-namespace:Pinta.Brix.ViewModels;assembly=Pinta.Brix.Core"
@@ -33,7 +34,7 @@
         <Border x:Name="MainToolbarBorder" Grid.Row="1" BorderThickness="0,0,0,1"
                 BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                <StackPanel x:Name="MainToolbarPanel" Orientation="Horizontal" Padding="6,3" Spacing="2" />
+                <StackPanel x:Name="MainToolbarPanel" a:AutomationProperties.AutomationId="MainToolbar" Orientation="Horizontal" Padding="6,3" Spacing="2" />
             </ScrollViewer>
         </Border>
 
@@ -56,10 +57,11 @@
             </Grid.ColumnDefinitions>
 
             <ScrollViewer x:Name="ToolboxScroll" Grid.Column="0" VerticalScrollBarVisibility="Auto">
-                <StackPanel x:Name="ToolboxPanel" Padding="4" /><!-- Width flows from the button columns; see RefreshToolbox -->
+                <StackPanel x:Name="ToolboxPanel" a:AutomationProperties.AutomationId="Toolbox" Padding="4" /><!-- Width flows from the button columns; see RefreshToolbox -->
             </ScrollViewer>
 
             <TabView x:Name="DocumentTabs"
+                     a:AutomationProperties.AutomationId="DocumentTabs"
                      Grid.Column="1"
                      IsAddTabButtonVisible="False"
                      TabCloseRequested="DocumentTabs_TabCloseRequested"
@@ -79,9 +81,9 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Text="Layers" FontWeight="SemiBold" Margin="8,6,8,2" />
-                    <ListView x:Name="LayersList" Grid.Row="1" SelectionChanged="LayersList_SelectionChanged" />
+                    <ListView x:Name="LayersList" a:AutomationProperties.AutomationId="LayersList" Grid.Row="1" SelectionChanged="LayersList_SelectionChanged" />
                     <!-- Pad toolbar, built from the Layers commands; see BuildPadToolbars -->
-                    <StackPanel x:Name="LayersPadToolbar" Grid.Row="2" Orientation="Horizontal"
+                    <StackPanel x:Name="LayersPadToolbar" a:AutomationProperties.AutomationId="LayersPadToolbar" Grid.Row="2" Orientation="Horizontal"
                                 Spacing="2" Margin="6,2,6,6" />
                 </Grid>
 
@@ -96,9 +98,9 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="History" FontWeight="SemiBold" VerticalAlignment="Center" />
-                        <StackPanel x:Name="HistoryPadToolbar" Grid.Column="1" Orientation="Horizontal" Spacing="2" />
+                        <StackPanel x:Name="HistoryPadToolbar" a:AutomationProperties.AutomationId="HistoryPadToolbar" Grid.Column="1" Orientation="Horizontal" Spacing="2" />
                     </Grid>
-                    <ListView x:Name="HistoryList" Grid.Row="1" SelectionChanged="HistoryList_SelectionChanged" />
+                    <ListView x:Name="HistoryList" a:AutomationProperties.AutomationId="HistoryList" Grid.Row="1" SelectionChanged="HistoryList_SelectionChanged" />
                 </Grid>
             </Grid>
         </Grid>
@@ -116,18 +118,18 @@
             <ContentControl x:Name="PaletteWidgetHost" Grid.Column="0" VerticalAlignment="Center" />
             <!-- MaxLines keeps the bar one line tall: the shape tools carry
                  many-line StatusBarText and would otherwise grow the bar. -->
-            <TextBlock Grid.Column="1" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxLines="1"
+            <TextBlock Grid.Column="1" a:AutomationProperties.AutomationId="StatusText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxLines="1"
                        Text="{d:Binding StatusText}" />
-            <TextBlock Grid.Column="2" VerticalAlignment="Center" MinWidth="80"
+            <TextBlock Grid.Column="2" a:AutomationProperties.AutomationId="CursorPosition" VerticalAlignment="Center" MinWidth="80"
                        Text="{d:Binding CursorPositionText}" />
-            <TextBlock Grid.Column="3" VerticalAlignment="Center" MinWidth="80"
+            <TextBlock Grid.Column="3" a:AutomationProperties.AutomationId="SelectionSize" VerticalAlignment="Center" MinWidth="80"
                        Text="{d:Binding SelectionSizeText}" />
             <!-- The zoom control is the view model's: the two buttons are
                  commands, the list is its preset list, and the placeholder is
                  the current zoom because nothing stays selected. -->
             <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
                 <Button Content="−" Command="{d:Binding ZoomOutCommand}" />
-                <ComboBox MinWidth="90" IsEditable="True"
+                <ComboBox MinWidth="90" IsEditable="True" a:AutomationProperties.Name="Zoom"
                           ItemsSource="{d:Binding ZoomPresets}"
                           PlaceholderText="{d:Binding ZoomDisplayText}"
                           SelectedItem="{d:Binding SelectedZoomPreset, Mode=TwoWay}" />

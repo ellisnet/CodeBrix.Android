@@ -1,4 +1,5 @@
 using CodeBrix.Platform.Simple;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -10,7 +11,10 @@ namespace PolyHavenBrowser;
 
 public partial class App : Application
 {
-    public App()
+    public App() : this(null) { }
+
+    // Alternate hosts may replace external services before any view models are constructed.
+    public App(Action<IServiceCollection> configureServices)
     {
         //Set Roboto as the default font for all text in the application
         global::CodeBrix.Platform.UI.FeatureConfiguration.Font.DefaultTextFontFamily =
@@ -18,7 +22,11 @@ public partial class App : Application
 
         //Build the DI container (Poly Haven API client + sample-asset service) so view
         //  models can resolve services through SimpleServiceResolver.Instance.
-        SimpleServiceResolver.CreateInstance(HostHelper.GetHost(), services => services.AddPolyHavenBrowser());
+        SimpleServiceResolver.CreateInstance(HostHelper.GetHost(), services =>
+        {
+            services.AddPolyHavenBrowser();
+            configureServices?.Invoke(services);
+        });
         SimpleViewModel.SetIsDesignMode(false);
 
         InitializeComponent();

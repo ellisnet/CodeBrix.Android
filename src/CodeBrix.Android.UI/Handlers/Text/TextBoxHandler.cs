@@ -124,6 +124,9 @@ internal class TextBoxHandler : ViewHandler<TextBox, TextBoxView>, INativeTextEd
     /// <summary>The native editor.</summary>
     internal CodeBrixEditText EditText => PlatformView?.Editor;
 
+    /// <summary>AP9-3: the native editor (the focusable field) carries the automation name, not its layout.</summary>
+    public override AView AccessibilityView => (AView)(NativeView as TextBoxView)?.Editor ?? NativeView;
+
     /// <inheritdoc />
     public int SelectionStart => EditText is { } e ? Math.Min(e.SelectionStart, e.SelectionEnd) : 0;
 

@@ -1,5 +1,6 @@
 using CodeBrix.Platform.Simple;
 using GitHubIssueFinder.GitHub;
+using GitHubIssueFinder.Helpers;
 using GitHubIssueFinder.Settings;
 using GitHubIssueFinder.Theming;
 using Microsoft.UI.Xaml;
@@ -70,6 +71,7 @@ public class MainViewModel : SimpleViewModel, IManageColorScheme
 
     private readonly IGitHubIssueSearchService _searchService;
     private readonly bool _ownsSearchService;
+    private readonly IUrlOpener _urlOpener;
     private readonly Dictionary<string, RepositoryGroupViewModel> _groupsByRepository =
         new Dictionary<string, RepositoryGroupViewModel>(StringComparer.OrdinalIgnoreCase);
 
@@ -113,6 +115,9 @@ public class MainViewModel : SimpleViewModel, IManageColorScheme
             _searchService = new GitHubIssueSearchService(new GitHubSearchOptions());
             _ownsSearchService = true;
         }
+
+        //Null unless an alternate host registered one; the platform launcher is used then.
+        _urlOpener = GetService<IUrlOpener>();
 
         Groups = new ObservableCollection<RepositoryGroupViewModel>();
         StatusBrush = new SolidColorBrush();
@@ -947,7 +952,9 @@ public class MainViewModel : SimpleViewModel, IManageColorScheme
                 return;
             }
 
-            var opened = await Windows.System.Launcher.LaunchUriAsync(uri);
+            var opened = _urlOpener != null
+                ? await _urlOpener.OpenAsync(uri)
+                : await Windows.System.Launcher.LaunchUriAsync(uri);
             if (!opened)
             {
                 SetStatus("No browser was available to open that page.", SearchStatusKind.Failed);

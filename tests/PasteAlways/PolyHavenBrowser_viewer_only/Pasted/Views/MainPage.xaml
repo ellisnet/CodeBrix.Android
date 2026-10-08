@@ -3,6 +3,7 @@
     xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
     xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:a="using:Microsoft.UI.Xaml.Automation"
     xmlns:local="using:PolyHavenBrowser.Views"
     xmlns:vm="clr-namespace:PolyHavenBrowser.ViewModels;assembly=PolyHavenBrowser.Core"
     xmlns:conv="clr-namespace:PolyHavenBrowser.Converters;assembly=PolyHavenBrowser.Core"
@@ -38,6 +39,8 @@
             <TextBlock Text="Rendering engine:" VerticalAlignment="Center" Margin="12,0,0,0"
                        Visibility="{d:Binding EngineSelectorVisibility}" />
             <ComboBox Width="130" Height="36" VerticalAlignment="Center"
+                      a:AutomationProperties.AutomationId="RenderEngine"
+                      a:AutomationProperties.Name="Rendering engine"
                       ItemsSource="{d:Binding RenderEngineKinds}"
                       SelectedItem="{d:Binding SelectedRenderEngine, Mode=TwoWay}"
                       IsEnabled="{d:Binding IsNotBusy}"
@@ -46,7 +49,7 @@
 
         <!-- The rendering/display canvas, with a thin border between it and the window edge -->
         <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="1">
-            <skia:SKXamlCanvas x:Name="DisplayCanvas" />
+            <skia:SKXamlCanvas x:Name="DisplayCanvas" a:AutomationProperties.AutomationId="DisplayCanvas" />
         </Border>
 
         <!-- Busy indicator: an indeterminate bar across the top of the canvas while an asset
@@ -57,6 +60,7 @@
                      Visibility="{d:Binding BusyVisibility}" />
 
         <TextBlock Grid.Row="2" Text="{d:Binding StatusText}" Margin="0,8,0,0"
+                   a:AutomationProperties.AutomationId="StatusText"
                    TextWrapping="Wrap" Opacity="0.75" />
     </Grid>
 </Page>

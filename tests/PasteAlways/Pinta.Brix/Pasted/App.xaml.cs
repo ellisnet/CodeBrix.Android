@@ -12,7 +12,10 @@ namespace Pinta.Brix;
 
 public partial class App : Application
 {
-    public App()
+    public App() : this(null) { }
+
+    // Alternate hosts (the PlayTests) keep the settings store out of the user's own folder.
+    public App(string settingsDirectory)
     {
         //Set Open Sans as the default font for all text in the application
         global::CodeBrix.Platform.UI.FeatureConfiguration.Font.DefaultTextFontFamily =
@@ -29,7 +32,14 @@ public partial class App : Application
         //including its startup auto-backup and pruning - before anything reads
         //a setting. PintaCore's static constructor builds the palette manager,
         //which reads settings, so this must come first.
-        Pinta.Brix.Settings.SettingsService.Initialize();
+        if (settingsDirectory is null)
+        {
+            Pinta.Brix.Settings.SettingsService.Initialize();
+        }
+        else
+        {
+            Pinta.Brix.Settings.SettingsService.Initialize(settingsDirectory);
+        }
 
         //Restore the persisted window size BEFORE any window exists - the
         //Skia heads consult ApplicationView.PreferredLaunchViewSize when they

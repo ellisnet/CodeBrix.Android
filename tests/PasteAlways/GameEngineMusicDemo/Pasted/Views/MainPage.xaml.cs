@@ -17,6 +17,10 @@ public sealed partial class MainPage : Page
 {
     private IManageGameCanvas _gameCanvasManager;
 
+    // Set while this page moves a stem slider itself, so the slider's ValueChanged handler does not
+    // write the gain straight back - which would cancel a fade in flight.
+    private bool _movingStemSliders;
+
     /// <summary>Creates the page.</summary>
     public MainPage()
     {
@@ -94,7 +98,7 @@ public sealed partial class MainPage : Page
     private void SetStemGain(int index, double percent)
     {
         var stems = Demo?.Stems;
-        if (stems is not null)
+        if (stems is not null && !_movingStemSliders)
         {
             stems[index].Gain = (float)(percent / 100.0);
         }
@@ -118,7 +122,7 @@ public sealed partial class MainPage : Page
 
         // The slider would otherwise keep showing where the layer WAS; setting it here would fight
         // the fade, so it is moved to the destination and the fade is left to do the audible part.
-        slider.Value = target * 100.0;
+        MoveStemSlider(slider, target * 100.0);
     }
 
     private void SyncStemSliders()
@@ -129,9 +133,22 @@ public sealed partial class MainPage : Page
             return;
         }
 
-        PadSlider.Value = stems[0].Gain * 100.0;
-        BassSlider.Value = stems[1].Gain * 100.0;
-        LeadSlider.Value = stems[2].Gain * 100.0;
+        MoveStemSlider(PadSlider, stems[0].Gain * 100.0);
+        MoveStemSlider(BassSlider, stems[1].Gain * 100.0);
+        MoveStemSlider(LeadSlider, stems[2].Gain * 100.0);
+    }
+
+    private void MoveStemSlider(Slider slider, double value)
+    {
+        _movingStemSliders = true;
+        try
+        {
+            slider.Value = value;
+        }
+        finally
+        {
+            _movingStemSliders = false;
+        }
     }
 
     // ----- the stems export -----

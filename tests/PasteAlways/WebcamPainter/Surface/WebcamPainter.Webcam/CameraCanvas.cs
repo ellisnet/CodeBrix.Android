@@ -12,7 +12,7 @@ namespace WebcamPainter.Webcam;
 public class CameraCanvas : SkiaSharp.Views.Windows.SKXamlCanvas { }
 
 /// <summary>
-/// Renders a capture service's most recent webcam frame onto a Skia surface - aspect-fit,
+/// Renders a camera source's most recent webcam frame onto a Skia surface - aspect-fit,
 /// centered on a black background, and optionally mirrored (selfie-style). Create one
 /// renderer per canvas; the frame buffers it caches are reused across paints and are only
 /// touched on the UI thread.
@@ -27,9 +27,9 @@ public sealed class WebcamFrameRenderer
     /// </summary>
     /// <param name="surface">The Skia surface to render onto.</param>
     /// <param name="info">The image info describing the surface.</param>
-    /// <param name="service">The capture service to pull the frame from; nothing renders when null.</param>
+    /// <param name="service">The camera source to pull the frame from; nothing renders when null.</param>
     /// <param name="mirror"><c>true</c> to flip the video left-to-right, like a mirror.</param>
-    public void Render(SKSurface surface, SKImageInfo info, WebcamCaptureService service, bool mirror)
+    public void Render(SKSurface surface, SKImageInfo info, ICameraSource service, bool mirror)
     {
         SKCanvas canvas = surface.Canvas;
         canvas.Clear(SKColors.Black);

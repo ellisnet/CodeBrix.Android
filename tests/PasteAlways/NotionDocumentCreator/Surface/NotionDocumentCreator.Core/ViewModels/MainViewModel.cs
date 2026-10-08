@@ -388,11 +388,13 @@ public class MainViewModel : SimpleViewModel, IFileSaveBridge
                 PageSize = SelectedPageSize.Option
             };
 
-            var progress = new Progress<CreateProgress>(p => InvokeOnMainThread(() =>
+            //Progress<T> already posts each report to the UI thread it was created on; queueing it
+            //  a second time let a late report overwrite the final "Saved:"/"Creation failed." line.
+            var progress = new Progress<CreateProgress>(p =>
             {
                 StatusText = p.Message;
                 ProgressValue = p.PercentComplete;
-            }));
+            });
 
             var result = await _documentSvc.CreateDocumentAsync(request, progress);
 
@@ -443,8 +445,13 @@ public class MainViewModel : SimpleViewModel, IFileSaveBridge
         try
         {
             var children = await _documentSvc.LoadChildrenAsync(node.Id);
-            InvokeOnMainThread(() =>
-                node.SetChildren(children.Select(c => new NotionPageNodeViewModel(c, this))));
+            //Awaited, not just queued: "Load whole tree" walks the new children as soon as this
+            //  returns, so they have to be in place by then.
+            await InvokeOnMainThreadAsync(() =>
+            {
+                node.SetChildren(children.Select(c => new NotionPageNodeViewModel(c, this)));
+                return Task.FromResult(true);
+            });
         }
         catch (Exception e)
         {

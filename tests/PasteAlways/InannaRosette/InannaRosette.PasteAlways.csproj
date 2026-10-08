@@ -11,8 +11,12 @@
     <!-- The desktop heads keep the default root namespace (= assembly name); the generator names its per-assembly types after it. -->
     <RootNamespace>InannaRosette.PasteAlways</RootNamespace>
     <AssemblyName>InannaRosette.PasteAlways</AssemblyName>
-    <!-- The same language settings as the app's desktop heads and InannaRosette.Core. -->
-    <Nullable>enable</Nullable>
+    <!--
+      [AP8-T2, 2026-10-07] The app's desktop heads (which compile the pasted UI files) now build with Nullable DISABLED, while
+      the Surface copies of InannaRosette.Core / InannaRosette.Reading keep their own Nullable ENABLED annotations: the
+      "annotations" context accepts both (the `?` annotations compile, and no nullable warning is raised - as on the desktop heads).
+    -->
+    <Nullable>annotations</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 

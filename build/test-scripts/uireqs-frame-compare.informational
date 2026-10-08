@@ -56,19 +56,10 @@ Landscape/ThemeFocus/Image
 # (REMOVED by AP8-S item 3, 2026-09-27: the one-frame entry Portrait/Text/PasswordBox/Scenario2_..._01_masked - the native
 # caret blink phase. The harness now gives every EditText its draw-nothing caret drawable on its first layout, before the
 # Editor caches the real one (TestTargetSession.InstallCaretHook): no caret is drawn in any frame, the frame is strict again.)
-# ONE FRAME per orientation [AP1.12 2026-09-27, agent; for the coordinator to confirm]: RatingControl Scenario 1 has two exact
-# rendering states on this emulator (star-edge antialiasing, max 3-4/255, ~600-900 px): the same build and pin gave the
-# baseline state in dev4a (both orientations) and dev4b portrait, the other state in dev4b landscape and full pass p1 (both
-# orientations, held platform.lock + build.lock); the .982 re-gate p4 had the baseline state. No change of this package
-# reaches it (RatingControl's Core surface is identical between the pins). The scenario's region claims stay strict;
-# FIXLIST [AP1.12] RatingControl, owner AP8-S.
-# [AP10-C] the star tiles are no longer filtered (RatingControlHandler.Tile, FilterBitmap false; frames re-baselined); kept
-# until more emulator sessions show the new frame is single-state (FIXLIST [AP10-C] ITEM 4).
-Portrait/Range/RatingControl/Scenario1_a_ratingcontrol_draws_its_stars_01
-Landscape/Range/RatingControl/Scenario1_a_ratingcontrol_draws_its_stars_01
-# ONE FRAME [AP7-B AdvancedTextEdit, coordinator ruling 2026-09-27 08:07]: native indeterminate ring animation phase at
-# capture; owner AP8-S (ProgressRing look/animator-scale items); FIXLIST [AP7-B AdvancedTextEdit] 08:07.
-Portrait/Range/ProgressRing/Scenario3_a_progressring_that_stops_being_active_clears_its_rectangle_01
+# (REMOVED by AP1.16, 2026-10-07: the one-frame entries Portrait/Landscape Range/RatingControl/Scenario1_..._01 (star-edge
+# antialiasing, AP1.12/AP10-C) and Portrait Range/ProgressRing/Scenario3_..._01 (indeterminate ring phase, AP7-B). All three
+# frames were byte-identical to the baseline in AP1.15 run 2 and full pass p1 and in every AP1.16 run at pin 1.0.280.1176;
+# the frames are strict again. FIXLIST [AP1.12] RatingControl / [AP10-C] ITEM 4 / [AP7-B AdvancedTextEdit] 08:07.)
 # ONE FRAME per orientation [AP8-S batch 4, coordinator ruling 2026-09-27 22:30]: Android clipboard 'Copied' chip overlay after
 # a copy chord; two-state; owner harness; FIXLIST [AP8-S batch 4]. (SystemUI draws the chip on its own timer after the app writes
 # the clipboard: the pin triple's run 2 captured the frame before it showed - a 75x41 box at (0,1515) in portrait; runs 1/3 and

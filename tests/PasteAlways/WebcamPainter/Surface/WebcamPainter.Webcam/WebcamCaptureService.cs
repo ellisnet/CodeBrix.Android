@@ -14,7 +14,7 @@ namespace WebcamPainter.Webcam;
 /// Audio is never captured - this application only paints. The latest-frame cache lives in
 /// the underlying <see cref="WebcamSession"/>; this service just forwards to it.
 /// </summary>
-public sealed class WebcamCaptureService : IDisposable
+public sealed class WebcamCaptureService : ICameraSource
 {
     private volatile bool _hasFrame;
 
@@ -34,6 +34,9 @@ public sealed class WebcamCaptureService : IDisposable
         }
         return cameras;
     }
+
+    /// <inheritdoc />
+    Task<IReadOnlyList<CameraDevice>> ICameraSource.GetCamerasAsync() => GetCamerasAsync();
 
     /// <summary>Indicates whether a capture session is currently running.</summary>
     public bool IsRunning => _session != null;

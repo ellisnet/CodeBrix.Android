@@ -1,4 +1,4 @@
-<Page
+<Page xmlns:a="using:Microsoft.UI.Xaml.Automation"
     x:Class="GitHubIssueFinder.Views.MainPage"
     xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
     xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
@@ -48,7 +48,7 @@
                     <FontIcon Glyph="&#xE790;" FontSize="16"
                               Foreground="{StaticResource TextSecondaryBrush}"
                               VerticalAlignment="Center" />
-                    <ComboBox Width="210" CornerRadius="6" TabIndex="6"
+                    <ComboBox a:AutomationProperties.AutomationId="SelectedScheme" a:AutomationProperties.Name="Selected Scheme" Width="210" CornerRadius="6" TabIndex="6"
                               VerticalAlignment="Center"
                               ItemsSource="{d:Binding SchemeOptions}"
                               SelectedItem="{d:Binding SelectedScheme, Mode=TwoWay}"
@@ -89,7 +89,7 @@
                                      binding whose fallback is a theme resource, and that fallback
                                      is lost when the element theme is switched at run time, which
                                      takes the placeholder text with it. -->
-                                <TextBox Width="260" CornerRadius="6" TabIndex="1"
+                                <TextBox a:AutomationProperties.AutomationId="Owner" a:AutomationProperties.Name="Owner" Width="260" CornerRadius="6" TabIndex="1"
                                          Padding="30,6,8,6" FontSize="13"
                                          PlaceholderForeground="{StaticResource TextTertiaryBrush}"
                                          PlaceholderText="GitHub user or organization"
@@ -102,7 +102,7 @@
                             </Grid>
 
                             <Grid Margin="0,3,14,3">
-                                <TextBox Width="260" CornerRadius="6" TabIndex="2"
+                                <TextBox a:AutomationProperties.AutomationId="Assignee" a:AutomationProperties.Name="Assignee" Width="260" CornerRadius="6" TabIndex="2"
                                          Padding="30,6,8,6" FontSize="13"
                                          PlaceholderForeground="{StaticResource TextTertiaryBrush}"
                                          PlaceholderText="Leave empty for unassigned"
@@ -114,14 +114,14 @@
                                           Margin="10,0,0,0" IsHitTestVisible="False" />
                             </Grid>
 
-                            <CheckBox Content="Include closed issues" FontSize="13" TabIndex="3"
+                            <CheckBox a:AutomationProperties.AutomationId="IncludeClosed" a:AutomationProperties.Name="Include Closed" Content="Include closed issues" FontSize="13" TabIndex="3"
                                       Margin="0,3,14,3" VerticalAlignment="Center"
                                       IsChecked="{d:Binding IncludeClosed, Mode=TwoWay}" />
 
                             <Button Margin="0,3,8,3" CornerRadius="6" Padding="16,7" TabIndex="4"
                                     FontWeight="SemiBold" VerticalAlignment="Center"
                                     Style="{StaticResource AccentButtonStyle}"
-                                    Command="{d:Binding SearchCommand}">
+                                    a:AutomationProperties.Name="Search" Command="{d:Binding SearchCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon Glyph="&#xE721;" FontSize="14"
                                               VerticalAlignment="Center" />
@@ -135,7 +135,7 @@
                             <Button Margin="0,3,0,3" CornerRadius="6" Padding="16,7" TabIndex="5"
                                     VerticalAlignment="Center"
                                     BorderThickness="1"
-                                    Command="{d:Binding CancelCommand}">
+                                    a:AutomationProperties.Name="Cancel" Command="{d:Binding CancelCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon Glyph="&#xE711;" FontSize="14"
                                               VerticalAlignment="Center" />
@@ -145,7 +145,7 @@
                             </Button>
                         </flex:FlexPanel>
 
-                        <TextBlock Text="{d:Binding HelperText}" FontSize="12.5"
+                        <TextBlock a:AutomationProperties.AutomationId="HelperText" Text="{d:Binding HelperText}" FontSize="12.5"
                                    TextWrapping="Wrap"
                                    Foreground="{StaticResource TextTertiaryBrush}" />
                     </StackPanel>
@@ -181,16 +181,16 @@
                                 <FontIcon Glyph="&#xF138;" FontSize="15"
                                           Foreground="{StaticResource SuccessBrush}"
                                           VerticalAlignment="Center" />
-                                <TextBlock Text="{d:Binding HeaderOpenText}" FontSize="13"
+                                <TextBlock a:AutomationProperties.AutomationId="HeaderOpenText" Text="{d:Binding HeaderOpenText}" FontSize="13"
                                            FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimaryBrush}"
                                            VerticalAlignment="Center" />
-                                <TextBlock Text="{d:Binding HeaderSummary}" FontSize="13"
+                                <TextBlock a:AutomationProperties.AutomationId="HeaderSummary" Text="{d:Binding HeaderSummary}" FontSize="13"
                                            Foreground="{StaticResource TextSecondaryBrush}"
                                            TextTrimming="CharacterEllipsis" MaxLines="1"
                                            VerticalAlignment="Center" />
                             </StackPanel>
-                            <TextBlock Grid.Column="1" Text="{d:Binding IssuePrSplit}" FontSize="12"
+                            <TextBlock a:AutomationProperties.AutomationId="IssuePrSplit" Grid.Column="1" Text="{d:Binding IssuePrSplit}" FontSize="12"
                                        Foreground="{StaticResource TextSecondaryBrush}"
                                        VerticalAlignment="Center" Margin="12,0,0,0" />
                         </Grid>
@@ -236,11 +236,11 @@
                             <FontIcon Glyph="&#xF13E;" FontSize="32"
                                       Foreground="{StaticResource SuccessBrush}"
                                       HorizontalAlignment="Center" />
-                            <TextBlock Text="{d:Binding EmptyText}" FontSize="15"
+                            <TextBlock a:AutomationProperties.AutomationId="EmptyText" Text="{d:Binding EmptyText}" FontSize="15"
                                        FontWeight="SemiBold" MaxWidth="540" TextWrapping="Wrap"
                                        TextAlignment="Center" HorizontalAlignment="Center"
                                        Foreground="{StaticResource TextPrimaryBrush}" />
-                            <TextBlock Text="Tick Include closed issues to widen the search."
+                            <TextBlock a:AutomationProperties.AutomationId="EmptyHint" Text="Tick Include closed issues to widen the search."
                                        FontSize="12.5" HorizontalAlignment="Center"
                                        Visibility="{d:Binding EmptyHintVisibility}"
                                        Foreground="{StaticResource TextTertiaryBrush}" />
@@ -424,7 +424,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <ProgressBar Grid.Column="0" Width="200" Height="6" Minimum="0" Maximum="100"
+                <ProgressBar a:AutomationProperties.AutomationId="StatusProgress" Grid.Column="0" Width="200" Height="6" Minimum="0" Maximum="100"
                              VerticalAlignment="Center"
                              Value="{d:Binding ProgressValue}"
                              IsIndeterminate="{d:Binding IsProgressIndeterminate}"
@@ -432,11 +432,11 @@
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
                             VerticalAlignment="Center">
-                    <FontIcon Glyph="{d:Binding StatusGlyph}" FontSize="13"
+                    <FontIcon a:AutomationProperties.AutomationId="StatusGlyph" Glyph="{d:Binding StatusGlyph}" FontSize="13"
                               Foreground="{d:Binding StatusBrush}"
                               Visibility="{d:Binding StatusGlyphVisibility}"
                               VerticalAlignment="Center" />
-                    <TextBlock Text="{d:Binding StatusText}" FontSize="12"
+                    <TextBlock a:AutomationProperties.AutomationId="StatusText" Text="{d:Binding StatusText}" FontSize="12"
                                Foreground="{d:Binding StatusBrush}"
                                TextTrimming="CharacterEllipsis" MaxLines="1"
                                VerticalAlignment="Center" />
@@ -447,14 +447,14 @@
                     <Border Background="{d:Binding SearchQuotaBackground}"
                             BorderBrush="{d:Binding SearchQuotaBorderBrush}"
                             BorderThickness="1" CornerRadius="10" Padding="8,1">
-                        <TextBlock Text="{d:Binding SearchQuotaText}" FontSize="11"
+                        <TextBlock a:AutomationProperties.AutomationId="SearchQuota" Text="{d:Binding SearchQuotaText}" FontSize="11"
                                    FontWeight="SemiBold"
                                    Foreground="{d:Binding SearchQuotaForeground}" />
                     </Border>
                     <Border Background="{StaticResource CanvasInsetBrush}"
                             BorderBrush="{StaticResource HairlineBrush}"
                             BorderThickness="1" CornerRadius="10" Padding="8,1">
-                        <TextBlock Text="{d:Binding CoreQuotaText}" FontSize="11"
+                        <TextBlock a:AutomationProperties.AutomationId="CoreQuota" Text="{d:Binding CoreQuotaText}" FontSize="11"
                                    FontWeight="SemiBold"
                                    Foreground="{StaticResource TextSecondaryBrush}" />
                     </Border>

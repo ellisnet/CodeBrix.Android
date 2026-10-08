@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using CodeBrix.Platform.Simple;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
@@ -15,7 +16,10 @@ namespace WikipediaPublisher;
 
 public partial class App : Application
 {
-    public App()
+    public App() : this(null) { }
+
+    // Alternate hosts may replace external services before any view models are constructed.
+    public App(Action<IServiceCollection> configureServices)
     {
         //Set Open Sans as the default font for all text in application
         global::CodeBrix.Platform.UI.FeatureConfiguration.Font.DefaultTextFontFamily = "ms-appx:///CodeBrix.Platform.Fonts.OpenSans/Fonts/OpenSans.ttf";
@@ -24,6 +28,7 @@ public partial class App : Application
         {
             //Register my custom services here
             services.AddRenderArticle();
+            configureServices?.Invoke(services);
         });
         SimpleViewModel.SetIsDesignMode(false);
 

@@ -1,4 +1,4 @@
-<Page
+<Page xmlns:a="using:Microsoft.UI.Xaml.Automation"
     x:Class="KenneyAssetBrowser.Views.MainPage"
     xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
     xmlns:c="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
@@ -240,11 +240,11 @@
 
                     <!-- Search and the category filter travel as one unit when the panel wraps -->
                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,6,16,6">
-                        <TextBox Width="240" VerticalAlignment="Center"
+                        <TextBox a:AutomationProperties.AutomationId="SearchText" a:AutomationProperties.Name="Search Text" Width="240" VerticalAlignment="Center"
                                  PlaceholderText="Search assets…"
                                  Text="{d:Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                  CornerRadius="8" />
-                        <ComboBox Width="190" VerticalAlignment="Center"
+                        <ComboBox a:AutomationProperties.AutomationId="SelectedCategory" a:AutomationProperties.Name="Selected Category" Width="190" VerticalAlignment="Center"
                                   CornerRadius="8"
                                   ItemsSource="{d:Binding Categories}"
                                   SelectedItem="{d:Binding SelectedCategory, Mode=TwoWay}" />
@@ -252,7 +252,7 @@
 
                     <Button CornerRadius="8" Padding="14,8" Margin="0,6,0,6" BorderThickness="1"
                             MaxWidth="300"
-                            Command="{d:Binding PickFolderCommand}">
+                            a:AutomationProperties.Name="{d:Binding AssetsFolderLabel}" Command="{d:Binding PickFolderCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xE8B7;" FontSize="13"
                                       Foreground="{StaticResource AccentBrush}"
@@ -278,7 +278,7 @@
                            Text="Download asset bundles (.zip) from kenney.nl and place them in a folder of your choice, then point this app at that folder. Your choice is remembered for next time." />
                 <Button HorizontalAlignment="Center"
                         Style="{StaticResource PrimaryButtonStyle}"
-                        Command="{d:Binding PickFolderCommand}">
+                        a:AutomationProperties.Name="{d:Binding AssetsFolderLabel}" Command="{d:Binding PickFolderCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE8B7;" FontSize="14" VerticalAlignment="Center" />
                         <TextBlock Text="Choose assets folder…" VerticalAlignment="Center" />
@@ -336,6 +336,7 @@
                                    Foreground="{StaticResource TextTertiaryBrush}"
                                    VerticalAlignment="Center" />
                         <Button Grid.Column="1" CornerRadius="6" Padding="10,5" BorderThickness="1"
+                                a:AutomationProperties.AutomationId="ShowLicense"
                                 Command="{d:Binding ShowLicenseCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon Glyph="&#xE8A5;" FontSize="12"
@@ -555,7 +556,7 @@
                         <!-- Animated 3D models: pick a clip and play/pause it -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
                                     Visibility="{d:Binding AnimationBarVisibility}">
-                            <ComboBox Width="210" VerticalAlignment="Center" CornerRadius="6"
+                            <ComboBox a:AutomationProperties.AutomationId="SelectedAnimation" a:AutomationProperties.Name="Selected Animation" Width="210" VerticalAlignment="Center" CornerRadius="6"
                                       ItemsSource="{d:Binding AnimationNames}"
                                       SelectedItem="{d:Binding SelectedAnimation, Mode=TwoWay}" />
                             <Button Height="30" Padding="14,0" CornerRadius="6" BorderThickness="1"

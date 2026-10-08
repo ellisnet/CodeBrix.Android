@@ -4,6 +4,7 @@ using InannaRosette.Reading.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -48,7 +49,7 @@ public sealed partial class CardView : UserControl
     }
 
     /// <summary>Raised when the small × in the corner is clicked.</summary>
-    public event EventHandler? CloseRequested;
+    public event EventHandler CloseRequested;
 
     // ------------------------------------------------------------------ properties
 
@@ -56,9 +57,9 @@ public sealed partial class CardView : UserControl
         nameof(Card), typeof(Card), typeof(CardView),
         new PropertyMetadata(null, (d, _) => ((CardView)d).Rebuild()));
 
-    public Card? Card
+    public Card Card
     {
-        get => (Card?)GetValue(CardProperty);
+        get => (Card)GetValue(CardProperty);
         set => SetValue(CardProperty, value);
     }
 
@@ -150,7 +151,7 @@ public sealed partial class CardView : UserControl
         if (IsFaceUp) { return; }
         try
         {
-            void OnDone(object? s, object e)
+            void OnDone(object s, object e)
             {
                 FlipOutStory.Completed -= OnDone;
                 IsFaceUp = true;
@@ -276,7 +277,7 @@ public sealed partial class CardView : UserControl
     // ------------------------------------------------------------------ helpers
 
     private static Rectangle Rect(double x, double y, double w, double h, double radius,
-                                  Brush? fill, Brush? stroke = null, double thickness = 0)
+                                  Brush fill, Brush stroke = null, double thickness = 0)
     {
         var r = new Rectangle
         {
@@ -293,8 +294,8 @@ public sealed partial class CardView : UserControl
         return r;
     }
 
-    private static Ellipse Circle(double cx, double cy, double radius, Brush? fill,
-                                  Brush? stroke = null, double thickness = 0)
+    private static Ellipse Circle(double cx, double cy, double radius, Brush fill,
+                                  Brush stroke = null, double thickness = 0)
     {
         var e = new Ellipse
         {
@@ -336,7 +337,7 @@ public sealed partial class CardView : UserControl
     /// (accent layers take <paramref name="accent"/>); stroked layers take <paramref name="stroke"/>.
     /// </summary>
     internal static Canvas LayerCanvas(IReadOnlyList<EmblemLayer> layers, double box,
-                                       Brush? fill, Brush? accent, Brush? stroke)
+                                       Brush fill, Brush accent, Brush stroke)
     {
         var canvas = new Canvas { Width = box, Height = box };
         if (layers is null) { return canvas; }
@@ -362,7 +363,7 @@ public sealed partial class CardView : UserControl
 
     /// <summary>An ornament layer stack placed at a point, scaled into a square of the given size.</summary>
     internal static Viewbox PathBox(IReadOnlyList<EmblemLayer> layers, double cx, double cy, double size,
-                                    double box, Brush? fill, Brush? accent = null, Brush? stroke = null,
+                                    double box, Brush fill, Brush accent = null, Brush stroke = null,
                                     double opacity = 1, double scaleX = 1, double scaleY = 1)
     {
         var canvas = LayerCanvas(layers, box, fill, accent, stroke ?? fill);
@@ -414,7 +415,7 @@ public sealed partial class CardView : UserControl
         return new PathGeometry();
     }
 
-    private static Geometry? TryParseGeometry(string data)
+    private static Geometry TryParseGeometry(string data)
     {
         try { return (Geometry)Microsoft.UI.Xaml.Markup.XamlBindingHelper.ConvertValue(typeof(Geometry), data); }
         catch (Exception) { /* try the reader */ }
@@ -626,8 +627,8 @@ public sealed partial class CardView : UserControl
 
     // ------------------------------------------------------------------ overlay
 
-    private Border? _closeButton;
-    private Microsoft.UI.Xaml.Shapes.Path? _reversedMarker;
+    private Border _closeButton;
+    private Microsoft.UI.Xaml.Shapes.Path _reversedMarker;
 
     private void BuildOverlay()
     {
@@ -671,6 +672,7 @@ public sealed partial class CardView : UserControl
                 VerticalAlignment = VerticalAlignment.Center,
             },
         };
+        AutomationProperties.SetAutomationId(close, "ReturnToTray");
         close.PointerPressed += (_, e) =>
         {
             e.Handled = true;

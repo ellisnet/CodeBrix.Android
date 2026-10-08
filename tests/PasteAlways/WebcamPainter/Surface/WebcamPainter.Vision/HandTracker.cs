@@ -15,7 +15,7 @@ namespace WebcamPainter.Vision;
 /// latest-frame-wins semantics - submitting faster than the models can process simply
 /// drops stale frames, so the capture pipeline is never blocked.
 /// </summary>
-public sealed class HandTracker : IDisposable
+public sealed class HandTracker : IHandTracker
 {
     private const string DetectorResourceName = "WebcamPainter.Vision.Models.hand_detector.tflite";
     private const string LandmarkerResourceName = "WebcamPainter.Vision.Models.hand_landmarks_detector.tflite";

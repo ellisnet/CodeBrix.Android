@@ -135,7 +135,13 @@ public class ContainersViewModel : SectionViewModel
             : Rows.Count.ToString() + " of " + Formatting.Plural(snapshot.Count, "container");
         NotifyPropertyChanged(nameof(EmptyVisibility));
 
-        if (selected is null && !string.IsNullOrEmpty(_selectedId))
+        if (selected is not null)
+        {
+            //Keep the detail pane's state and toolbar in step with the fresh snapshot, without
+            //  reloading the open tab.
+            Detail.ApplyStatus(selected.Info);
+        }
+        else if (!string.IsNullOrEmpty(_selectedId))
         {
             //The selected container is gone (removed, or filtered out): clear the pane rather
             //  than leaving it showing something that no longer exists.

@@ -65,12 +65,14 @@ up logging to logcat itself).
 5. **The font swap** (`FontSwap.Apply`): the Android variant of the Core project carries the Open Sans
    package reference exactly as the net10.0 one does, so the Roboto swap must be applied to it too.
    The head files contain no font reference.
-6. **Package versions**: the head and the Core carry `CodeBrix.Android.ApacheLicenseForever` with
-   `Version="*"` in this repository (no version is published yet). When the files go into the
-   archive, write the published version there; `ApplicationPackageVersionUpdater` then moves it to the
-   latest release like every other reference. The updater (and `PackageReferenceReader`) must read and
-   rewrite a PackageReference that sits inside a conditional ItemGroup (the Core's two framework-specific
-   groups).
+6. **Package versions**: the head and the Core files in this folder carry `CodeBrix.Android.ApacheLicenseForever`
+   with `Version="*"` as a placeholder. When the files go into the archive, write the newest version of
+   `CodeBrix.Android.ApacheLicenseForever` on nuget.org there (the package is published like every other CodeBrix
+   package); `ApplicationPackageVersionUpdater` then moves it to the latest release like every other reference. Every
+   `CodeBrix.Android.<Add-in>.ApacheLicenseForever` package an app adds takes the same version as the framework
+   package (the packages of one release depend on each other at exactly that version). The updater (and
+   `PackageReferenceReader`) must read and rewrite a PackageReference that sits inside a conditional ItemGroup (the
+   Core's two framework-specific groups).
 7. **Name validation when Android is selected**: the application name becomes part of the Android
    package name (`com.companyname.<Name>`), whose dot-separated segments must each start with a letter
    and must not be a Java keyword (`int`, `new`, `package`, ...). The generator accepts a segment that
@@ -129,10 +131,13 @@ bare `Android.` prefix.
 ## Proof
 
 A scratch app was instantiated from the archive with ONLY the Android head selected (the steps above applied by a
-script: head folder, `.slnx` line, the two-framework Core, the token), with one add-in package (Lottie), an app asset
-read through `ms-appx:///`, a TextBox, a ListView and the add-in's player on its page. It restored with an isolated
-package folder, the locally packed CodeBrix.Android packages as the ONLY source of `CodeBrix.Android.*` and nuget.org
-for everything else; it built Debug and a trimmed Release with 0 warnings and 0 errors (the trimmed APK carries the
-framework's Core assemblies and no Skia twin), and ran on an emulator and on real arm64 and x86_64 devices: first
-frame with no application error line, the text box typed into with the soft keyboard up (Pan), the list scrolled
-and selected, the Lottie document from the app's assets playing. The work package's report has the details.
+script: head folder, `.slnx` line, the two-framework Core, the token), with a Skia-canvas add-in (Lottie) and an engine
+add-in (TerminalView) in the head, the AppSettings add-in in the two-framework Core (the Platform package in its
+`net10.0` group, the Android package in its `net10.0-android36.1` group), an app asset read through `ms-appx:///`, a
+bound TextBox and a 40-item ListView on its page. It restored with an isolated package folder, the release's
+CodeBrix.Android packages as the only source of `CodeBrix.Android.*` and nuget.org for everything else; it built Debug
+and a trimmed Release for android-x64 and android-arm64 with 0 warnings and 0 errors (the trimmed APK carries the
+framework's Core assemblies and no Skia twin), and ran on an emulator and on real arm64 and x86_64 devices: first frame
+with no application error line, the text box typed into with the soft keyboard up (Pan), the list scrolled, the Lottie
+document from the app's assets playing, the terminal drawing its text, and the settings store kept across a restart.
+The work package's report has the details.

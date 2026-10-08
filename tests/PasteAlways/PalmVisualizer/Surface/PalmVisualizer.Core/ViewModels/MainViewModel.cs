@@ -102,7 +102,8 @@ public class MainViewModel : SimpleViewModel, ICanvasBridge, IManageGameCanvas, 
         //Capture-thread context: get out fast
         if (!HasFrame)
         {
-            InvokeOnMainThread(() => HasFrame = _captureService.HasFrame);
+            //The page may have been closed (and the service released) by the time this runs
+            InvokeOnMainThread(() => HasFrame = _captureService?.HasFrame ?? false);
         }
 
         if (IsCameraMode)
@@ -144,11 +145,16 @@ public class MainViewModel : SimpleViewModel, ICanvasBridge, IManageGameCanvas, 
         if (openCount != _reportedOpenPalmCount)
         {
             _reportedOpenPalmCount = openCount;
-            InvokeOnMainThread(() => StatusText = openCount switch
+            InvokeOnMainThread(() =>
             {
-                0 => "Show the camera your open palm - the colors will gather toward it.",
-                1 => "The colors are chasing your open palm - close your hand to set them free.",
-                _ => $"The colors are chasing {openCount} open palms - close your hands to set them free.",
+                //Back may have run since this frame was analyzed: its status line stands
+                if (IsCameraMode) { return; }
+                StatusText = openCount switch
+                {
+                    0 => "Show the camera your open palm - the colors will gather toward it.",
+                    1 => "The colors are chasing your open palm - close your hand to set them free.",
+                    _ => $"The colors are chasing {openCount} open palms - close your hands to set them free.",
+                };
             });
         }
     }

@@ -2,14 +2,13 @@ using CodeBrix.Imaging;
 using CodeBrix.Imaging.Formats.Png;
 using CodeBrix.Imaging.PixelFormats;
 using CodeBrix.Platform.Simple;
-using CodeBrix.Webcam;
-using CodeBrix.Webcam.Capture;
 using CodeBrix.Webcam.Devices;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using WebcamViewer.Cameras;
 
 namespace WebcamViewer.ViewModels;
 
@@ -73,7 +72,8 @@ public class CameraOption
 [Microsoft.UI.Xaml.Data.Bindable]
 public class MainViewModel : SimpleViewModel, IFolderPickBridge, ICanvasInvalidator, IVideoFrameSource
 {
-    private WebcamSession _session;
+    private readonly ICameraService _cameras;
+    private ICameraSession _session;
 
     private readonly object _frameLock = new object();
     private byte[] _latestFrame;
@@ -85,6 +85,8 @@ public class MainViewModel : SimpleViewModel, IFolderPickBridge, ICanvasInvalida
         if (IsDesignMode(true)) { return; } //Leave as the first line of constructor
 
         Debug.WriteLine("Webcam Viewer view model startup.");
+        //The App registers the real cameras; an alternate host may register its own service
+        _cameras = GetService<ICameraService>();
         StatusText = "Discovering cameras…";
         _ = InitializeAsync();
     }
@@ -93,7 +95,7 @@ public class MainViewModel : SimpleViewModel, IFolderPickBridge, ICanvasInvalida
     {
         try
         {
-            var devices = await WebcamDevices.GetImagingMediaDeviceListAsync();
+            var devices = await _cameras.GetCamerasAsync();
             InvokeOnMainThread(() =>
             {
                 Cameras.Clear();
@@ -141,7 +143,7 @@ public class MainViewModel : SimpleViewModel, IFolderPickBridge, ICanvasInvalida
                 return;
             }
 
-            _session = new WebcamSession(camera.Device);
+            _session = _cameras.OpenSession(camera.Device);
             _session.FrameReceived += OnFrameReceived;
             _session.MonitorAudio = IsAudioMonitorOn;
             _session.Start();
@@ -154,19 +156,19 @@ public class MainViewModel : SimpleViewModel, IFolderPickBridge, ICanvasInvalida
         }
     }
 
-    private void OnFrameReceived(object sender, WebcamFrameEventArgs frame)
+    private void OnFrameReceived(object sender, CameraFrameEventArgs frame)
     {
         // Capture-thread context: copy the pixels and get out fast.
         lock (_frameLock)
         {
-            var needed = (int)(frame.Width * frame.Height * 4);
+            var needed = frame.Width * frame.Height * 4;
             if (_latestFrame == null || _latestFrame.Length != needed)
             {
                 _latestFrame = new byte[needed];
             }
             frame.CopyTo(_latestFrame);
-            _frameWidth = (int)frame.Width;
-            _frameHeight = (int)frame.Height;
+            _frameWidth = frame.Width;
+            _frameHeight = frame.Height;
         }
 
         if (!HasFrame)
@@ -335,7 +337,7 @@ public class MainViewModel : SimpleViewModel, IFolderPickBridge, ICanvasInvalida
             var session = _session;
             if (session == null) { return; }
 
-            WebcamPhoto photo = session.CapturePhoto();
+            byte[] pixels = session.CapturePhoto(out int width, out int height);
             string fileName = $"frame_capture_{DateTime.Now:yyyyMMdd_HHmmss_fff}.png";
             string outputPath = Path.Combine(FolderPath.Trim(), fileName);
 
@@ -343,7 +345,7 @@ public class MainViewModel : SimpleViewModel, IFolderPickBridge, ICanvasInvalida
             await Task.Run(() =>
             {
                 using Image<Bgra32> image = Image.LoadPixelData<Bgra32>(
-                    photo.PixelsBgra32, photo.Width, photo.Height, PngFormat.Instance);
+                    pixels, width, height, PngFormat.Instance);
                 image.SaveAsPng(outputPath);
             });
 

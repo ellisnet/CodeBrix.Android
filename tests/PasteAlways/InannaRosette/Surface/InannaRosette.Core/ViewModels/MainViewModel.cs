@@ -64,6 +64,10 @@ public class MainViewModel : SimpleViewModel, IReadingTableBridge, IReadingFileB
         _serializer = GetService<IReadingSerializer>() ?? _serializer;
         _pdfBuilder = GetService<IPdfReportBuilder>() ?? _pdfBuilder;
 
+        //Nothing is registered for this in the application itself, so the shuffled deck above
+        //  stands; an alternate host can register a factory to deal the cards in a known order
+        _deck = GetService<IDeckFactory>()?.Create() ?? _deck;
+
         RefreshCounts();
         RefreshGuidance();
     }

@@ -317,3 +317,10 @@ AP1.14 (resumed 2026-09-28; pin recorded in build/PlatformPin.props)
 
   Audio settle follow-up: TestTargetFixture.WaitForRenderAsync uses native frame callbacks on Android,
   avoiding adb screenshot latency while waiting for the binding. The shared AudioPlayer steps stay verbatim.
+
+AP8-T2 (2026-10-07)
+  TerminalInput.feature copied verbatim (sha256 d224e38c...c062372) from the CodeBrix.Platform working tree at
+  commit 8810f9b1, where the file was still UNCOMMITTED (a repo-only feature-text change; no NuGet republish):
+  the scenario "A finger dragged down the history scrolls back through it and dragged up returns to the live tail"
+  now taps "term" once before the frame "the live tail" is captured (+ the comment block above the scenario).
+  Its pending line was removed from tests/CodeBrix.Android.UIReqs/uireqs-pending.txt.

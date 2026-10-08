@@ -433,6 +433,17 @@ public class MainViewModel : SimpleViewModel, ICopyToClipboard, IConsoleTabsBrid
         _ = PumpEventsAsync(_eventStream.Token);
     }
 
+    /// <inheritdoc />
+    public override void Dispose()
+    {
+        _refresh?.Stop();
+        _eventStream?.Cancel();
+        _eventStream?.Dispose();
+        _eventStream = null;
+        Containers?.Suspend();
+        base.Dispose();
+    }
+
     private async Task PumpEventsAsync(CancellationToken cancellationToken)
     {
         try

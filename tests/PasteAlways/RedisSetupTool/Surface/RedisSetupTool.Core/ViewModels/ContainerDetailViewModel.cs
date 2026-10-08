@@ -501,6 +501,23 @@ public class ContainerDetailViewModel : SimpleViewModel
         await LoadTabAsync().ConfigureAwait(true);
     }
 
+    /// <summary>
+    /// Brings the header's state and the toolbar in line with a fresher snapshot of the shown
+    /// container, without reloading the open tab or restarting its live feed.
+    /// </summary>
+    /// <param name="container">The shown container as the latest refresh saw it.</param>
+    public void ApplyStatus(ContainerInfo container)
+    {
+        if (container is null || !string.Equals(container.Id, _containerId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        IsRunning = container.IsRunning;
+        StateText = Formatting.OrDash(container.Status);
+        StateBrush = container.IsRunning ? Palette.Good : Palette.Idle;
+    }
+
     /// <summary>Cancels every live feed this pane owns. The section calls it when it goes away.</summary>
     public void Suspend()
     {

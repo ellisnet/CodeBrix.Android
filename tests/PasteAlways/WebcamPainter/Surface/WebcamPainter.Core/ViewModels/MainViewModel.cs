@@ -18,8 +18,8 @@ namespace WebcamPainter.ViewModels;
 #endif
 public class MainViewModel : SimpleViewModel, IFileSaveBridge, ICanvasBridge
 {
-    private WebcamCaptureService _captureService;
-    private HandTracker _tracker;
+    private ICameraSource _captureService;
+    private IHandTracker _tracker;
     private PaintingSession _paintSession;
 
     private byte[] _visionFrame;
@@ -35,7 +35,9 @@ public class MainViewModel : SimpleViewModel, IFileSaveBridge, ICanvasBridge
         {
             Debug.WriteLine("WebcamPainter view model startup.");
 
-            _captureService = new WebcamCaptureService();
+            //The camera and the hand tracker come from the application's services (the real
+            //  webcam and tracker unless a host registered others)
+            _captureService = GetService<ICameraSource>();
             _captureService.FrameArrived += OnFrameArrived;
 
             StatusText = "Discovering cameras…";
@@ -61,7 +63,7 @@ public class MainViewModel : SimpleViewModel, IFileSaveBridge, ICanvasBridge
     {
         try
         {
-            var cameras = await WebcamCaptureService.GetCamerasAsync();
+            var cameras = await _captureService.GetCamerasAsync();
             InvokeOnMainThread(() =>
             {
                 Cameras.Clear();
@@ -86,8 +88,11 @@ public class MainViewModel : SimpleViewModel, IFileSaveBridge, ICanvasBridge
         }
     }
 
-    /// <summary>The capture service - the page's self-view canvas pulls live frames from it.</summary>
-    public WebcamCaptureService CaptureService => _captureService;
+    /// <summary>The camera source - the page's self-view canvas pulls live frames from it.</summary>
+    public ICameraSource CaptureService => _captureService;
+
+    /// <summary>The painting session in Paint Mode; null in Capture Mode.</summary>
+    public PaintingSession PaintSession => _paintSession;
 
     #region | What the main canvas draws |
 
@@ -128,10 +133,13 @@ public class MainViewModel : SimpleViewModel, IFileSaveBridge, ICanvasBridge
 
     private void OnFrameArrived(object sender, EventArgs e)
     {
-        //Capture-thread context: get out fast
+        //Capture-thread context: get out fast. Dispose nulls the field, so work from a local.
+        var source = _captureService;
+        if (source == null) { return; }
+
         if (!HasFrame)
         {
-            InvokeOnMainThread(() => HasFrame = _captureService.HasFrame);
+            InvokeOnMainThread(() => HasFrame = source.HasFrame);
         }
 
         if (IsCaptureMode)
@@ -143,7 +151,7 @@ public class MainViewModel : SimpleViewModel, IFileSaveBridge, ICanvasBridge
             //Paint Mode: the live feed drives the hand tracker and the little self-view
             var tracker = _tracker;
             if (tracker is { IsRunning: true }
-                && _captureService.TryCopyLatestFrame(ref _visionFrame, out var width, out var height))
+                && source.TryCopyLatestFrame(ref _visionFrame, out var width, out var height))
             {
                 tracker.SubmitFrame(_visionFrame, width, height);
             }
@@ -334,7 +342,7 @@ public class MainViewModel : SimpleViewModel, IFileSaveBridge, ICanvasBridge
 
             if (_tracker == null)
             {
-                _tracker = new HandTracker();
+                _tracker = GetService<IHandTracker>();
                 _tracker.TrackingUpdated += OnTrackingUpdated;
             }
             _tracker.Start();

@@ -15,7 +15,10 @@ namespace CodeBrixVideoTool;
 
 public partial class App : Application
 {
-    public App()
+    public App() : this(null) { }
+
+    // Alternate hosts may replace external services before any view models are constructed.
+    public App(Action<IServiceCollection> configureServices)
     {
         //Set Roboto as the default font for all text in the application
         global::CodeBrix.Platform.UI.FeatureConfiguration.Font.DefaultTextFontFamily =
@@ -39,6 +42,7 @@ public partial class App : Application
             services.AddSingleton<IMediaProbe, MediaProbe>();
             services.AddSingleton<IConversionRunner, ConversionRunner>();
             services.AddSingleton<IExternalToolCheck, ExternalToolCheck>();
+            configureServices?.Invoke(services);
         });
         SimpleViewModel.SetIsDesignMode(false);
 

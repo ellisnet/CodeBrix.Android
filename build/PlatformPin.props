@@ -15,8 +15,8 @@
     ships a different one.
   -->
   <PropertyGroup>
-    <CodeBrixPlatformVersion>1.0.271.1243</CodeBrixPlatformVersion>
-    <CodeBrixPlatformSkiaSharpViewsVersion>4.152.0</CodeBrixPlatformSkiaSharpViewsVersion>
+    <CodeBrixPlatformVersion>1.0.280.1176</CodeBrixPlatformVersion>
+    <CodeBrixPlatformSkiaSharpViewsVersion>4.153.1</CodeBrixPlatformSkiaSharpViewsVersion>
   </PropertyGroup>
 
 </Project>

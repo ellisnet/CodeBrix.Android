@@ -5,6 +5,8 @@
 #
 # CodeBrixPlatformVersion 1.0.266.1160 (AP1.8: Phase D split every add-in into a Core - 10 new
 # add-in Cores + their notices; WPG1 deleted Descriptors/Platform.UI.LinkAttributes.Android.xml)
+# CodeBrixPlatformVersion 1.0.280.1176 (AP1.16, the first pin from nuget.org: the republished
+# CodeBrix.Platform.SkiaSharp.Views 4.153.1 ships IntelliSense xml - lib/CodeBrix.Platform.SkiaSharp.Views.Core.xml)
 analyzers/dotnet/cs/CodeBrix.Platform.Analyzers.dll
 analyzers/dotnet/cs/CodeBrix.Platform.Analyzers.pdb
 analyzers/dotnet/cs/CodeBrix.Platform.UI.SourceGenerators.dll
@@ -28,6 +30,7 @@ lib/CodeBrix.Platform.Foundation.Core.dll
 lib/CodeBrix.Platform.Foundation.Logging.Core.dll
 lib/CodeBrix.Platform.SkiaSharp.Views.Core.dll
 lib/CodeBrix.Platform.SkiaSharp.Views.Core.pdb
+lib/CodeBrix.Platform.SkiaSharp.Views.Core.xml
 lib/CodeBrix.Platform.UI.Adapter.Microsoft.Extensions.Logging.Core.dll
 lib/CodeBrix.Platform.UI.AdvancedTextEdit.Core.dll
 lib/CodeBrix.Platform.UI.AdvancedTextEdit.Core.xml

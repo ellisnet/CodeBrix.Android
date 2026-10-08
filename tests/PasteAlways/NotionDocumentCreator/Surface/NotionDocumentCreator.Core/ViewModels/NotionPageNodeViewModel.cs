@@ -85,6 +85,9 @@ public class NotionPageNodeViewModel : SimpleViewModel
         }
     }
 
+    /// <summary>The checkbox's accessible name, so screen readers (and UI tests) can tell the rows apart.</summary>
+    public string CheckBoxName => $"Include {Title}";
+
     /// <summary>The checkbox hides on the placeholder row.</summary>
     public Visibility CheckBoxVisibility => GetVisibility(!IsPlaceholder);
 

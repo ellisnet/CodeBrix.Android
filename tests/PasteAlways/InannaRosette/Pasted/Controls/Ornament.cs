@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml.Media;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using Windows.UI;
@@ -31,7 +32,7 @@ public static class Ornament
     public const string Malachite = "#2E8B6B";
 
     /// <summary>Parse "#RGB", "#RRGGBB" or "#AARRGGBB" into a Color. Falls back to gold.</summary>
-    public static Color ToColor(string? hex)
+    public static Color ToColor(string hex)
     {
         if (string.IsNullOrWhiteSpace(hex)) { return ToColor(Gold); }
         var s = hex.Trim().TrimStart('#');
@@ -89,7 +90,7 @@ public static class Ornament
     /// TextBlock.CharacterSpacing is ignored on this head, so "tracked caps" are faked by
     /// inserting thin spaces between letters. Existing spaces become a wider gap.
     /// </summary>
-    public static string Track(string? text, bool upper = true)
+    public static string Track(string text, bool upper = true)
     {
         if (string.IsNullOrEmpty(text)) { return string.Empty; }
         var source = upper ? text.ToUpperInvariant() : text;
@@ -107,7 +108,7 @@ public static class Ornament
     }
 
     /// <summary>Light tracking (hair spaces only) for longer strings that must still fit.</summary>
-    public static string TrackLight(string? text, bool upper = true)
+    public static string TrackLight(string text, bool upper = true)
     {
         if (string.IsNullOrEmpty(text)) { return string.Empty; }
         var source = upper ? text.ToUpperInvariant() : text;

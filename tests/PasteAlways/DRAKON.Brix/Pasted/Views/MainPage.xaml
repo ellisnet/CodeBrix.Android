@@ -1,5 +1,6 @@
 <Page
     x:Class="DRAKON.Brix.Views.MainPage"
+    xmlns:a="using:Microsoft.UI.Xaml.Automation"
     xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
     xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -17,6 +18,6 @@
          through the TkCanvas command bridge; this page only hosts the
          single Tk surface. -->
     <Grid>
-        <tkhost:TkHostView x:Name="TkHost" />
+        <tkhost:TkHostView x:Name="TkHost" a:AutomationProperties.AutomationId="TkHost" />
     </Grid>
 </Page>

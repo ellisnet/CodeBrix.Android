@@ -1,6 +1,7 @@
 <Page x:Class="JustBetweenUs.Views.MainPage"
       xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
       xmlns:d="clr-namespace:Microsoft.UI.Xaml.Data;assembly=CodeBrix.Platform.UI"
+      xmlns:a="using:Microsoft.UI.Xaml.Automation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:local="using:JustBetweenUs.Views"
       xmlns:vm="clr-namespace:JustBetweenUs.ViewModels;assembly=JustBetweenUs.Core"
@@ -31,14 +32,14 @@
                 HorizontalAlignment="Center" 
                 VerticalAlignment="Center">
 
-            <ComboBox HorizontalAlignment="Center"
+            <ComboBox a:AutomationProperties.Name="Encryption mode" a:AutomationProperties.AutomationId="encryption-mode" HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Width="300"
                 ItemsSource="{d:Binding EncryptionModes}"
                 DisplayMemberPath="Description"
                 SelectedItem="{d:Binding SelectedEncryptionMode, Mode=TwoWay}" />
             <TextBlock Margin="20, 0, 20, 0" VerticalAlignment="Center">Encryption Key:</TextBlock>
-            <TextBox Height="40" Width="180" 
+            <TextBox a:AutomationProperties.Name="Encryption key" a:AutomationProperties.AutomationId="encryption-key" Height="40" Width="180"
                      VerticalAlignment="Center" VerticalContentAlignment="Center"
                      Text="{d:Binding EncryptionKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></TextBox>
 
@@ -55,7 +56,7 @@
         </StackPanel>
 
         <ScrollViewer Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" VerticalScrollBarVisibility="Auto" Padding="4,4,10,4">
-            <TextBox HorizontalContentAlignment="Left" VerticalContentAlignment="Top"
+            <TextBox a:AutomationProperties.Name="Input text" a:AutomationProperties.AutomationId="input-text" HorizontalContentAlignment="Left" VerticalContentAlignment="Top"
                TextWrapping="Wrap" AcceptsReturn="True" Margin="2" IsReadOnly="False"
                Text="{d:Binding EnteredText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></TextBox>
         </ScrollViewer>
@@ -68,14 +69,14 @@
             <controls:EmbeddedImageButton Margin="0,0,20,0" Width="140" Height="90"
                 VerticalAlignment="Center" HorizontalAlignment="Right"
                 Background="#FFB85555"
-                Command="{d:Binding EncryptCommand}"
+                a:AutomationProperties.Name="Encrypt" Command="{d:Binding EncryptCommand}"
                 ImageUriSource="embedded://JustBetweenUs.Core/JustBetweenUs.Assets.padlock-icon.svg"
                 Text="Encrypt" ImageWidth="40" ImageHeight="40" Spacing="6" ImagePosition="Top" />
 
             <controls:EmbeddedImageButton Margin="20,0,0,0" Width="140" Height="90"
                 VerticalAlignment="Center" HorizontalAlignment="Left"
                 Background="#FFB85555"
-                Command="{d:Binding DecryptCommand}"
+                a:AutomationProperties.Name="Decrypt" Command="{d:Binding DecryptCommand}"
                 ImageUriSource="embedded://JustBetweenUs.Core/JustBetweenUs.Assets.unlocked-icon.svg"
                 Text="Decrypt" ImageWidth="40" ImageHeight="40" Spacing="6" ImagePosition="Top" />
 
@@ -87,7 +88,7 @@
         </StackPanel>
 
         <ScrollViewer Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" VerticalScrollBarVisibility="Auto" Padding="4,4,10,4">
-            <TextBox HorizontalContentAlignment="Left" VerticalContentAlignment="Top"
+            <TextBox a:AutomationProperties.Name="Processed text" a:AutomationProperties.AutomationId="processed-text" HorizontalContentAlignment="Left" VerticalContentAlignment="Top"
                TextWrapping="Wrap" AcceptsReturn="True" Margin="2" IsReadOnly="True"
                Text="{d:Binding ProcessedText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></TextBox>
         </ScrollViewer>
@@ -95,14 +96,14 @@
         <controls:EmbeddedImageButton Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Width="220" Height="50"
             VerticalAlignment="Center" HorizontalAlignment="Center"
             Background="#FFB85555"
-            Command="{d:Binding CopyToClipboardCommand}"
+            a:AutomationProperties.Name="Copy to Clipboard" Command="{d:Binding CopyToClipboardCommand}"
             ImageUriSource="embedded://JustBetweenUs.Core/JustBetweenUs.Assets.clipboard.svg"><!--ImagePosition="Right"-->
             Copy to Clipboard
         </controls:EmbeddedImageButton>
 
         <Button Grid.Row="4" Grid.Column="1" Width="80" Height="50"
                 VerticalAlignment="Center" HorizontalAlignment="Left"
-                Command="{d:Binding ShowOsInfoCommand}">
+                a:AutomationProperties.Name="Operating system information" Command="{d:Binding ShowOsInfoCommand}">
             <StackPanel Orientation="Horizontal">
                 <AnimatedVisualPlayer AutoPlay="True"
                                       HorizontalAlignment="Center"

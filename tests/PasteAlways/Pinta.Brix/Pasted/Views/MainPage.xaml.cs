@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CodeBrix.Platform.Simple;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Pinta.Brix.Bridges;
@@ -40,8 +41,16 @@ public sealed partial class MainPage : Page
         Loaded += MainPage_Loaded;
     }
 
+    private bool wired;
+
     private void MainPage_Loaded(object sender, RoutedEventArgs e)
     {
+        //Everything below subscribes to the process-wide PintaCore singletons
+        //and opens the first document, so it must run once: Loaded fires again
+        //whenever the page is re-hosted.
+        if (wired) { return; }
+        wired = true;
+
         //Chrome wiring: dialogs need a XamlRoot, so this happens on Loaded
         PintaCore.Chrome.InitializeErrorDialogHandler(ShowErrorDialogAsync);
         PintaCore.Chrome.InitializeMessageDialog(ShowMessageDialogAsync);
@@ -365,6 +374,9 @@ public sealed partial class MainPage : Page
                 Padding = new Thickness(4),
             };
 
+            //The button shows only an icon; its name is what assistive
+            //technology (and UI automation) reads.
+            AutomationProperties.SetName(button, tool.Name);
             ToolTipService.SetToolTip(button, BuildToolTooltip(tool));
             BaseTool captured = tool;
 
@@ -390,9 +402,9 @@ public sealed partial class MainPage : Page
     {
         string tooltip = tool.Name;
 
-        if (tool.ShortcutKey != default)
+        if (tool.ShortcutKey != Key.Invalid)
         {
-            tooltip += $"\nShortcut key: {tool.ShortcutKey}";
+            tooltip += $"\nShortcut key: {tool.ShortcutKey.ToUpper().Name()}";
         }
 
         if (!string.IsNullOrEmpty(tool.StatusBarText))

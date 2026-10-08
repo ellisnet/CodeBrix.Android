@@ -1,3 +1,7 @@
 Surface/WebcamViewer.Core/Helpers/HostHelper.cs  <- CodeBrix.Samples/WebcamViewer/src/WebcamViewer.Core/Helpers/HostHelper.cs  (verbatim)
 Surface/WebcamViewer.Core/Video/VideoCanvas.cs  <- CodeBrix.Samples/WebcamViewer/src/WebcamViewer.Core/Video/VideoCanvas.cs  (verbatim)
 Surface/WebcamViewer.Core/ViewModels/MainViewModel.cs  <- CodeBrix.Samples/WebcamViewer/src/WebcamViewer.Core/ViewModels/MainViewModel.cs  (verbatim)
+Surface/WebcamViewer.Core/Cameras/CameraFrameEventArgs.cs  <- CodeBrix.Samples/WebcamViewer/src/WebcamViewer.Core/Cameras/CameraFrameEventArgs.cs  (verbatim)
+Surface/WebcamViewer.Core/Cameras/ICameraService.cs  <- CodeBrix.Samples/WebcamViewer/src/WebcamViewer.Core/Cameras/ICameraService.cs  (verbatim)
+Surface/WebcamViewer.Core/Cameras/ICameraSession.cs  <- CodeBrix.Samples/WebcamViewer/src/WebcamViewer.Core/Cameras/ICameraSession.cs  (verbatim)
+Surface/WebcamViewer.Core/Cameras/WebcamCameraService.cs  <- CodeBrix.Samples/WebcamViewer/src/WebcamViewer.Core/Cameras/WebcamCameraService.cs  (verbatim)

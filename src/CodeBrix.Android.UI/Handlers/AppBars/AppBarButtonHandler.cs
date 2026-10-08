@@ -7,6 +7,7 @@ using System;
 using CodeBrix.Android.UI.Android;
 using CodeBrix.Platform.UI.Contracts;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
@@ -126,6 +127,12 @@ internal sealed class AppBarButtonHandler : ViewGroupHandler<ButtonBase, ButtonH
     public override Size Measure(Size availableSize) =>
         _button == null ? new Size(0, 0) : ViewHandlerExtensions.GetDesiredSizeFromView(_button, availableSize, Density);
 
+    /// <summary>AP9-3: the Material button carries the automation name (its host is not focusable).</summary>
+    public override AView AccessibilityView => (AView)_button ?? NativeView;
+
+    /// <inheritdoc />
+    protected override void OnAutomationNameCleared() => Refill();
+
     /// <inheritdoc />
     protected override ButtonHostView CreatePlatformView() => new(Context) { Focusable = false, FocusableInTouchMode = false };
 
@@ -200,7 +207,7 @@ internal sealed class AppBarButtonHandler : ViewGroupHandler<ButtonBase, ButtonH
 
         var (label, icon, compact) = Read(element);
         button.Text = compact && icon != null ? string.Empty : label;
-        button.ContentDescription = label;
+        button.ContentDescription = AutomationText.ContentDescriptionOr(AutomationProperties.GetName(element), label);
         button.TooltipText = label;
         Recolor();
     }

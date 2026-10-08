@@ -56,12 +56,15 @@ public interface IFileSaveBridge
 [Microsoft.UI.Xaml.Data.Bindable]
 public class MainViewModel : SimpleViewModel, ICanvasBridge, IFileSaveBridge
 {
+    private const string SettlingRenderPathText = "Render path: settling…";
+
     private readonly VideoPlaybackController controller;
     private readonly SmokeOptions smoke;
     private readonly List<LutCatalogEntry> lutCatalogue = [];
 
     private bool isSyncingPosition;
     private bool hasStartedSmokeRun;
+    private bool isVideoSurfaceReady;
     private int playbackEndedCount;
     private string pendingSnapshotPath;
     private TaskCompletionSource<ComposedFrameSnapshot> pendingSnapshot;
@@ -144,6 +147,9 @@ public class MainViewModel : SimpleViewModel, ICanvasBridge, IFileSaveBridge
 
             if (value != null && controller != null)
             {
+                //A message about the path being left would be stale. A path that cannot be honoured reports
+                //  again while it is resolved, and that report is queued, so it lands after this.
+                ClearMessage();
                 controller.RenderPath = value.Option;
                 UpdateUiState();
             }
@@ -193,7 +199,7 @@ public class MainViewModel : SimpleViewModel, ICanvasBridge, IFileSaveBridge
     {
         get;
         private set => SetProperty(ref field, value);
-    } = "Render path: settling…";
+    } = SettlingRenderPathText;
 
     /// <summary>Where the sample corpus was found.</summary>
     public string CorpusText
@@ -305,6 +311,7 @@ public class MainViewModel : SimpleViewModel, ICanvasBridge, IFileSaveBridge
     public void OnVideoSurfaceReady(bool gpuCanvasAvailable)
     {
         IsGpuCanvasAvailable = gpuCanvasAvailable;
+        isVideoSurfaceReady = true;
 
         if (!gpuCanvasAvailable)
         {
@@ -324,6 +331,9 @@ public class MainViewModel : SimpleViewModel, ICanvasBridge, IFileSaveBridge
     /// <summary>Whether the host's GPU-Skia canvas started, and is the canvas being painted.</summary>
     public bool IsGpuCanvasAvailable { get; private set; }
 
+    /// <summary>The player behind the transport, read by the application's PlayTests.</summary>
+    internal VideoPlaybackController Controller => controller;
+
     /// <summary>Releases the player and the page's seams. Called by the page when the window closes.</summary>
     public void Shutdown()
     {
@@ -332,6 +342,19 @@ public class MainViewModel : SimpleViewModel, ICanvasBridge, IFileSaveBridge
         //Dropping the delegates the page handed over is what breaks the page-to-view-model cycle.
         InvalidateVideoCanvas = null;
         PickSaveCubePathAsync = null;
+    }
+
+    /// <summary>Releases the player before the view model lets go of its dispatcher.</summary>
+    /// <param name="disposing">True when called from <see cref="SimpleViewModel.Dispose()" />.</param>
+    /// <remarks>
+    /// The player's events hop to the user-interface thread through the dispatcher the base class drops,
+    /// so the player goes first: an event raised after that would throw on the decoding thread.
+    /// </remarks>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) { Shutdown(); }
+
+        base.Dispose(disposing);
     }
 
     #endregion
@@ -547,8 +570,12 @@ public class MainViewModel : SimpleViewModel, ICanvasBridge, IFileSaveBridge
         var onGpu = backend == VideoRenderBackendOption.Gpu;
         var canvas = IsGpuCanvasAvailable ? "GPU-Skia canvas" : "CPU canvas";
 
-        RenderPathText = $"Render path: {(onGpu ? "GPU" : "CPU")} · effects "
-            + $"{(controller.EffectsActive ? "applied" : "off")} · {canvas}";
+        //Which canvas is painting is not known until the page reports it, so the line says so until then
+        //  rather than naming a canvas that may not be the one.
+        RenderPathText = isVideoSurfaceReady
+            ? $"Render path: {(onGpu ? "GPU" : "CPU")} · effects "
+                + $"{(controller.EffectsActive ? "applied" : "off")} · {canvas}"
+            : SettlingRenderPathText;
 
         IsLutPanelEnabled = LutPanelPolicy.IsEditable(backend, transport);
         LutPanelNote = LutPanelPolicy.GetNote(backend, transport);
@@ -584,6 +611,10 @@ public class MainViewModel : SimpleViewModel, ICanvasBridge, IFileSaveBridge
 
         if (!string.IsNullOrWhiteSpace(message)) { Debug.WriteLine($"SimpleCbxVideoPlayer: {message}"); }
     }
+
+    //Back to what stands whatever the user chooses: nothing, or why the video runtime never started.
+    private void ClearMessage() =>
+        MessageText = SkiaVideoRuntime.IsInitialized ? string.Empty : SkiaVideoRuntime.ErrorMessage ?? string.Empty;
 
     #endregion
 

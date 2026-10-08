@@ -56,6 +56,7 @@ public sealed class MainViewModel : SimpleViewModel, ICanvasInvalidator
     //Coalescing: never queue more than one paint. While one is pending, pointer moves only
     //update the camera; the next paint draws the latest state.
     private bool _renderPending;
+    private bool _isDisposed;
 
     private ModelScenePainter _modelPainter;
 
@@ -386,20 +387,32 @@ public sealed class MainViewModel : SimpleViewModel, ICanvasInvalidator
         RaiseSelectionChanged();
         IsBusy = true;
 
+        //Progress callbacks are posted to the UI thread, so one can land after a failure has
+        //already been reported below; once the load has finished, late ones are ignored.
+        var finished = false;
+
         try
         {
-            var progress = new Progress<string>(message => StatusText = message);
+            var progress = new Progress<string>(message =>
+            {
+                if (!finished) { StatusText = message; }
+            });
             var asset = await _assets.EnsureSampleAsync(kind, progress, _lifetime.Token);
 
             //Decode off the UI thread; the painters upload to GL lazily during Paint.
             var decoded = await Task.Run(() => DecodeSample(kind, asset), _lifetime.Token);
 
             //Hand the decoded content to a painter back on the UI thread: the painters, their
-            //cameras and the bound status line are only ever touched there.
-            InvokeOnMainThread(() =>
+            //cameras and the bound status line are only ever touched there. Awaited, so the
+            //busy flag clears and Initialization completes only once the sample is on display,
+            //and a view model disposed meanwhile never reaches its released painters.
+            await InvokeOnMainThreadAsync(() =>
             {
+                finished = true;
+                if (_isDisposed) { return Task.FromResult(false); }
                 CurrentPainter = ApplyDecodedSample(kind, decoded);
                 StatusText = $"{Label(kind)}: {asset.Name}    ·    {Hint(kind)}";
+                return Task.FromResult(true);
             });
         }
         catch (OperationCanceledException)
@@ -408,6 +421,7 @@ public sealed class MainViewModel : SimpleViewModel, ICanvasInvalidator
         }
         catch (Exception ex)
         {
+            finished = true;
             StatusText = $"Could not load the {kind.ToString().ToLowerInvariant()} sample: {ex.Message}";
         }
         finally
@@ -535,6 +549,12 @@ public sealed class MainViewModel : SimpleViewModel, ICanvasInvalidator
     /// </summary>
     public override void Dispose()
     {
+        //Dispose can arrive more than once - the page disposes its view model when it
+        //unloads, and whatever replaced the page may dispose it again. The cancellation
+        //source throws when it is canceled after being disposed, so only the first call acts.
+        if (_isDisposed) { return; }
+        _isDisposed = true;
+
         //Stop an in-flight download so shutdown does not wait for the network.
         _lifetime.Cancel();
 

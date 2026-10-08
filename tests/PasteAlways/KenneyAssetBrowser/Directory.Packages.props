@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <!-- SKBitmap / SKCanvas in the view model and the Rendering library (Microsoft; the family's locked SkiaSharp release) -->
-    <!-- SkiaSharp 4.152.0: pinned by the repository's Directory.Packages.props since AP7-A (same version). -->
+    <!-- SkiaSharp 4.153.1: pinned by the repository's Directory.Packages.props since AP7-A (same version). -->
     <!-- The .zip bundle reader of KenneyAssetBrowser.AssetRead (self-produced CodeBrix package, the version the sample pins) -->
     <PackageVersion Include="CodeBrix.Compression.MitLicenseForever" Version="1.0.248.1109" />
     <!-- The Rendering library's real glTF loader and image decoders (AP7-M; self-produced CodeBrix packages, the versions

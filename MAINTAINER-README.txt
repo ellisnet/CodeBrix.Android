@@ -27,8 +27,9 @@ Two hard constraints shape the build:
      The Core assemblies are extracted from a pinned Platform build and
      re-shipped inside the CodeBrix.Android packages.
   2. The Android build never reads the CodeBrix.Platform repository. It reads
-     Platform packages from nuget.org, or from a local folder of .nupkg files
-     while the pinned build is unpublished.
+     the pinned Platform packages from nuget.org (the pin names a published
+     Platform build). A local folder of .nupkg files is the exception, used only
+     to test against a Platform build that is not on nuget.org yet.
 
 
 REPOSITORY LAYOUT
@@ -122,10 +123,13 @@ What it does:
      the pinned build (heads are not taken) into the isolated folder
      artifacts/intake/.packages/ - no package dependency is recorded, and a
      same-version copy in the global NuGet cache is never used.
-     Sources: nuget.org, plus the folder feed named by the CODEBRIX_PLATFORM_FEED
-     environment variable (MSBuild property CodeBrixPlatformFeed; default
-     ~/ClaudeHome/android-feed/<version>/) when that folder exists. The feed is
-     an immutable copy of a Platform local feed; never write into it.
+     Sources: nuget.org - the normal case, the pin names a published Platform
+     build. The exception, for testing an unpublished Platform build only: the
+     folder feed named by the CODEBRIX_PLATFORM_FEED environment variable
+     (MSBuild property CodeBrixPlatformFeed; default
+     ~/ClaudeHome/android-feed/<version>/), used when that folder exists. Such a
+     feed is an immutable copy of a Platform local feed; never write into it,
+     and never pack a release from a pin that is not on nuget.org.
      A package already in artifacts/intake/.packages/ is compared (SHA-256) with
      the feed's copy of the same id and version: a version re-packed with
      different content (SkiaSharp.Views keeps its literal version across
@@ -175,7 +179,10 @@ module initializer. A CodeBrix.Android assembly must carry exactly the name its
 Core grants; gate 3 enforces the list.
 
 PIN BUMP (moving to a newer Platform build)
-  1. Make the new feed folder available (or wait for nuget.org).
+  1. Wait until the new Platform build is on nuget.org (check the v3 flat
+     container for every package the intake takes). Only to test an
+     unpublished build ahead of its publication, make its feed folder
+     available as described under INTAKE (unset it again before packing).
   2. Change CodeBrixPlatformVersion (and, if it moved,
      CodeBrixPlatformSkiaSharpViewsVersion) in build/PlatformPin.props.
   3. Run the intake. Review every gate error: new add-in Core splits add
@@ -191,9 +198,13 @@ PIN BUMP (moving to a newer Platform build)
      too, so the next pin cannot drop it silently.
   4. Rebuild and test everything, Debug and Release.
   5. Re-run the device gates: paste-always, the HelloPaste smoke (Debug and
-     trimmed Release), the full UIReqs suite in both orientations three times
-     (frames against the baseline; re-baseline only frames a named Core change
+     trimmed Release), the full UIReqs suite in both orientations (strict 0
+     against the baseline; re-baseline only frames a named Core change
      explains), and move every pending scenario the new build unblocks.
+  6. Bump the dependency pins in Directory.Packages.props that the new
+     Platform build moved (SkiaSharp, HarfBuzzSharp and the CodeBrix libraries
+     the add-ins depend on), each to a version that exists on nuget.org, then
+     pack (PACKAGING / PUBLISHING).
 
 
 SOURCE LAYOUT
@@ -262,7 +273,16 @@ handler (parent first) and its native view:
                    Clip (with Core's layout clip, Platform/ClipReplay),
                    Canvas.ZIndex, FlowDirection, ToolTipService.ToolTip (text
                    tooltips of native-input widgets -> TooltipCompat,
-                   Handlers/Overlays/ToolTipMapping) - never Width/Height/
+                   Handlers/Overlays/ToolTipMapping), AutomationProperties.
+                   Name / AutomationId (AP9-3: the content description / string
+                   tag of the handler's AccessibilityView - the native view, or
+                   the focusable widget a handler hosts: the Material button,
+                   the text field's editor, the overlaid widget; applied at
+                   connect after every mapper and at every change the Core seam
+                   delivers; a cleared name clears it and OnAutomationNameCleared
+                   lets a handler that labels its widget put its label back;
+                   such labels use Views/Portable/AutomationText so the app's
+                   name wins) - never Width/Height/
                    Margin/alignment, Core layout owns them); ViewGroupHandler
                    (the view shows the element's visual children, synced from
                    the seam's child notifications and from each child's own
@@ -883,7 +903,7 @@ initializer (Android/AndroidPlatformBootstrap) registers its contracts and handl
     SkiaSharp.Views canvas-host factory and is shown by that add-in's SkiaCanvasElementHandler (registered in the
     bootstrap); the GPU path is the Graphics3DGL add-in's SkiaGpuContext (EGL / OpenGL ES); the sound is
     CodeBrix.Audio's shared output on CodeBrix.Audio.Android (the bootstrap initialises it). One CodeBrix.Audio.Core
-    line: CodeBrix.VideoPlayback 1.0.271.1195 and CodeBrix.Audio.Android 1.0.271.1201 both depend on
+    line: CodeBrix.VideoPlayback 1.0.280.1149 and CodeBrix.Audio.Android 1.0.271.1201 both depend on
     CodeBrix.Audio.Core.MitLicenseForever 1.0.271.1165 (never the desktop CodeBrix.Audio package's own assemblies).
     Fences: the copied VideoPlayer group (informational for frames) and AndroidVideoPlayer.
   UIReqs: each add-in's group is copied (tests/CodeBrix.Android.UIReqs.Device/PORTING.txt,
@@ -1208,6 +1228,9 @@ PORTING.txt: source commit, every adaptation). Two halves:
       them, Core values without echo, the native ComboBox and Image),
       AndroidItems (AP3b: RecyclerView realisation, recycling, native drag,
       selection, ObservableCollection changes, native tab strips) and
+      AndroidAccessibility (AP9-3, AndroidSteps/AccessibilitySteps.cs:
+      AutomationProperties.Name / AutomationId on the native content
+      description and tag, set before the tree and changed or cleared live),
       AndroidOverlays (AP4: Material dialogs and menus, bottom sheets, back
       and predictive back; the copied Popups group runs with the Material
       forms OFF, scenarios tagged @native-overlays turn them on),
@@ -1408,6 +1431,16 @@ written by hand: the nuspecs use $dep_<Package_Id>$ tokens that the driver fills
 from Directory.Packages.props, and the driver stops when the framework nuspec
 lacks a dependency the framework projects reference.
 
+PUBLISHING. Jeremy publishes the packages of one pack folder, all at its one
+version, to nuget.org: the framework package first, then the add-ins in
+dependency order (SkiaSharp.Views, TextLayout, Svg and Graphics3DGL before the
+add-in packages that depend on them; package-gates.txt lists every package's
+dependencies). Before the pack that is to be published, move the Unshipped
+CBAND rows (ADDING A PACKAGE); before publishing, check that every external
+dependency id and version in package-gates.txt exists on nuget.org. After
+publishing: tag the repository with the package version and refresh the
+template head's consumers (templates/TEMPLATE_INTEGRATION.md).
+
 THE PACKAGE GATES (build/intake/CodeBrix.Android.IntakeGate, "packages" mode;
 run by the driver after packing; any error fails the run; report
 package-gates.txt beside the packages, which also lists every package's
@@ -1435,8 +1468,12 @@ ADDING A PACKAGE
     the framework nuspec (the driver checks). An id outside the owner list needs
     Jeremy's approval before package-dependency-owners.txt gets a line.
   * A new framework assembly: add its files to the framework nuspec.
-  * At the first publish, move the CBAND ids from
-    src/CodeBrix.Android.Analyzers/AnalyzerReleases.Unshipped.md to Shipped.md.
+  * A new CBAND diagnostic: add its row to
+    src/CodeBrix.Android.Analyzers/AnalyzerReleases.Unshipped.md (the Roslyn
+    release-tracking format; the analyzer build reports RS2xxx otherwise).
+    Before the next published pack, move the Unshipped rows to AnalyzerReleases.Shipped.md
+    under a new "## Release <version>" heading (the version of the packages
+    being published) and leave Unshipped.md with its header lines only.
 
 APPLICATION TEMPLATE. templates/AndroidHead/ is the Android head of the
 CodeBrix.Platform application template (token TemplateApp, as in the template

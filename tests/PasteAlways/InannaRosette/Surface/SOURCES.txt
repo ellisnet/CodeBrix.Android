@@ -20,3 +20,4 @@ Surface/InannaRosette.Reading/Services/IReadingSerializer.cs  <- CodeBrix.Sample
 Surface/InannaRosette.Reading/Services/PdfReportBuilder.cs  <- CodeBrix.Samples/InannaRosette/src/libs/InannaRosette.Reading/Services/PdfReportBuilder.cs  (stub)
 Surface/InannaRosette.Reading/Services/ReadingInterpreter.cs  <- CodeBrix.Samples/InannaRosette/src/libs/InannaRosette.Reading/Services/ReadingInterpreter.cs  (verbatim)
 Surface/InannaRosette.Reading/Services/ReadingSerializer.cs  <- CodeBrix.Samples/InannaRosette/src/libs/InannaRosette.Reading/Services/ReadingSerializer.cs  (verbatim)
+Surface/InannaRosette.Core/Services/IDeckFactory.cs  <- CodeBrix.Samples/InannaRosette/src/InannaRosette.Core/Services/IDeckFactory.cs  (verbatim)

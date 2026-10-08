@@ -18,6 +18,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Pinta.Brix.Engine;
@@ -170,6 +171,7 @@ public static class EffectOptionsDialog
 			Margin = new Thickness (4, 0, 0, 0),
 		};
 		ToolTipService.SetToolTip (reset, "Reset to default");
+		NameRow (caption, slider, spin, reset);
 
 		bool updating = false;
 		void Apply (double raw)
@@ -206,6 +208,18 @@ public static class EffectOptionsDialog
 		return row;
 	}
 
+	/// <summary>
+	/// The slider, the spin entry and the reset button carry no visible label of
+	/// their own - the caption above them is a separate TextBlock - so they are
+	/// named after it for assistive technology and UI automation.
+	/// </summary>
+	private static void NameRow (string caption, Slider slider, NumberBox spin, Button reset)
+	{
+		AutomationProperties.SetName (slider, caption);
+		AutomationProperties.SetName (spin, caption);
+		AutomationProperties.SetName (reset, $"Reset {caption} to default");
+	}
+
 	private static FrameworkElement CreateCheckRow (EffectData data, MemberInfo member, string caption)
 	{
 		CheckBox check = new () {
@@ -225,6 +239,7 @@ public static class EffectOptionsDialog
 		Array values = Enum.GetValues (enumType);
 		foreach (object value in values)
 			combo.Items.Add (AddSpaces (value.ToString () ?? string.Empty));
+		AutomationProperties.SetName (combo, caption);
 		combo.SelectedIndex = Array.IndexOf (values, GetValue (data, member));
 		combo.SelectionChanged += (_, _) => {
 			if (combo.SelectedIndex >= 0)
@@ -247,6 +262,7 @@ public static class EffectOptionsDialog
 			: [];
 		foreach (string choice in choices)
 			combo.Items.Add (choice);
+		AutomationProperties.SetName (combo, caption);
 		combo.SelectedIndex = Array.IndexOf (choices, (string?) GetValue (data, member) ?? string.Empty);
 		combo.SelectionChanged += (_, _) => {
 			if (combo.SelectedIndex >= 0)
@@ -283,6 +299,7 @@ public static class EffectOptionsDialog
 			Margin = new Thickness (4, 0, 0, 0),
 		};
 		ToolTipService.SetToolTip (reset, "Reset to default");
+		NameRow (caption, slider, spin, reset);
 
 		bool updating = false;
 		void Apply (double raw)
@@ -334,6 +351,9 @@ public static class EffectOptionsDialog
 		NumberBox x = new () { Value = current.X, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline, Minimum = -32000, Maximum = 32000 };
 		NumberBox y = new () { Value = current.Y, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline, Minimum = -32000, Maximum = 32000 };
 
+		AutomationProperties.SetName (x, $"{caption} X");
+		AutomationProperties.SetName (y, $"{caption} Y");
+
 		void Apply () => SetValue (data, member, new PointI (
 			double.IsNaN (x.Value) ? 0 : (int) x.Value,
 			double.IsNaN (y.Value) ? 0 : (int) y.Value));
@@ -369,6 +389,8 @@ public static class EffectOptionsDialog
 		Slider vertical = new () { Minimum = -1, Maximum = 1, StepFrequency = 0.01, Value = current.Vertical };
 
 		TextBlock readout = new () { MinWidth = 90, Margin = new Thickness (8, 0, 0, 0) };
+		AutomationProperties.SetName (horizontal, $"{caption} horizontal");
+		AutomationProperties.SetName (vertical, $"{caption} vertical");
 
 		void Apply ()
 		{
@@ -413,6 +435,8 @@ public static class EffectOptionsDialog
 			Background = new SolidColorBrush (ToWindowsColor (current)),
 		};
 
+		AutomationProperties.SetName (swatch, caption);
+
 		swatch.Click += async (_, _) => {
 
 			XamlRoot? root = swatch.XamlRoot;
@@ -456,6 +480,7 @@ public static class EffectOptionsDialog
 		StackPanel row = new () { Orientation = Orientation.Horizontal, Spacing = 8 };
 		row.Children.Add (new TextBlock { Text = caption, VerticalAlignment = VerticalAlignment.Center });
 		Button reseed = new () { Content = "Reseed" };
+		AutomationProperties.SetName (reseed, $"{caption}: Reseed");
 		Random random = new ();
 		reseed.Click += (_, _) => SetValue (data, member, new RandomSeed (random.Next ()));
 		row.Children.Add (reseed);

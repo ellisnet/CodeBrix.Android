@@ -153,7 +153,8 @@ internal sealed class WikipediaClient : IDisposable
         return result;
     }
 
-    private static void ParseImageMetadata(
+    //internal (not private) so tests can feed it captured API responses without a network call
+    internal static void ParseImageMetadata(
         string json, IDictionary<string, IReadOnlyDictionary<string, string>> into)
     {
         using var document = JsonDocument.Parse(json);
@@ -178,12 +179,19 @@ internal sealed class WikipediaClient : IDisposable
             }
 
             var info = imageInfo[0];
-            if (!info.TryGetProperty("extmetadata", out var extMetadata)) { continue; }
+            //MediaWiki renders an empty extmetadata map as [] (an array) rather than {} — such an
+            //image has no attribution fields to read, so skip it instead of throwing
+            if (!info.TryGetProperty("extmetadata", out var extMetadata)
+                || extMetadata.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
 
             var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (var field in extMetadata.EnumerateObject())
             {
-                if (field.Value.TryGetProperty("value", out var valueProp)
+                if (field.Value.ValueKind == JsonValueKind.Object
+                    && field.Value.TryGetProperty("value", out var valueProp)
                     && valueProp.ValueKind == JsonValueKind.String)
                 {
                     fields[field.Name] = valueProp.GetString() ?? "";

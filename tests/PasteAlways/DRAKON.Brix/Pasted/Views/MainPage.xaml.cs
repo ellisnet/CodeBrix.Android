@@ -24,4 +24,7 @@ public sealed partial class MainPage : Page
 
         this.InitializeComponent(); //Leave this line last
     }
+
+    //The page's DRAKON runtime owner (readiness, quit action); read by the PlayTests.
+    internal RuntimeHost RuntimeHost => _runtimeHost;
 }

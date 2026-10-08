@@ -68,6 +68,12 @@ public class ModelCellViewModel : SimpleViewModel
     /// <summary>The model's display name.</summary>
     public string Title { get; }
 
+    /// <summary>
+    /// The Download button's accessible name, e.g. <c>Download Oak Chair</c>, so assistive
+    /// technology (and UI automation) can tell the cells' Download buttons apart.
+    /// </summary>
+    public string DownloadButtonName => $"Download {Title}";
+
     /// <summary>The creator credit line, e.g. <c>by Rico Cilliers</c>.</summary>
     public string AuthorCredit { get; }
 

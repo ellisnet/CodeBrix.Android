@@ -1,5 +1,7 @@
+using WebcamViewer.Cameras;
 using WebcamViewer.Helpers;
 using CodeBrix.Platform.Simple;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -10,7 +12,10 @@ namespace WebcamViewer;
 
 public partial class App : Application
 {
-    public App()
+    public App() : this(null) { }
+
+    // Alternate hosts may replace the camera service before any view models are constructed.
+    public App(Action<IServiceCollection> configureServices)
     {
         //Set Open Sans as the default font for all text in the application
         global::CodeBrix.Platform.UI.FeatureConfiguration.Font.DefaultTextFontFamily =
@@ -18,8 +23,9 @@ public partial class App : Application
 
         SimpleServiceResolver.CreateInstance(HostHelper.GetHost(), services =>
         {
-            //No custom services needed - the webcam session lives in the view model
-
+            //The cameras: CodeBrix.Webcam's device list and capture sessions
+            services.AddSingleton<ICameraService, WebcamCameraService>();
+            configureServices?.Invoke(services);
         });
         SimpleViewModel.SetIsDesignMode(false);
 

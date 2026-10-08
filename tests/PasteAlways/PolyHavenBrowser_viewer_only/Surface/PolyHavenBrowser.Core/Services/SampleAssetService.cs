@@ -52,11 +52,24 @@ public sealed class SampleAssetService
 
     /// <summary>Creates the service over a Poly Haven API client factory.</summary>
     public SampleAssetService(IPolyHavenApiClientFactory factory)
+        : this(factory, Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "PolyHavenBrowser", "cache"))
+    {
+    }
+
+    /// <summary>
+    /// Creates the service over a Poly Haven API client factory, caching downloads under the
+    /// given folder instead of the per-user default (for alternate hosts, such as UI tests).
+    /// </summary>
+    /// <param name="factory">The Poly Haven API client factory.</param>
+    /// <param name="cacheRoot">The root folder downloaded sample assets are cached under.</param>
+    public SampleAssetService(IPolyHavenApiClientFactory factory, string cacheRoot)
     {
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
-        _cacheRoot = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "PolyHavenBrowser", "cache");
+        _cacheRoot = string.IsNullOrWhiteSpace(cacheRoot)
+            ? throw new ArgumentException("A cache folder is required.", nameof(cacheRoot))
+            : cacheRoot;
     }
 
     /// <summary>The root folder where downloaded sample assets are cached.</summary>

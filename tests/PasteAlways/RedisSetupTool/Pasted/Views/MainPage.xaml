@@ -1,4 +1,4 @@
-<Page
+<Page xmlns:a="using:Microsoft.UI.Xaml.Automation"
     x:Class="RedisSetupTool.Views.MainPage"
     xmlns="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
     xmlns:c="clr-namespace:Microsoft.UI.Xaml.Controls;assembly=CodeBrix.Platform.UI"
@@ -84,7 +84,7 @@
         <!-- One rail row: a full-bleed button whose brushes come from the item view model,
              which is how the family does selection highlighting -->
         <ui:DataTemplate x:Key="NavItemTemplate">
-            <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+            <Button a:AutomationProperties.Name="{d:Binding Title}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                     Background="{d:Binding ItemBackground}" BorderThickness="0"
                     CornerRadius="8" Padding="12,9" Margin="8,2"
                     Command="{d:Binding SelectCommand}">
@@ -153,6 +153,7 @@
                         BorderThickness="0" Background="{StaticResource CardWellBrush}"
                         Visibility="{d:Binding RevealVisibility}" />
                 <Button Grid.Column="4" Command="{d:Binding CopyCommand}"
+                        a:AutomationProperties.Name="Copy to clipboard"
                         Width="26" Height="24" MinWidth="0" MinHeight="0" Padding="0"
                         CornerRadius="5" Background="Transparent" BorderThickness="0"
                         ToolTipService.ToolTip="Copy to clipboard">
@@ -507,7 +508,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBox CornerRadius="8" Visibility="{d:Binding TextVisibility}"
+                    <TextBox a:AutomationProperties.AutomationId="Value" a:AutomationProperties.Name="Value" CornerRadius="8" Visibility="{d:Binding TextVisibility}"
                              Text="{d:Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     <PasswordBox CornerRadius="8" Visibility="{d:Binding PasswordVisibility}"
                                  Password="{d:Binding Value, Mode=TwoWay}" />
@@ -515,13 +516,13 @@
                                Minimum="{d:Binding Minimum}" Maximum="{d:Binding Maximum}"
                                SpinButtonPlacementMode="Inline"
                                Value="{d:Binding NumberValue, Mode=TwoWay}" />
-                    <ComboBox HorizontalAlignment="Stretch" CornerRadius="8"
+                    <ComboBox a:AutomationProperties.AutomationId="Value2" a:AutomationProperties.Name="Value" HorizontalAlignment="Stretch" CornerRadius="8"
                               Visibility="{d:Binding ChoiceVisibility}"
                               ItemsSource="{d:Binding Choices}"
                               SelectedItem="{d:Binding Value, Mode=TwoWay}" />
                     <ToggleSwitch Header="" Visibility="{d:Binding BooleanVisibility}"
                                   IsOn="{d:Binding BoolValue, Mode=TwoWay}" />
-                    <TextBox CornerRadius="8" AcceptsReturn="True" TextWrapping="Wrap"
+                    <TextBox a:AutomationProperties.AutomationId="Value3" a:AutomationProperties.Name="Value" CornerRadius="8" AcceptsReturn="True" TextWrapping="Wrap"
                              MinHeight="90" FontSize="12"
                              FontFamily="{StaticResource RobotoMonoFont}"
                              Visibility="{d:Binding MultiLineVisibility}"
@@ -1102,15 +1103,15 @@
                             <TextBlock Text="{d:Binding CountText}" FontSize="11"
                                        Foreground="{StaticResource TextTertiaryBrush}" />
                         </StackPanel>
-                        <ComboBox Width="230" Margin="0,0,10,6" CornerRadius="8"
+                        <ComboBox a:AutomationProperties.AutomationId="TopologyFilter" a:AutomationProperties.Name="Topology Filter" Width="230" Margin="0,0,10,6" CornerRadius="8"
                                   VerticalAlignment="Center"
                                   ItemsSource="{d:Binding TopologyFilterOptions}"
                                   SelectedItem="{d:Binding TopologyFilter, Mode=TwoWay}" />
-                        <ComboBox Width="130" Margin="0,0,10,6" CornerRadius="8"
+                        <ComboBox a:AutomationProperties.AutomationId="StateFilter" a:AutomationProperties.Name="State Filter" Width="130" Margin="0,0,10,6" CornerRadius="8"
                                   VerticalAlignment="Center"
                                   ItemsSource="{d:Binding StateFilterOptions}"
                                   SelectedItem="{d:Binding StateFilter, Mode=TwoWay}" />
-                        <TextBox Width="190" Margin="0,0,10,6" CornerRadius="8"
+                        <TextBox a:AutomationProperties.AutomationId="SearchText" a:AutomationProperties.Name="Search Text" Width="190" Margin="0,0,10,6" CornerRadius="8"
                                  VerticalAlignment="Center" PlaceholderText="Search by name…"
                                  Text="{d:Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <Button Content="Clear" Margin="0,0,10,6" VerticalAlignment="Center"
@@ -1225,7 +1226,7 @@
                                     <TextBlock Text="Instance name" FontSize="11.5"
                                                FontWeight="SemiBold"
                                                Foreground="{StaticResource TextSecondaryBrush}" />
-                                    <TextBox CornerRadius="8"
+                                    <TextBox a:AutomationProperties.AutomationId="InstanceName" a:AutomationProperties.Name="Instance Name" CornerRadius="8"
                                              PlaceholderText="A name you will recognise later"
                                              Text="{d:Binding InstanceName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBlock Text="Used for the container, volume and network names, and shown on the card."
@@ -1325,10 +1326,10 @@
                                 <TextBlock Text="{d:Binding CountText}" FontSize="11"
                                            Foreground="{StaticResource TextTertiaryBrush}" />
                             </StackPanel>
-                            <ComboBox HorizontalAlignment="Stretch" CornerRadius="8"
+                            <ComboBox a:AutomationProperties.AutomationId="Filter" a:AutomationProperties.Name="Filter" HorizontalAlignment="Stretch" CornerRadius="8"
                                       ItemsSource="{d:Binding FilterOptions}"
                                       SelectedItem="{d:Binding Filter, Mode=TwoWay}" />
-                            <TextBox CornerRadius="8" PlaceholderText="Search name, image or id…"
+                            <TextBox a:AutomationProperties.AutomationId="SearchText2" a:AutomationProperties.Name="Search Text" CornerRadius="8" PlaceholderText="Search name, image or id…"
                                      Text="{d:Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
                         <ScrollViewer Grid.Row="1" Padding="12,0,12,12"
@@ -1400,7 +1401,7 @@
                                     <Button Content="Restart" Margin="0,0,7,5"
                                             Style="{StaticResource SmallButtonStyle}"
                                             Command="{d:Binding RestartCommand}" />
-                                    <ComboBox Width="118" Margin="0,0,4,5" CornerRadius="6"
+                                    <ComboBox a:AutomationProperties.AutomationId="KillSignal" a:AutomationProperties.Name="Kill Signal" Width="118" Margin="0,0,4,5" CornerRadius="6"
                                               VerticalAlignment="Center"
                                               ItemsSource="{d:Binding KillSignals}"
                                               SelectedItem="{d:Binding KillSignal, Mode=TwoWay}" />
@@ -1545,7 +1546,7 @@
                                 </Grid.RowDefinitions>
                                 <c:WrapPanel Grid.Row="0" Orientation="Horizontal"
                                              Margin="24,14,24,8">
-                                    <ComboBox Width="140" Margin="0,0,10,6" CornerRadius="8"
+                                    <ComboBox a:AutomationProperties.AutomationId="LogTail" a:AutomationProperties.Name="Log Tail" Width="140" Margin="0,0,10,6" CornerRadius="8"
                                               VerticalAlignment="Center"
                                               ItemsSource="{d:Binding LogTailOptions}"
                                               SelectedItem="{d:Binding LogTail, Mode=TwoWay}" />
@@ -1790,7 +1791,7 @@
                                 <TextBlock Text="Open a console in…" FontSize="15"
                                            FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimaryBrush}" />
-                                <TextBox Grid.Row="1" CornerRadius="8"
+                                <TextBox a:AutomationProperties.AutomationId="PickerSearchText" a:AutomationProperties.Name="Picker Search Text" Grid.Row="1" CornerRadius="8"
                                          PlaceholderText="Filter running containers…"
                                          Text="{d:Binding PickerSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
@@ -1829,7 +1830,7 @@
                                 <TextBlock Text="{d:Binding CountText}" FontSize="11"
                                            Foreground="{StaticResource TextTertiaryBrush}" />
                             </StackPanel>
-                            <TextBox CornerRadius="8" PlaceholderText="Search images…"
+                            <TextBox a:AutomationProperties.AutomationId="SearchText3" a:AutomationProperties.Name="Search Text" CornerRadius="8" PlaceholderText="Search images…"
                                      Text="{d:Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
                         <ScrollViewer Grid.Row="1" Padding="12,0,12,12"
@@ -1839,7 +1840,7 @@
                         </ScrollViewer>
                         <StackPanel Grid.Row="2" Padding="14,10" Spacing="7">
                             <Border Height="1" Background="{StaticResource HairlineBrush}" />
-                            <TextBox CornerRadius="8" PlaceholderText="redis:8-alpine"
+                            <TextBox a:AutomationProperties.AutomationId="PullReference" a:AutomationProperties.Name="Pull Reference" CornerRadius="8" PlaceholderText="redis:8-alpine"
                                      Text="{d:Binding PullReference, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             <Button Content="Pull image" HorizontalAlignment="Stretch"
                                     Style="{StaticResource SmallButtonStyle}"
@@ -1857,12 +1858,12 @@
                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                FontSize="14"
                                Foreground="{StaticResource TextTertiaryBrush}"
-                               Visibility="{d:Binding NoSelectionVisibility}" />
+                               Visibility="{d:Binding EmptyPaneVisibility}" />
 
                     <ScrollViewer Padding="24,18" VerticalScrollBarVisibility="Auto"
-                                  Visibility="{d:Binding HasSelectionVisibility}">
+                                  Visibility="{d:Binding DetailPaneVisibility}">
                         <StackPanel Spacing="16" MaxWidth="920" HorizontalAlignment="Left">
-                            <StackPanel Spacing="2">
+                            <StackPanel Spacing="2" Visibility="{d:Binding HasSelectionVisibility}">
                                 <TextBlock Text="{d:Binding Title}" FontSize="18"
                                            FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimaryBrush}"
@@ -1872,8 +1873,8 @@
                                            Foreground="{StaticResource TextTertiaryBrush}" />
                             </StackPanel>
 
-                            <c:WrapPanel Orientation="Horizontal">
-                                <TextBox Width="220" Margin="0,0,8,6" CornerRadius="8"
+                            <c:WrapPanel Orientation="Horizontal" Visibility="{d:Binding HasSelectionVisibility}">
+                                <TextBox a:AutomationProperties.AutomationId="NewTag" a:AutomationProperties.Name="New Tag" Width="220" Margin="0,0,8,6" CornerRadius="8"
                                          VerticalAlignment="Center"
                                          PlaceholderText="new tag, e.g. myredis:latest"
                                          Text="{d:Binding NewTag, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
@@ -1897,7 +1898,8 @@
 
                             <Border Padding="16,13" CornerRadius="12" BorderThickness="1"
                                     Background="{StaticResource CardWellBrush}"
-                                    BorderBrush="{StaticResource HairlineBrush}">
+                                    BorderBrush="{StaticResource HairlineBrush}"
+                                    Visibility="{d:Binding HasSelectionVisibility}">
                                 <StackPanel Spacing="8">
                                     <TextBlock Text="LINT A DOCKERFILE" FontSize="10"
                                                FontWeight="SemiBold" CharacterSpacing="80"
@@ -1907,7 +1909,7 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBox CornerRadius="8"
+                                        <TextBox a:AutomationProperties.AutomationId="DockerfilePath" a:AutomationProperties.Name="Dockerfile Path" CornerRadius="8"
                                                  PlaceholderText="/path/to/Dockerfile"
                                                  Text="{d:Binding DockerfilePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                         <Button Grid.Column="1" Content="Lint (Hadolint)"
@@ -1944,7 +1946,8 @@
 
                             <Border Padding="18,14" CornerRadius="12" BorderThickness="1"
                                     Background="{StaticResource CardBrush}"
-                                    BorderBrush="{StaticResource HairlineBrush}">
+                                    BorderBrush="{StaticResource HairlineBrush}"
+                                    Visibility="{d:Binding HasSelectionVisibility}">
                                 <StackPanel Spacing="6">
                                     <TextBlock Text="IMAGE" FontSize="10" FontWeight="SemiBold"
                                                CharacterSpacing="80"
@@ -1956,7 +1959,8 @@
 
                             <Border Padding="18,14" CornerRadius="12" BorderThickness="1"
                                     Background="{StaticResource CardBrush}"
-                                    BorderBrush="{StaticResource HairlineBrush}">
+                                    BorderBrush="{StaticResource HairlineBrush}"
+                                    Visibility="{d:Binding HasSelectionVisibility}">
                                 <StackPanel Spacing="6">
                                     <TextBlock Text="LAYERS" FontSize="10" FontWeight="SemiBold"
                                                CharacterSpacing="80"
@@ -2011,13 +2015,13 @@
                                    CharacterSpacing="80" VerticalAlignment="Center"
                                    Margin="0,0,16,6"
                                    Foreground="{StaticResource AccentBrush}" />
-                        <TextBox Width="200" Margin="0,0,8,6" CornerRadius="8"
+                        <TextBox a:AutomationProperties.AutomationId="NewNetworkName" a:AutomationProperties.Name="New Network Name" Width="200" Margin="0,0,8,6" CornerRadius="8"
                                  VerticalAlignment="Center" PlaceholderText="new network name"
                                  Text="{d:Binding NewNetworkName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        <Button Content="Create" Margin="0,0,8,6" VerticalAlignment="Center"
+                        <Button a:AutomationProperties.AutomationId="CreateNetwork" Content="Create" Margin="0,0,8,6" VerticalAlignment="Center"
                                 Style="{StaticResource SmallButtonStyle}"
                                 Command="{d:Binding CreateNetworkCommand}" />
-                        <Button Content="Remove selected" Margin="0,0,8,6"
+                        <Button a:AutomationProperties.AutomationId="RemoveNetwork" Content="Remove selected" Margin="0,0,8,6"
                                 VerticalAlignment="Center"
                                 Style="{StaticResource SmallButtonStyle}"
                                 Foreground="{StaticResource AccentBrush}"
@@ -2065,13 +2069,13 @@
                                    CharacterSpacing="80" VerticalAlignment="Center"
                                    Margin="0,0,16,6"
                                    Foreground="{StaticResource AccentBrush}" />
-                        <TextBox Width="200" Margin="0,0,8,6" CornerRadius="8"
+                        <TextBox a:AutomationProperties.AutomationId="NewVolumeName" a:AutomationProperties.Name="New Volume Name" Width="200" Margin="0,0,8,6" CornerRadius="8"
                                  VerticalAlignment="Center" PlaceholderText="new volume name"
                                  Text="{d:Binding NewVolumeName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        <Button Content="Create" Margin="0,0,8,6" VerticalAlignment="Center"
+                        <Button a:AutomationProperties.AutomationId="CreateVolume" Content="Create" Margin="0,0,8,6" VerticalAlignment="Center"
                                 Style="{StaticResource SmallButtonStyle}"
                                 Command="{d:Binding CreateVolumeCommand}" />
-                        <Button Content="Remove selected" Margin="0,0,8,6"
+                        <Button a:AutomationProperties.AutomationId="RemoveVolume" Content="Remove selected" Margin="0,0,8,6"
                                 VerticalAlignment="Center"
                                 Style="{StaticResource SmallButtonStyle}"
                                 Foreground="{StaticResource AccentBrush}"
@@ -2219,7 +2223,7 @@
                                                    CharacterSpacing="80" VerticalAlignment="Center"
                                                    Margin="0,0,14,6"
                                                    Foreground="{StaticResource AccentBrush}" />
-                                        <ComboBox Width="130" Margin="0,0,8,6" CornerRadius="8"
+                                        <ComboBox a:AutomationProperties.AutomationId="EventFilter" a:AutomationProperties.Name="Event Filter" Width="130" Margin="0,0,8,6" CornerRadius="8"
                                                   VerticalAlignment="Center"
                                                   ItemsSource="{d:Binding EventFilterOptions}"
                                                   SelectedItem="{d:Binding EventFilter, Mode=TwoWay}" />
@@ -2249,7 +2253,7 @@
                                                    FontWeight="SemiBold" CharacterSpacing="80"
                                                    VerticalAlignment="Center" Margin="0,0,14,6"
                                                    Foreground="{StaticResource AccentBrush}" />
-                                        <ComboBox Width="150" Margin="0,0,8,6" CornerRadius="8"
+                                        <ComboBox a:AutomationProperties.AutomationId="SeverityFilter" a:AutomationProperties.Name="Severity Filter" Width="150" Margin="0,0,8,6" CornerRadius="8"
                                                   VerticalAlignment="Center"
                                                   ItemsSource="{d:Binding SeverityFilterOptions}"
                                                   SelectedItem="{d:Binding SeverityFilter, Mode=TwoWay}" />

@@ -9,18 +9,26 @@ namespace WebcamPainter.Webcam;
 public sealed class CameraDevice
 {
     internal CameraDevice(IImagingMediaDevice device)
+        : this(device.Id, device.FriendlyName)
     {
         Device = device;
+    }
+
+    //For camera sources that are not backed by a discovered device
+    internal CameraDevice(string id, string friendlyName)
+    {
+        Id = id;
+        FriendlyName = friendlyName;
     }
 
     internal IImagingMediaDevice Device { get; }
 
     /// <summary>The camera's unique hardware identifier.</summary>
-    public string Id => Device.Id;
+    public string Id { get; }
 
     /// <summary>The camera's human-readable name.</summary>
-    public string FriendlyName => Device.FriendlyName;
+    public string FriendlyName { get; }
 
     /// <summary>The dropdown display text.</summary>
-    public override string ToString() => Device.FriendlyName;
+    public override string ToString() => FriendlyName;
 }

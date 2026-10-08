@@ -46,4 +46,5 @@ Surface/GitHubIssueFinder.GitHub/Serialization/UserDto.cs  <- CodeBrix.Samples/G
 Surface/GitHubIssueFinder.Settings/LoggingService.cs  <- CodeBrix.Samples/GitHubIssueFinder/src/libs/GitHubIssueFinder.Settings/LoggingService.cs  (verbatim)
 Surface/GitHubIssueFinder.Settings/SettingKeys.cs  <- CodeBrix.Samples/GitHubIssueFinder/src/libs/GitHubIssueFinder.Settings/SettingKeys.cs  (verbatim)
 Surface/GitHubIssueFinder.Settings/SettingsService.cs  <- CodeBrix.Samples/GitHubIssueFinder/src/libs/GitHubIssueFinder.Settings/SettingsService.cs  (verbatim)
+Surface/GitHubIssueFinder.Core/Helpers/IUrlOpener.cs  <- CodeBrix.Samples/GitHubIssueFinder/src/GitHubIssueFinder.Core/Helpers/IUrlOpener.cs  (verbatim)
 # Not copied: InternalsVisibleTo.cs of each library (grants to the libraries' own test projects).

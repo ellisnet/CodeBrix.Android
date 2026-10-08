@@ -3,7 +3,7 @@
   <!--
     Paste-always head PicoScope.Brix: the repository pins. The self-produced CodeBrix.Plotter package the
     chart code uses is pinned by the repository's Directory.Packages.props since AP7-C (the PlotterView
-    add-in's version, 1.0.269.1424 = the version the pinned PlotterView add-in declares).
+    add-in's version, 1.0.278.1156 = the version the pinned PlotterView add-in declares).
   -->
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
 

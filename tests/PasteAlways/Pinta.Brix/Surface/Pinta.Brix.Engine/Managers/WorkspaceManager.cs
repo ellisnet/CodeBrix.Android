@@ -273,6 +273,13 @@ public sealed class WorkspaceManager : IWorkspaceService
 			OnActiveDocumentChanged (EventArgs.Empty);
 		} else {
 			open_documents.Remove (document);
+
+			// Pinta.Brix note: a document before the active one shifts the
+			// active one down a place; without this the index points at the
+			// wrong document, or past the end of the list (closing the first
+			// of two tabs while the second is active).
+			if (index < active_document_index)
+				active_document_index--;
 		}
 
 		document.Layers.LayerAdded -= Document_LayerAdded;

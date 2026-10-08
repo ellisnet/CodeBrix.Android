@@ -10,6 +10,7 @@ using CodeBrixVideoTool.Services;
 using Microsoft.UI.Xaml;
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,6 +39,10 @@ public class MainViewModel : SimpleViewModel, IMediaFileBridge
         Playback = new PlaybackViewModel();
         Conversion = new ConversionViewModel();
         Conversion.ConversionFinished += OnConversionFinished;
+
+        //The conversion half's own status line - a cancelled save dialog, a refused plan, the plan
+        //while it runs - has no text block of its own, so it goes on the one status bar.
+        Conversion.PropertyChanged += OnConversionPropertyChanged;
     }
 
     #region | Bindable properties |
@@ -224,6 +229,14 @@ public class MainViewModel : SimpleViewModel, IMediaFileBridge
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private void OnConversionPropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ConversionViewModel.StatusText))
+        {
+            StatusText = Conversion.StatusText;
         }
     }
 

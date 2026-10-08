@@ -49,7 +49,7 @@ public sealed class HandTrackingResult
     public float PresenceScore { get; }
 }
 
-/// <summary>Carries a <see cref="HandTrackingResult"/> to <see cref="HandTracker.TrackingUpdated"/> subscribers.</summary>
+/// <summary>Carries a <see cref="HandTrackingResult"/> to <see cref="IHandTracker.TrackingUpdated"/> subscribers.</summary>
 public sealed class HandTrackingEventArgs : EventArgs
 {
     internal HandTrackingEventArgs(HandTrackingResult result)

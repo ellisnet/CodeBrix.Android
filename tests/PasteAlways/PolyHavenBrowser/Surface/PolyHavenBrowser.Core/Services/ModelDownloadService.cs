@@ -108,13 +108,24 @@ public sealed class ModelDownloadService
         //keyed by exactly those relative paths, so the files land where the glTF expects them.
         if (gltf.Include != null)
         {
-            foreach (var (relativePath, sidecar) in gltf.Include)
+            try
             {
-                var sidecarPath = Path.Combine(modelFolder, relativePath.Replace('/', Path.DirectorySeparatorChar));
-                Directory.CreateDirectory(Path.GetDirectoryName(sidecarPath)!);
-                await DownloadOneAsync(client, sidecar, sidecarPath, totalBytes, completedBytes, progress, cancellationToken)
-                    .ConfigureAwait(false);
-                completedBytes += sidecar.Size;
+                foreach (var (relativePath, sidecar) in gltf.Include)
+                {
+                    var sidecarPath = Path.Combine(modelFolder, relativePath.Replace('/', Path.DirectorySeparatorChar));
+                    Directory.CreateDirectory(Path.GetDirectoryName(sidecarPath)!);
+                    await DownloadOneAsync(client, sidecar, sidecarPath, totalBytes, completedBytes, progress, cancellationToken)
+                        .ConfigureAwait(false);
+                    completedBytes += sidecar.Size;
+                }
+            }
+            catch
+            {
+                //The .gltf is what marks a model as already downloaded (TryFindExistingGltf): leave
+                //  it behind without its sidecars and every later attempt would skip the download
+                //  and fail to load the incomplete model. Remove it so a retry downloads again.
+                TryDeleteFile(gltfPath);
+                throw;
             }
         }
 
@@ -139,6 +150,20 @@ public sealed class ModelDownloadService
 
         await client.DownloadFileAsync(file, destinationPath, fileProgress, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+    }
+
+    private static void TryDeleteFile(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
     }
 
     private static PolyHavenFileRef PickGltf(PolyHavenFileTree files)

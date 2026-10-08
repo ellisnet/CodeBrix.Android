@@ -12,6 +12,12 @@ using WikipediaPublisher.RenderArticle.Services;
 // ReSharper disable once CheckNamespace
 namespace WikipediaPublisher.ViewModels;
 
+/// <summary>Optional navigation origin, for hosting a local Wikipedia mirror or an offline fixture.</summary>
+public sealed class WikiNavigationOptions
+{
+    public Uri BaseUri { get; init; } = new("https://en.wikipedia.org/");
+}
+
 /// <summary>
 /// Lets the hosting page hand the view model a way to drive the embedded
 /// WebView browser (only wired up on heads that have one).
@@ -55,7 +61,7 @@ public class MainViewModel : SimpleViewModel, IWebViewBridge, IFileSaveBridge
 {
     public const string HomeUrl = "https://en.wikipedia.org/wiki/Main_Page";
 
-    private const string WikiHost = "en.wikipedia.org";
+    private readonly Uri _wikiBaseUri = new("https://en.wikipedia.org/");
 
     //Wikipedia namespace prefixes that are not printable articles
     private static readonly string[] NonArticlePrefixes =
@@ -74,6 +80,8 @@ public class MainViewModel : SimpleViewModel, IWebViewBridge, IFileSaveBridge
             Debug.WriteLine("Main view model startup.");
 
             _renderSvc = GetService<IArticleRenderService>();
+            var navigation = SimpleServiceResolver.Instance.GetService(typeof(WikiNavigationOptions)) as WikiNavigationOptions;
+            _wikiBaseUri = navigation?.BaseUri ?? _wikiBaseUri;
 
             PageSizes = PageSizeInfo.All;
             SelectedPageSize = PageSizes[0];
@@ -186,8 +194,8 @@ public class MainViewModel : SimpleViewModel, IWebViewBridge, IFileSaveBridge
         //  picks an article by navigating to it, and Publish uses whatever page is displayed.
         if (CanSearch() && NavigateToUrl != null)
         {
-            var searchUrl =
-                $"https://{WikiHost}/w/index.php?search={Uri.EscapeDataString(SearchTerms.Trim())}";
+            var searchUrl = new Uri(_wikiBaseUri,
+                "w/index.php?search=" + Uri.EscapeDataString(SearchTerms.Trim())).AbsoluteUri;
             Navigate(searchUrl);
             StatusText = "Browse to the article you want, then click Publish.";
         }
@@ -293,6 +301,10 @@ public class MainViewModel : SimpleViewModel, IWebViewBridge, IFileSaveBridge
             }
         }
 
+        //Progress reports are posted to the UI thread, so one can arrive after rendering has
+        //  finished or failed; it must not overwrite the final status that was already shown.
+        var rendering = true;
+
         try
         {
             IsBusy = true;
@@ -307,11 +319,13 @@ public class MainViewModel : SimpleViewModel, IWebViewBridge, IFileSaveBridge
 
             var progress = new Progress<RenderProgress>(p => InvokeOnMainThread(() =>
             {
+                if (!rendering) { return; }
                 StatusText = p.Message;
                 ProgressValue = p.PercentComplete;
             }));
 
             var result = await _renderSvc.RenderArticleAsync(request, progress);
+            rendering = false;
 
             StatusText = $"Saved: {result.OutputFilePath}";
             await ShowInfo(
@@ -322,6 +336,7 @@ public class MainViewModel : SimpleViewModel, IWebViewBridge, IFileSaveBridge
         }
         catch (Exception e)
         {
+            rendering = false;
             StatusText = "Publishing failed.";
             await ShowError($"Error while publishing: {e.Message}\n\nArticle URL: {ArticleUrl}");
         }
@@ -371,7 +386,7 @@ public class MainViewModel : SimpleViewModel, IWebViewBridge, IFileSaveBridge
     {
         //The view model, not the page, decides where the browser starts, so every head opens
         //  on the same page and all navigation flows one way.
-        Navigate(HomeUrl);
+        Navigate(new Uri(_wikiBaseUri, "wiki/Main_Page").AbsoluteUri);
     }
 
     public void SetCurrentBrowserUrl(string url)

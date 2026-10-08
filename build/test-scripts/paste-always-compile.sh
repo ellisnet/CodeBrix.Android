@@ -4,10 +4,15 @@
 # Builds every paste-always head under tests/PasteAlways/<App>/ (or only the apps named on the
 # command line) for net10.0-android36.1 and reports one line per corpus app. An app PASSES when
 #   1. its pasted files are unchanged (tests/PasteAlways/<App>/pasted-files.sha256), and
-#   2. its head builds with 0 errors and 0 warnings other than CBAND diagnostics.
+#   2. its head builds with 0 errors and 0 warnings other than CBAND diagnostics and the Platform XAML generator's
+#      own Uno-prefixed warnings.
 # CBAND warnings (the CodeBrix.Android analyzer and XAML scan: constructs Android accepts and ignores) are
 # COUNTED, never failures: the CBAND column, and <log dir>/cband-counts.tsv (per app and per id) and
 # <log dir>/cband-findings.txt (every finding, file and line).
+# [AP1.16, coordinator ruling 2026-10-07] The CodeBrix.Platform XAML generator's own WARNINGS (Uno-prefixed ids, $uno_ids;
+# tests/PasteAlways/Directory.Build.props keeps them warnings via WarningsNotAsErrors) are COUNTED the same way, never
+# failures: the UNO column, <log dir>/uno-counts.tsv (per app and per id) and <log dir>/uno-findings.txt. The Platform raises
+# them identically on every head (they report the sample's XAML, not an Android parity gap).
 # Exit status: 0 when every app passes, 1 otherwise.
 #
 # usage:  build/test-scripts/paste-always-compile.sh [-c Debug|Release] [App ...]
@@ -26,6 +31,8 @@ export MSBUILDDISABLENODEREUSE=1
 # device other than the agent AVD (a developer's phone may be attached). Without it running, the probe finds nothing.
 export ANDROID_SERIAL=${ANDROID_SERIAL:-emulator-5600}
 ids="CBAND0001 CBAND0002 CBAND0003 CBAND0004 CBAND0005 CBAND0006 CBAND0007 CBAND0008"
+# The Platform XAML generator's Warning-severity ids (keep in step with tests/PasteAlways/Directory.Build.props).
+uno_ids="Uno0008"
 
 apps=("$@")
 if [ ${#apps[@]} -eq 0 ]; then
@@ -40,9 +47,13 @@ failed=0
 summary="$logdir/summary.txt"
 counts="$logdir/cband-counts.tsv"
 findings="$logdir/cband-findings.txt"
+uno_counts="$logdir/uno-counts.tsv"
+uno_findings="$logdir/uno-findings.txt"
+printf 'app\ttotal' > "$uno_counts"; for id in $uno_ids; do printf '\t%s' "$id" >> "$uno_counts"; done; printf '\n' >> "$uno_counts"
+: > "$uno_findings"
 printf 'app\ttotal' > "$counts"; for id in $ids; do printf '\t%s' "$id" >> "$counts"; done; printf '\n' >> "$counts"
 : > "$findings"
-printf '%-28s %-6s %-10s %-9s %-6s %-9s %s\n' PAGE RESULT PASTED WARNINGS CBAND ERRORS LOG | tee "$summary"
+printf '%-28s %-6s %-10s %-9s %-6s %-4s %-9s %s\n' PAGE RESULT PASTED WARNINGS CBAND UNO ERRORS LOG | tee "$summary"
 for app in "${apps[@]}"; do
   dir="$repo/tests/PasteAlways/$app"
   proj=$(ls "$dir"/*.PasteAlways.csproj 2>/dev/null | head -1)
@@ -71,8 +82,19 @@ for app in "${apps[@]}"; do
   app_findings=$(grep -E ': warning CBAND[0-9]{4}:' "$log" | sed -E 's/ \[[^]]*\]$//' | sort -u)
   cband=0
   [ -n "$app_findings" ] && cband=$(printf '%s\n' "$app_findings" | wc -l)
+  uno_pattern=$(printf '%s|' $uno_ids); uno_pattern=${uno_pattern%|}
+  uno_app_findings=$(grep -E ": warning ($uno_pattern):" "$log" | sed -E 's/ \[[^]]*\]$//' | sort -u)
+  uno=0
+  [ -n "$uno_app_findings" ] && uno=$(printf '%s\n' "$uno_app_findings" | wc -l)
   other=x
-  [ -n "${warnings:-}" ] && other=$((warnings - cband))
+  [ -n "${warnings:-}" ] && other=$((warnings - cband - uno))
+  printf '%s\t%s' "$app" "$uno" >> "$uno_counts"
+  for id in $uno_ids; do
+    n=0; [ -n "$uno_app_findings" ] && n=$(printf '%s\n' "$uno_app_findings" | grep -c ": warning $id:")
+    printf '\t%s' "$n" >> "$uno_counts"
+  done
+  printf '\n' >> "$uno_counts"
+  [ -n "$uno_app_findings" ] && printf '%s\n' "$uno_app_findings" | sed "s|^|$app: |" >> "$uno_findings"
   printf '%s' "$app" >> "$counts"; printf '\t%s' "$cband" >> "$counts"
   for id in $ids; do
     n=0; [ -n "$app_findings" ] && n=$(printf '%s\n' "$app_findings" | grep -c ": warning $id:")
@@ -83,8 +105,8 @@ for app in "${apps[@]}"; do
 
   result=PASS
   if [ $rc -ne 0 ] || [ "${errors:-x}" != 0 ] || [ "$other" != 0 ] || [[ "$pasted" != ok* ]]; then result=FAIL; failed=1; fi
-  printf '%-28s %-6s %-10s %-9s %-6s %-9s %s\n' "$app" "$result" "$pasted" "$other" "$cband" "${errors:-?}" "$log" | tee -a "$summary"
+  printf '%-28s %-6s %-10s %-9s %-6s %-4s %-9s %s\n' "$app" "$result" "$pasted" "$other" "$cband" "$uno" "${errors:-?}" "$log" | tee -a "$summary"
 done
 
-echo "paste-always: $([ $failed -eq 0 ] && echo PASS || echo FAIL) (${#apps[@]} apps, $config; WARNINGS = warnings other than CBAND; CBAND counts in $counts)" | tee -a "$summary"
+echo "paste-always: $([ $failed -eq 0 ] && echo PASS || echo FAIL) (${#apps[@]} apps, $config; WARNINGS = warnings other than CBAND and UNO; CBAND counts in $counts; UNO counts in $uno_counts)" | tee -a "$summary"
 exit $failed

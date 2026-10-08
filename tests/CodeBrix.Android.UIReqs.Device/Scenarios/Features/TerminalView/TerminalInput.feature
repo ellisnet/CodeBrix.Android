@@ -181,6 +181,9 @@ Scenario: The scrollback chords page back through the history and forward again
 	Then the region of "term" in frame "back at the tail" is unchanged from frame "the live tail"
 	And the InputEmitted of "term" was never raised
 
+# The reference frame "the live tail" is captured AFTER a first tap on the terminal: on a platform whose first touch focuses the
+# terminal and raises a soft keyboard, the keyboard is then part of every frame the scenario compares, so the comparison judges the
+# scrolling alone. A tap is a click to the terminal (nothing is selected; the view does not move).
 Scenario: A finger dragged down the history scrolls back through it and dragged up returns to the live tail
 	Given the font "ms-appx:///CodeBrix.Platform.Fonts.RobotoMono/Fonts/RobotoMono.ttf" is warm
 	And the application shows a Grid named "cell" with:
@@ -196,6 +199,7 @@ Scenario: A finger dragged down the history scrolls back through it and dragged 
 	When the frame is captured
 	And the cursor of "term" is hidden
 	And the script "LongOutput" is fed to "term"
+	And "term" is tapped
 	And the frame is captured as "the live tail"
 	Then the view of "term" is at the live tail
 	When a finger drags from row 2 to row 12 in column 5 of "term"

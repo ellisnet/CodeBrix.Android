@@ -4,6 +4,7 @@
 using System;
 using CodeBrix.Android.UI.Platform;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using ALayoutDirection = global::Android.Views.LayoutDirection;
@@ -14,7 +15,8 @@ namespace CodeBrix.Android.UI.Handlers;
 
 /// <summary>
 /// The UIElement / FrameworkElement mapper every view handler chains to (plan 2.5):
-/// Visibility, Opacity, RenderTransform (+origin), Clip, Canvas.ZIndex and FlowDirection.
+/// Visibility, Opacity, RenderTransform (+origin), Clip, Canvas.ZIndex and FlowDirection; and (AP9-3)
+/// AutomationProperties.Name / AutomationId as the content description / tag of the handler's accessibility view.
 /// </summary>
 internal static class ViewMappers
 {
@@ -29,7 +31,19 @@ internal static class ViewMappers
         [Canvas.ZIndexProperty] = MapZIndex,
         [FrameworkElement.FlowDirectionProperty] = MapFlowDirection,
         [ToolTipService.ToolTipProperty] = ToolTipMapping.Map,
+        [AutomationProperties.NameProperty] = MapAutomationName,
+        [AutomationProperties.AutomationIdProperty] = MapAutomationId,
     };
+
+    /// <summary>
+    /// Maps AutomationProperties.Name to the content description of the handler's accessibility view (what
+    /// TalkBack speaks and UI Automator matches as the description). The Core seam delivers every effective
+    /// change of the attached property to the handler, so a later change or a clear re-runs this mapping.
+    /// </summary>
+    public static void MapAutomationName(IViewHandler handler, UIElement element) => handler.ApplyAutomationName();
+
+    /// <summary>Maps AutomationProperties.AutomationId to the tag of the handler's accessibility view (Android has no settable resource id).</summary>
+    public static void MapAutomationId(IViewHandler handler, UIElement element) => handler.ApplyAutomationId();
 
     /// <summary>Maps UIElement.Visibility (Collapsed = Gone: Core arranges nothing for it).</summary>
     public static void MapVisibility(IViewHandler handler, UIElement element)

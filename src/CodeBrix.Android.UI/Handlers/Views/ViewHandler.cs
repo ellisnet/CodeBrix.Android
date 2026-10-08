@@ -4,6 +4,7 @@
 using System;
 using CodeBrix.Android.UI.Platform;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
 using AContext = global::Android.Content.Context;
@@ -25,6 +26,7 @@ internal abstract class ViewHandler<TElement, TView> : ElementHandler<TElement, 
 {
     private Transform _watchedTransform;
     private Size _lastArrangedSize;
+    private AView _namedView;
 
     /// <summary>Creates a view handler that maps with <paramref name="mapper"/>.</summary>
     /// <param name="mapper">The property mapper (chain it to <see cref="ViewMappers.ViewMapper"/>).</param>
@@ -48,6 +50,70 @@ internal abstract class ViewHandler<TElement, TView> : ElementHandler<TElement, 
     /// the default widget); null uses <see cref="CreatePlatformView"/>.
     /// </summary>
     public static Func<ViewHandler<TElement, TView>, TView> PlatformViewFactory { get; set; }
+
+    /// <summary>
+    /// AP9-3: the view TalkBack and UI Automator read for this element - the one that carries the element's
+    /// AutomationProperties.Name as its content description (and its AutomationId as its tag). The native view
+    /// itself by default; a handler whose root view only hosts the interactive widget (a text field inside its
+    /// layout, a Material button inside its host, an overlaid widget) returns that widget.
+    /// </summary>
+    public virtual AView AccessibilityView => NativeView;
+
+    /// <inheritdoc />
+    public void ApplyAutomationName()
+    {
+        var target = AccessibilityView;
+        var description = Element is { } element ? AutomationText.ContentDescriptionOf(AutomationProperties.GetName(element)) : null;
+        if (_namedView != null && !ReferenceEquals(_namedView, target))
+        {
+            // The accessibility view was replaced (e.g. a Button switched between text and element content).
+            ClearDescription(_namedView);
+            _namedView = null;
+        }
+
+        if (target == null)
+        {
+            return;
+        }
+
+        if (description != null)
+        {
+            target.ContentDescription = description;
+            _namedView = target;
+        }
+        else if (_namedView != null)
+        {
+            ClearDescription(_namedView);
+            _namedView = null;
+            OnAutomationNameCleared();
+        }
+    }
+
+    /// <inheritdoc />
+    public void ApplyAutomationId()
+    {
+        // One statement: a string tag (or none) only, so a tag the view's own code set is never replaced.
+        if (AccessibilityView is { Tag: null or global::Java.Lang.String } target)
+        {
+            target.Tag = AutomationText.TagOf(Element is { } element ? AutomationProperties.GetAutomationId(element) : null) is { } id ? new global::Java.Lang.String(id) : null;
+        }
+    }
+
+    /// <summary>
+    /// Called when the element's AutomationProperties.Name was cleared after it had named the accessibility view
+    /// (whose content description is now null): a handler that labels its widget itself puts its own label back.
+    /// </summary>
+    protected virtual void OnAutomationNameCleared()
+    {
+    }
+
+    private static void ClearDescription(AView view)
+    {
+        if (view.Handle != IntPtr.Zero)
+        {
+            view.ContentDescription = null;
+        }
+    }
 
     /// <inheritdoc />
     public override bool CanInvokeMappers() => NativeView is not { Handle: var handle } || handle != IntPtr.Zero;
@@ -79,6 +145,7 @@ internal abstract class ViewHandler<TElement, TView> : ElementHandler<TElement, 
     /// <inheritdoc />
     protected override void DisconnectHandler(TView platformView)
     {
+        _namedView = null;
         WatchRenderTransform(null);
         ViewTreeSync.DetachFromParent(Element, platformView);
         base.DisconnectHandler(platformView);
@@ -88,6 +155,10 @@ internal abstract class ViewHandler<TElement, TView> : ElementHandler<TElement, 
     protected override void OnConnected()
     {
         base.OnConnected();
+
+        // AP9-3: after every mapper ran, so the app's automation name wins over a label a handler gave its widget.
+        ApplyAutomationName();
+        ApplyAutomationId();
         ViewTreeSync.AttachToParent(Element, NativeView);
     }
 

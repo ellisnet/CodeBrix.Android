@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using CodeBrix.Android.UI.Android;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using AColor = global::Android.Graphics.Color;
@@ -230,7 +231,7 @@ internal sealed class InfoBarHandler : TemplateOverlayHandler<InfoBar, InfoBarCa
         {
             card.Row.SetPadding(card.Row.PaddingLeft, 0, MaterialWidgets.Px(16, density), 0);
         }
-        card.ContentDescription = element.Severity + " " + title?.Text;
+        card.ContentDescription = AutomationText.ContentDescriptionOr(AutomationProperties.GetName(element), element.Severity + " " + title?.Text);
     }
 
     /// <inheritdoc />
