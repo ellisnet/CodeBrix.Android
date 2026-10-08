@@ -84,6 +84,9 @@ internal sealed class AndroidXamlRootHost : IXamlRootHost
             return;
         }
 
+        // [AP9-4] The soft keyboard of the custom text controls follows finger and pen taps from the window's first one.
+        CodeBrix.Android.UI.Input.TextInput.CoreTextInputController.Current?.WatchRoot(root);
+
         AView rootView;
         if (root.Handler is IViewHandler { NativeView: { } own })
         {

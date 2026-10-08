@@ -42,7 +42,7 @@ Scenario: In Resize mode a text field at the bottom of the page is laid out abov
 Scenario: In Resize mode a terminal that fills the window shows its last row above the keyboard
 	Given the application's soft-input mode is "Resize"
 	And the application shows a TerminalView named "term" that fills the panel, fed 90 numbered lines
-	When the TerminalView "term" takes the focus
+	When a real finger taps the TerminalView "term"
 	Then the soft keyboard is showing
 	And the bottom edge of "term" is on the soft keyboard's top edge
 	And the TerminalView "term" has fewer rows than before the keyboard
@@ -103,11 +103,13 @@ Scenario: By default the window pans an editor's caret under the keyboard into v
 	Then no soft-keyboard session is open
 	And the window is not panned
 
+# [AP9-4] A terminal shows the soft keyboard for a finger press, not for programmatic focus: the two terminal scenarios
+# tap the terminal (their claims are about the window making room for the keyboard).
 # [AP8-S batch 4] The TerminalView add-in lays the focus view on the cursor cell (WPE1-18: TerminalControl's platform caret
 # seam). The cursor is shown (the caret), so no frame is captured: it blinks.
 Scenario: By default the window pans a terminal's cursor row under the keyboard into view
 	Given the application shows a TerminalView named "term" that fills the panel, fed 90 numbered lines, its cursor shown
-	When the TerminalView "term" takes the focus
+	When a real finger taps the TerminalView "term"
 	Then the soft keyboard is showing
 	And the window is panned up
 	And the soft keyboard's focus view is on the cursor cell of the TerminalView "term"

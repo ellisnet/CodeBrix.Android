@@ -122,9 +122,21 @@ Scenario: Moving the focus off the editor closes the session and takes the under
 	And the AdvancedTextEdit "editor" holds "draft"
 	And the text view of the AdvancedTextEdit "editor" draws no composition underline
 
+# [AP9-4] A custom text control summons the soft keyboard for a finger or pen PRESS only (the TextBox's rule, WinUI's):
+# programmatic focus opens the session and leaves the screen clear; a tap brings the keyboard.
+Scenario: A text area that takes the focus programmatically shows no soft keyboard, and a finger tap on it shows it
+	Given the application shows an AdvancedTextEdit named "editor" holding "one\ntwo\nthree"
+	When the text area of the AdvancedTextEdit "editor" takes the focus
+	Then the soft-keyboard session is open for the AdvancedTextEdit "editor" with the "editor" profile and its text
+	And the soft keyboard is hidden
+	When a real finger taps the AdvancedTextEdit "editor" at line 2, column 2
+	Then the soft keyboard is showing
+	And the caret of the AdvancedTextEdit "editor" is at line 2, column 2
+
 Scenario: With the soft keyboard up, a real finger puts the caret where it lands
 	Given the application shows an AdvancedTextEdit named "editor" holding "one\ntwo\nthree"
 	When the text area of the AdvancedTextEdit "editor" takes the focus
+	And a real finger taps the AdvancedTextEdit "editor" at line 1, column 1
 	Then the soft keyboard is showing
 	When a real finger taps the AdvancedTextEdit "editor" at line 3, column 3
 	Then the caret of the AdvancedTextEdit "editor" is at line 3, column 3

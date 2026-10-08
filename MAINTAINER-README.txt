@@ -516,7 +516,19 @@ typed into but are not a TextBox (TerminalView, AdvancedTextEdit) report their f
 through CodeBrix.Platform's SoftwareKeyboardFocus seam; CoreTextInputController (the
 registered ITextInputFocusNotificationsSingleton) then opens a session on the
 activity's CoreTextInputView (a 1x1 view in the root layout's FocusLayer that takes
-the Android focus and is an editor while a session is open) and shows the keyboard.
+the Android focus and is an editor while a session is open). It does NOT show the
+keyboard for the focus (AP9-4): a finger or pen tap does - the TextBox's rule and
+WinUI's (Portable/TextInput/SoftKeyboardPressRule, host-free tested). Press and release
+handlers (handled events too) sit on the focused control AND on the window's root
+element (AndroidXamlRootHost.AttachRootView -> WatchRoot, so the first tap of a window
+is seen): a press on the focused control shows it; a focus that follows a finger/pen
+release on that control within 500 ms shows it (TerminalControl focuses itself on
+Tapped, after the release, with FocusState.Pointer - the state its GrabFocus() also
+gives, so FocusState cannot tell a tap from a call); one show per tap; a mouse never.
+InputPane.TryShow while a session
+is open shows it on the session's view (CoreTextInputController.TryShowForInputPane).
+No hardware-keyboard detection: the input method decides. OpenCount counts sessions
+(the UIReqs IME-reset hook reads OpenCount + ShowCount).
 Its CoreTextInputConnection (a BaseInputConnection over one editable the view owns)
 turns committed text, a finished composition and "delete surrounding text" into
 KEY PRESSES raised in Core through the window's keyboard source
@@ -559,8 +571,9 @@ CoreTextInputView.ReportsReachInputMethod = false is the UIReqs switch for scena
 themselves (the device's real input method would end a composition it did not make). Without a target (the terminal)
 the key-press path above is unchanged.
 Unfocus (or the focused control's Unloaded) closes the session on the next looper turn unless another custom control
-took the focus; the same control focused again does not re-summon a dismissed keyboard, a
-finger/pen press on it does (a mouse press does not).
+took the focus; focus never summons the keyboard (programmatic, keyboard, a page's first
+focus, the same control focused again), a finger/pen press on the control does (a mouse
+press does not). Fences: AndroidTerminal, AndroidAdvancedTextEdit, AndroidSoftInput.
 Register or replace a handler with CodeBrixHandlers.Register<TElement, THandler>()
 before the first element of that type goes live (internal in v1: D-O1).
 

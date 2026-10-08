@@ -136,12 +136,17 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     activity that declares its own [Activity(WindowSoftInputMode =
     ...Adjust...)] keeps that. InputPane.OccludedRect reports the keyboard
     in every mode.
-    A custom text control (AdvancedTextEdit, TerminalView) opens the keyboard
-    whenever it gets the focus, programmatic focus included - also the focus
-    Core gives the first focusable control when a page appears, so on a phone
-    a page whose first focusable control is a terminal or an editor can open
-    with the keyboard up (a text box does not: it opens the keyboard only
-    when it is touched).
+    A custom text control (AdvancedTextEdit, TerminalView) follows the text
+    box's rule: the soft keyboard comes up when a finger or pen presses the
+    control, not when it gets the focus. Focus given any other way (a Focus()
+    call, keyboard focus, the focus Core gives a page's first focusable
+    control) keeps the control focused and silent - it hears every key at
+    once, and the screen stays clear. After the user dismisses the keyboard
+    the control keeps the focus and the next tap brings the keyboard back. To
+    open the keyboard without a tap (for example once a page has loaded), call
+    InputPane.GetForCurrentView().TryShow(); TryHide() closes it. With a
+    hardware keyboard, typing works straight away, and Android's own setting
+    decides whether a tap also shows the on-screen keyboard.
     In Pan mode a custom text control (AdvancedTextEdit, TerminalView) is
     panned by its CARET too (a terminal by its cursor cell, while the hosted
     program shows the cursor); Resize remains the choice when the whole
@@ -483,8 +488,8 @@ What differs on Android:
     fitting and GridResized, colours, fonts, scrollback and its scroll bar,
     Shift+PageUp/PageDown, the finger or mouse drag selection, Ctrl+Shift+C/V,
     the right-click menu, TitleChanged); the grid is painted on a native Skia
-    view. Hardware keys (and adb input) reach it as on the desktop. When it
-    gets the focus the soft keyboard opens with a terminal layout (no
+    view. Hardware keys (and adb input) reach it as on the desktop. When a
+    finger or pen presses it the soft keyboard opens with a terminal layout (no
     suggestions or autocorrection; the digits row is shown): every key reaches
     InputEmitted at once, the keyboard's Enter is CR and its delete is DEL. A
     finger or pen on the terminal brings a dismissed keyboard back; a mouse
@@ -494,8 +499,8 @@ What differs on Android:
     highlighting, folding, line numbers, the search panel, completion windows,
     undo/redo, the caret and the drag selection of the editor itself); every
     surface (the text and each margin) is drawn on a native Skia view. Hardware
-    keys (and adb input) reach it as on the desktop. When its text area gets
-    the focus the soft keyboard opens as a text editor (suggestions,
+    keys (and adb input) reach it as on the desktop. When a finger or pen
+    presses its text area the soft keyboard opens as a text editor (suggestions,
     autocorrection, Enter is a line break) that SEES the document: it reads the
     text around the caret, composes a word in place (underlined until it is
     committed), replaces a word it corrects, deletes around the caret and moves

@@ -280,6 +280,22 @@ public sealed class TerminalViewAndroidSteps
         }
     }
 
+    /// <summary>[AP9-4] The application asks for the soft keyboard explicitly (InputPane.TryShow), with no touch.</summary>
+    [When("the application calls InputPane.TryShow")]
+    public async Task When_input_pane_try_show()
+    {
+        await TestTargetFixture.RunOnUIThreadAsync(() => global::Windows.UI.ViewManagement.InputPane.GetForCurrentView().TryShow()).ConfigureAwait(false);
+        await Settle().ConfigureAwait(false);
+    }
+
+    /// <summary>[AP9-4] The application hides the soft keyboard explicitly (InputPane.TryHide).</summary>
+    [When("the application calls InputPane.TryHide")]
+    public async Task When_input_pane_try_hide()
+    {
+        await TestTargetFixture.RunOnUIThreadAsync(() => global::Windows.UI.ViewManagement.InputPane.GetForCurrentView().TryHide()).ConfigureAwait(false);
+        await Settle().ConfigureAwait(false);
+    }
+
     /// <summary>A real finger tap in the middle of the terminal.</summary>
     [When("a real finger taps the TerminalView {string}")]
     public Task When_finger_taps(string name) => TapAsync(name, AMotionEventToolType.Finger);
@@ -447,7 +463,9 @@ public sealed class TerminalViewAndroidSteps
         // A scenario that opened a soft-keyboard session on a custom text control (this group, the copied TerminalView
         // group) leaves state in the input method (Gboard then shows itself for a later PasswordBox it did not show for
         // on a fresh device): the host resets the input method.
-        var shows = await OnUIThreadAsync(() => CoreTextInputController.Current?.ShowCount ?? 0).ConfigureAwait(false);
+        // [AP9-4] A session no longer shows the keyboard on focus: a scenario that opened one (OpenCount) or asked for the
+        // keyboard (ShowCount) resets the input method, as every session did before.
+        var shows = await OnUIThreadAsync(() => CoreTextInputController.Current is { } c ? c.ShowCount + c.OpenCount : 0).ConfigureAwait(false);
         if (shows != _showsSeen)
         {
             _showsSeen = shows;

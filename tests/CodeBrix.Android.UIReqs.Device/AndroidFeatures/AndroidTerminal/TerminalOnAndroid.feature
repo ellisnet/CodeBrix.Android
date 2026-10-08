@@ -69,6 +69,7 @@ Scenario: Moving the focus off the Terminal closes the soft-keyboard session
 Scenario: A finger on the focused Terminal brings a dismissed soft keyboard back, a mouse does not
 	Given the application shows a TerminalView named "term" that records its host traffic
 	When the TerminalView "term" takes the focus
+	And a real finger taps the TerminalView "term"
 	Then the soft keyboard is showing
 	When the soft keyboard is dismissed
 	And a real mouse clicks the TerminalView "term"
@@ -80,10 +81,51 @@ Scenario: A finger on the focused Terminal brings a dismissed soft keyboard back
 Scenario: With the soft keyboard up, a real finger lands on the point it touches
 	Given the system status bar is showing
 	And the application shows a TerminalView named "term" that records its host traffic
-	When the TerminalView "term" takes the focus
+	When a real finger taps the TerminalView "term"
 	Then the soft keyboard is showing
 	When a real finger presses the TerminalView "term" 100 DIPs right and 40 DIPs down from its top left corner
 	Then the TerminalView "term" saw the finger 100 DIPs right and 40 DIPs down from its top left corner
+
+# [AP9-4] A custom text control summons the soft keyboard for a finger or pen PRESS only - the TextBox's rule and WinUI's
+# (no touch keyboard for programmatic or keyboard focus). Focus given any other way (an application's call, a page's first
+# focus) opens the session - the control has the Android focus and hears every key at once - and leaves the screen clear.
+Scenario: A Terminal that takes the focus programmatically shows no soft keyboard
+	Given the application shows a TerminalView named "term" that records its host traffic
+	When the TerminalView "term" takes the focus
+	Then the soft-keyboard session is open for "term" with the "terminal" profile
+	And the soft keyboard is hidden
+	When the soft keyboard sends the key "Enter"
+	Then the host of "term" received "<CR>"
+
+Scenario: A finger tap on the focused Terminal shows the soft keyboard, and after a dismissal the next tap shows it again
+	Given the application shows a TerminalView named "term" that records its host traffic
+	When the TerminalView "term" takes the focus
+	Then the soft keyboard is hidden
+	When a real finger taps the TerminalView "term"
+	Then the soft keyboard is showing
+	When the soft keyboard is dismissed
+	Then the soft keyboard is hidden
+	And the soft-keyboard session is open for "term" with the "terminal" profile
+	When a real finger taps the TerminalView "term"
+	Then the soft keyboard is showing
+
+Scenario: A finger tap on a Terminal without the focus gives it the focus and shows the soft keyboard
+	Given the application shows a TerminalView named "term" that records its host traffic, beside a Button named "other"
+	When the Button "other" takes the focus
+	And a real finger taps the TerminalView "term"
+	Then the soft-keyboard session is open for "term" with the "terminal" profile
+	And the soft keyboard is showing
+
+Scenario: InputPane.TryShow shows the soft keyboard for the focused Terminal without a touch
+	Given the application shows a TerminalView named "term" that records its host traffic
+	When the TerminalView "term" takes the focus
+	Then the soft keyboard is hidden
+	When the application calls InputPane.TryShow
+	Then the soft keyboard is showing
+	And the soft-keyboard session is open for "term" with the "terminal" profile
+	When the application calls InputPane.TryHide
+	Then the soft keyboard is hidden
+	And the soft-keyboard session is open for "term" with the "terminal" profile
 
 Scenario: Out of touch mode, the window draws no focus highlight over its content
 	Given the application shows a TerminalView named "term" that records its host traffic
