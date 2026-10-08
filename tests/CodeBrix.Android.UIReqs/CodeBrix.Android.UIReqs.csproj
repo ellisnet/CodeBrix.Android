@@ -40,11 +40,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The one copy of the feature files is the device project's; Link is the Cucumber resource name. -->
-    <ReqnrollFeatureFile Include="$(_UIReqsDeviceProjectDir)Scenarios/Features/**/*.feature"
+    <!--
+      The one copy of the feature files is the device project's; Link is the Cucumber resource name.
+      Included by a path RELATIVE to this project, never through $(_UIReqsDeviceProjectDir): Reqnroll
+      writes each code-behind to $(IntermediateOutputPath)%(RelativeDir) (".." becomes "_"), and an
+      absolute RelativeDir makes that "obj\Debug\net10.0\C:\..." - an invalid path on Windows.
+    -->
+    <ReqnrollFeatureFile Include="../CodeBrix.Android.UIReqs.Device/Scenarios/Features/**/*.feature"
                          Link="Features/%(RecursiveDir)%(Filename)%(Extension)" />
     <!-- Android-only groups (real Android input and native behaviour; not copies of Platform features). -->
-    <ReqnrollFeatureFile Include="$(_UIReqsDeviceProjectDir)AndroidFeatures/**/*.feature"
+    <ReqnrollFeatureFile Include="../CodeBrix.Android.UIReqs.Device/AndroidFeatures/**/*.feature"
                          Link="Features/%(RecursiveDir)%(Filename)%(Extension)" />
     <!-- The wire protocol and PNG codec, shared with the device app. -->
     <Compile Include="$(_UIReqsDeviceProjectDir)Protocol/*.cs" Link="Protocol/%(Filename)%(Extension)" />
