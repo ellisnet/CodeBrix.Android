@@ -45,6 +45,27 @@ internal sealed class ElementHandlerRegistry
         }
     }
 
+    /// <summary>
+    /// The factory that serves <paramref name="elementType"/> right now - its most-derived registration, else the
+    /// fallback - so that an add-in can register a more derived type that wraps it (adds behaviour, keeps the view).
+    /// </summary>
+    /// <param name="elementType">The element type.</param>
+    /// <returns>The factory; it answers null (Core's own path) when neither a registration nor a fallback applies.</returns>
+    public Func<UIElement, IAndroidElementHandler> FactoryFor(Type elementType)
+    {
+        ArgumentNullException.ThrowIfNull(elementType);
+        var registered = ResolveRegisteredType(elementType);
+        lock (_gate)
+        {
+            if (registered != null && _factories.TryGetValue(registered, out var factory))
+            {
+                return factory;
+            }
+        }
+
+        return element => Fallback?.Invoke(element);
+    }
+
     /// <summary>The registered type whose handler serves <paramref name="elementType"/>, or null.</summary>
     /// <param name="elementType">The element's runtime type.</param>
     /// <returns>The registered type, or null when only the fallback applies.</returns>

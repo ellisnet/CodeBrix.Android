@@ -99,6 +99,7 @@ internal class TextBoxHandler : ViewHandler<TextBox, TextBoxView>, INativeTextEd
     private bool _writingText;
     private bool _selecting;
     private bool _nativeEditing;
+    private bool _focusClaimPending;
 
     /// <summary>Creates the handler.</summary>
     /// <param name="mapper">The mapper (a subclass passes its own).</param>
@@ -323,10 +324,7 @@ internal class TextBoxHandler : ViewHandler<TextBox, TextBoxView>, INativeTextEd
 
         if (state != FocusState.Unfocused)
         {
-            if (!editor.HasFocus)
-            {
-                editor.RequestFocus();
-            }
+            ClaimNativeFocus(editor, state);
 
             if (state == FocusState.Keyboard || state == FocusState.Programmatic)
             {
@@ -355,6 +353,7 @@ internal class TextBoxHandler : ViewHandler<TextBox, TextBoxView>, INativeTextEd
             return;
         }
 
+        SetFocusClaimPending(editor, false);
         if (editor.HasFocus)
         {
             HideSoftInput(editor);
@@ -468,6 +467,7 @@ internal class TextBoxHandler : ViewHandler<TextBox, TextBoxView>, INativeTextEd
         editor.AfterTextChanged -= OnAfterTextChanged;
         editor.BeforeTextChanged -= OnBeforeTextChanged;
         editor.FocusChange -= OnFocusChange;
+        SetFocusClaimPending(editor, false);
         editor.EditorAction -= OnEditorAction;
         editor.Touch -= OnTouch;
         platformView.Field.Touch -= OnTouch;
@@ -655,6 +655,70 @@ internal class TextBoxHandler : ViewHandler<TextBox, TextBoxView>, INativeTextEd
                 _selecting = false;
             }
         }
+    }
+
+    /// <summary>
+    /// [AP10-G] Gives the editor the Android focus Core gave the box, so that a hardware keyboard's keys go into it
+    /// (<see cref="NativeFocusClaim"/>). Android refuses the focus of a view that has no size yet - the editor of a page
+    /// that has just arrived by Frame.Navigate, whose first focus Core gives while the page's views are still 0 x 0 - so a
+    /// refused request is repeated after the editor's next layout. No soft keyboard here (AP9-4: a finger asks for it).
+    /// </summary>
+    private void ClaimNativeFocus(AView editor, FocusState state)
+    {
+        if (NativeFocusClaim.OnCoreFocus(state, editor.HasFocus) != NativeFocusClaimAction.RequestNow)
+        {
+            SetFocusClaimPending(editor, false);
+            return;
+        }
+
+        var granted = editor.RequestFocus() && editor.HasFocus;
+        SetFocusClaimPending(editor, NativeFocusClaim.AfterRequest(granted) == NativeFocusClaimAction.RetryAfterLayout);
+    }
+
+    /// <summary>
+    /// Arms or disarms the retry. The layout listener is attached only while a retry is pending: an editor that never
+    /// needs one keeps no listener (a permanent one measurably moved a TextBox frame of the AndroidSoftInput group by a
+    /// sub-pixel).
+    /// </summary>
+    private void SetFocusClaimPending(AView editor, bool pending)
+    {
+        if (pending == _focusClaimPending)
+        {
+            return;
+        }
+
+        _focusClaimPending = pending;
+        if (pending)
+        {
+            editor.LayoutChange += OnEditorLayoutChange;
+        }
+        else
+        {
+            editor.LayoutChange -= OnEditorLayoutChange;
+        }
+    }
+
+    private void OnEditorLayoutChange(object sender, AView.LayoutChangeEventArgs e)
+    {
+        if (!_focusClaimPending || EditText is not { } editor || Element is not TextBox element)
+        {
+            return;
+        }
+
+        if (NativeFocusClaim.OnLayout(_focusClaimPending, element.FocusState, editor.HasFocus) != NativeFocusClaimAction.RequestNow)
+        {
+            SetFocusClaimPending(editor, false);
+            return;
+        }
+
+        // Asked after the layout pass that gave the editor its size (a focus change inside the pass is deferred by Android).
+        editor.Post(() =>
+        {
+            if (_focusClaimPending && ReferenceEquals(EditText, editor) && Element is TextBox box)
+            {
+                ClaimNativeFocus(editor, box.FocusState);
+            }
+        });
     }
 
     private void OnWindowFocusChanged(bool hasWindowFocus)

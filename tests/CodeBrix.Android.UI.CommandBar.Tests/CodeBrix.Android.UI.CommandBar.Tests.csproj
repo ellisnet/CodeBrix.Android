@@ -2,7 +2,8 @@
 
   <!--
     Host-free tests (net10.0) of the CodeBrix.Android CommandBar add-in: the Core contract it implements,
-    read from the pinned Core assembly's metadata (the grants the Android assembly name relies on).
+    read from the pinned Core assembly's metadata (the grants the Android assembly name relies on), and the add-in's
+    portable rules (Portable/, compiled in from source: the overflow flyout's item-click rule).
     The bars and icons are exercised on the emulator (the CommandBar UIReqs group).
 
     AssemblyName = the name CodeBrix.Platform.UI.CommandBar.Core grants InternalsVisibleTo to.
@@ -20,6 +21,8 @@
 
   <ItemGroup>
     <Compile Include="..\Shared\CoreMetadata.cs" Link="Shared\CoreMetadata.cs" />
+    <!-- The add-in's portable rules (pure C#), compiled into this test assembly. -->
+    <Compile Include="..\..\src\AddIns\CodeBrix.Android.UI.CommandBar\Portable\*.cs" Link="Linked\Portable\%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

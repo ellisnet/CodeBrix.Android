@@ -130,3 +130,21 @@ Scenario: A text area that left the page without a session gets none when its fo
 	Then no soft-keyboard session is open
 	And the soft keyboard is hidden
 	And the window is not panned
+
+# [AP10-G] A TextBox that receives a page's FIRST focus from Frame.Navigate (Core's first-focusable rule: Programmatic focus)
+# must hold the Android focus, so a hardware keyboard's keys go into it as text (the device validation found them arriving
+# as unhandled KeyDown events instead) - and, by the AP9-4 rule, it raises no soft keyboard. Keys are real KeyEvents.
+Scenario: A TextBox that receives the page's first focus from Frame.Navigate takes typed keys as text
+	Given the application shows a Frame on a page whose TextBox "launch" has the focus
+	When the Frame navigates to a page whose first focusable element is a TextBox named "entry"
+	Then Core's focus is on "entry"
+	When the real key "A" is pressed
+	And the real key "B" is pressed
+	Then the TextBox "entry" holds "ab"
+
+Scenario: A TextBox that receives the page's first focus from Frame.Navigate holds the Android focus and shows no soft keyboard
+	Given the application shows a Frame on a page whose TextBox "launch" has the focus
+	When the Frame navigates to a page whose first focusable element is a TextBox named "entry"
+	Then Core's focus is on "entry"
+	And the TextBox "entry" holds the Android focus
+	And the soft keyboard is hidden

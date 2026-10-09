@@ -7,7 +7,7 @@ namespace CodeBrix.Android.UI.CommandBar.Android;
 
 /// <summary>
 /// Registers the Android side of the CommandBar add-in: IIconRasterizationPlatform, after the Svg add-in that draws the
-/// icons. Idempotent; runs as the module initializer (the Core's PlatformContract loads this assembly BY NAME when the
+/// icons, and the overflow rule (an item click closes the overflow flyout, <see cref="OverflowItemCloser"/>). Idempotent; runs as the module initializer (the Core's PlatformContract loads this assembly BY NAME when the
 /// first icon is made; the CodeBrix.Android.UI bootstrap also loads it at start-up).
 /// </summary>
 internal static class AndroidPlatformBootstrap
@@ -44,6 +44,9 @@ internal static class AndroidPlatformBootstrap
 
             var icons = new IconRasterizationAndroidPlatform();
             ApiExtensibility.Register(typeof(IIconRasterizationPlatform), _ => icons);
+
+            // AP10-G: an item click closes the ToolBar's overflow flyout (PLATFORM-QUEUE workaround, OverflowItemCloser).
+            OverflowItemCloser.Register();
             _registered = true;
         }
     }

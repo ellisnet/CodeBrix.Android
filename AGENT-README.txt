@@ -90,6 +90,10 @@ The Android head:
                     SupportedOSPlatformVersion 33, an ApplicationId;
                     imports MyApp.UI.projitems (the XAML is shared, not copied);
                     references MyApp.Core and CodeBrix.Android.ApacheLicenseForever.
+A new page (Views/NewPage.xaml + .xaml.cs) must be listed in the shared
+MyApp.UI.projitems, as the existing pages are (a <Page> item for the .xaml and
+a <Compile> item for its code-behind); a page that is only on disk is not
+built into the Android head.
 
 THE ANDROID HEAD'S TWO CLASSES
 ------------------------------
@@ -435,6 +439,41 @@ compile and run unchanged. The add-in packages:
                                and CodeBrix.Audio.Android)
     WebView                    CodeBrix.Android.WebView.ApacheLicenseForever
 
+What each add-in gives a page, and the namespace to import it from (in XAML
+xmlns:x1="using:<namespace>"; in C# a using). "Default" means the framework's
+own XAML namespace (no import needed): the add-in only supplies the Android
+side of a framework element.
+
+    Add-in            Element(s) / type(s)                Namespace
+    AdvancedTextEdit  AdvancedTextEdit                    CodeBrix.Platform.UI.AdvancedTextEdit
+    AppSettings       (no element; a settings service)    -
+    AudioPlayer       AudioPlayer, MidiPlayer             CodeBrix.Platform.UI.AudioPlayer.Skia
+    CommandBar        ToolBar, ToolBarTray, ToolBarGroup, CodeBrix.Platform.UI.CommandBar
+                      ToolButton, ToolToggleButton,
+                      ToolDropDownButton, ToolBarSeparator,
+                      ToolBarSpacer; icons SvgIconSource,
+                      RasterIconSource
+    FlexPanel         FlexPanel                           CodeBrix.Platform.UI.FlexPanel
+    Graphics2DSK      SKCanvasElement (abstract: subclass CodeBrix.Platform.WinUI.Graphics2DSK
+                      it, override RenderOverride)
+    Graphics3DGL      GLCanvasElement (abstract: see the  CodeBrix.Platform.WinUI.Graphics3DGL
+                      recipe below), SkiaGLCanvasElement; (GL: CodeBrix.Platform.OpenGL)
+                      the GL type its overrides receive
+    Lottie            AnimatedVisualPlayer                Default
+                      LottieVisualSource,                 CommunityToolkit.WinUI.Lottie
+                      ThemableLottieVisualSource
+    MediaPlayer       MediaPlayerElement                  Default
+    PlotterView       PlotterControl                      CodeBrix.Platform.UI.PlotterView
+    SkiaSharp.Views   SKXamlCanvas                        SkiaSharp.Views.Windows
+    Svg               SvgImageSource (the source of an    Default (Microsoft.UI.Xaml.Media.Imaging)
+                      Image)
+    TerminalView      TerminalControl                     CodeBrix.Platform.UI.TerminalView
+    TextLayout        (no element) TextLayoutEngine, used CodeBrix.Platform.UI.TextLayout
+                      from code; draw its layouts on an
+                      SKXamlCanvas
+    VideoPlayer       VideoPlayer                         CodeBrix.Platform.UI.VideoPlayer.Skia
+    WebView           WebView2                            Default
+
 The TriPaneView of CodeBrix.Platform's Toolkit is part of the framework package.
 What differs on Android:
   * FlexPanel: the panel is laid out by its Core exactly as on the desktop
@@ -460,6 +499,22 @@ What differs on Android:
     (<uses-permission android:name="android.permission.INTERNET" />). WebView
     uses the device's system WebView; MediaPlayer uses Media3 ExoPlayer
     (ms-appx:/// sources are the app's assets).
+  * WebView: a page packaged with the app is NOT opened with an ms-appx:///
+    Source (the page fails to load, as on Windows). Map a host name to the
+    app folder that holds it and navigate to that host:
+        await web.EnsureCoreWebView2Async();
+        web.CoreWebView2.SetVirtualHostNameToFolderMapping("app.local",
+            "Assets/web", CoreWebView2HostResourceAccessKind.Allow);
+        web.Source = new Uri("https://app.local/index.html");
+    (CoreWebView2HostResourceAccessKind is in Microsoft.Web.WebView2.Core;
+    the folder's files are Content items of the head, so they are the app's
+    assets; relative links between the pages work). Messages from the page
+    to the app: the page calls window.chrome.webview.postMessage(text) and
+    the app receives WebView2.WebMessageReceived. Messages from the app to
+    the page: use ExecuteScriptAsync (it runs script in the page and returns
+    its result); PostWebMessageAsString / PostWebMessageAsJson do not reach
+    the page today (there is no chrome.webview.addEventListener on the page
+    side).
   * TextLayout: the text engine is the add-in's Core; on Android it draws with
     SkiaSharp typefaces the Android assembly loads from the app's assets by the
     font rule above (a family name is the app's DefaultTextFontFamily file).
@@ -520,6 +575,21 @@ What differs on Android:
     shaders must be GLSL ES (`#version 300 es` plus a precision statement);
     desktop GLSL (`#version 330 core`) does not compile. SkiaGLCanvasElement,
     OffscreenGLContext and SkiaGpuContext are available (OpenGL ES backend).
+    Subclassing GLCanvasElement (the same on every head):
+      - constructor: call base(null) (the window argument is used on WinUI
+        only);
+      - Init(GL gl): create your programs, buffers and vertex arrays; it may
+        run more than once (each later call follows an OnDestroy);
+      - RenderOverride(GL gl): draw; the viewport is already set. Leave the
+        context as you found it: unbind your vertex array, program and
+        buffers (bind 0) and switch off what you switched on (depth test,
+        blending), because the framework draws with the same context;
+      - OnDestroy(GL gl): delete what Init created;
+      - call Invalidate() to draw again (a canvas draws when it loads and
+        when it is invalidated).
+    The usual GL calls that take a pointer (VertexAttribPointer with
+    (void*)0, for example) need <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    in the project that holds the subclass, and `unsafe` on the method.
   * PlotterView: PlotterControl works as on the desktop heads (the model, the
     controller and its bindings, the tracker, the zoom rectangle, keys, the
     mouse and its wheel); the chart is painted on a native Skia view, with the
@@ -537,7 +607,10 @@ What differs on Android:
     use (once per installed build), with its folder for an SFZ or Decent
     Sampler preset whose samples sit beside it. SoundEffect reads an
     ms-appx:/// source by path before anything copies it out, so give it an
-    embedded:// resource, a file path or a stream instead.
+    embedded:// resource, a file path or a stream instead. In XAML write
+    AutoPlay="True" BEFORE Source="..." on an AudioPlayer: written after it,
+    the source has already loaded with AutoPlay still false and nothing
+    plays (as observed on Android; the same order applies to VideoPlayer).
   * VideoPlayer: the VideoPlayer element works as on the desktop heads (WebM
     and .cbv Mode 1 / Mode 2 clips, the transport and its bindings, Stretch,
     render paths, effects, layers, captions and chapters); the picture is
@@ -549,7 +622,8 @@ What differs on Android:
     Register() methods; dav1d ships android-arm64 and android-x64 natives).
     ms-appx:/// clips are the app's assets, copied out of the APK before they
     are opened. CodeBrix.VideoPlayback.Authoring (encoding) is not supported on
-    Android.
+    Android. In XAML write AutoPlay="True" before Source="..." (as observed on
+    Android: written after Source, the clip never starts).
 
 
 COMPLETE EXAMPLES
