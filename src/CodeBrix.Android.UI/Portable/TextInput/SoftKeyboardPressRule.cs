@@ -12,8 +12,10 @@ namespace CodeBrix.Android.UI.Portable.TextInput;
 /// <para>
 /// The press can land on a control that already has the focus (a tap after the keyboard was dismissed): the keyboard is
 /// asked for on the press. Or it gives the control its focus (the first tap): a TerminalControl takes the focus on its
-/// Tapped event, right AFTER the release is routed, with FocusState.Pointer - the same state its GrabFocus() gives, so
-/// the focus state cannot tell a tap from an application's call. The rule therefore remembers the last finger or pen
+/// Tapped event, right AFTER the release is routed, with FocusState.Pointer - the same state its GrabFocus() ends up
+/// with, because Core (like WinUI's FocusManager.CoerceFocusState) turns a FocusState.Programmatic focus into Pointer or
+/// Keyboard from the last input device, so the focus state cannot tell a tap from an application's call for any control.
+/// The rule therefore remembers the last finger or pen
 /// release and shows the keyboard for a focus that follows it within <see cref="FocusAfterReleaseMilliseconds"/> when
 /// that release landed on the control now focused (once per release). The rule follows one pointer from its press to
 /// its release and answers "show" at most once for it. Pure state: the

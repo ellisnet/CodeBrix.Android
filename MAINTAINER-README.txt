@@ -524,7 +524,9 @@ element (AndroidXamlRootHost.AttachRootView -> WatchRoot, so the first tap of a 
 is seen): a press on the focused control shows it; a focus that follows a finger/pen
 release on that control within 500 ms shows it (TerminalControl focuses itself on
 Tapped, after the release, with FocusState.Pointer - the state its GrabFocus() also
-gives, so FocusState cannot tell a tap from a call); one show per tap; a mouse never.
+ends up with, because Core, like WinUI, coerces a FocusState.Programmatic focus to
+Pointer or Keyboard from the last input device (FocusManager.CoerceFocusState), so
+FocusState cannot tell a tap from a call for ANY control); one show per tap; a mouse never.
 InputPane.TryShow while a session
 is open shows it on the session's view (CoreTextInputController.TryShowForInputPane).
 No hardware-keyboard detection: the input method decides. OpenCount counts sessions

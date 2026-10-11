@@ -36,22 +36,37 @@ public class AssetFolderCatalog
     /// <returns>The loaded catalog; empty (with no warnings) when the folder does not exist.</returns>
     public static AssetFolderCatalog LoadFrom(string folderPath)
     {
+        var zipPaths = !string.IsNullOrWhiteSpace(folderPath) && Directory.Exists(folderPath)
+            ? Directory.EnumerateFiles(folderPath, "*.zip")
+            : [];
+
+        return LoadFrom(folderPath, zipPaths);
+    }
+
+    /// <summary>
+    /// Parses a given set of bundle zip files into a catalog - for a folder that has no local path
+    /// of its own (a folder picked on Android), whose zips each reach the disk on their own.
+    /// A zip that cannot be read produces a warning instead of failing the whole load.
+    /// </summary>
+    /// <param name="folderPath">The name or path shown for the assets folder.</param>
+    /// <param name="zipPaths">The full paths of the bundle zip files on disk.</param>
+    /// <returns>The loaded catalog.</returns>
+    public static AssetFolderCatalog LoadFrom(string folderPath, IEnumerable<string> zipPaths)
+    {
         var bundles = new List<AssetBundle>();
         var warnings = new List<string>();
 
-        if (!string.IsNullOrWhiteSpace(folderPath) && Directory.Exists(folderPath))
+        foreach (var zipPath in (zipPaths ?? [])
+                     .Where(p => !string.IsNullOrWhiteSpace(p))
+                     .OrderBy(p => Path.GetFileName(p), StringComparer.OrdinalIgnoreCase))
         {
-            foreach (var zipPath in Directory.EnumerateFiles(folderPath, "*.zip")
-                         .OrderBy(p => p, StringComparer.OrdinalIgnoreCase))
+            try
             {
-                try
-                {
-                    bundles.Add(KenneyBundleReader.ReadBundle(zipPath));
-                }
-                catch (Exception ex)
-                {
-                    warnings.Add($"{Path.GetFileName(zipPath)}: {ex.Message}");
-                }
+                bundles.Add(KenneyBundleReader.ReadBundle(zipPath));
+            }
+            catch (Exception ex)
+            {
+                warnings.Add($"{Path.GetFileName(zipPath)}: {ex.Message}");
             }
         }
 

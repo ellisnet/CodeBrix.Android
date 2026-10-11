@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Storage;
 using Windows.Storage.Pickers;
 
 // ReSharper disable once CheckNamespace
@@ -60,6 +61,9 @@ public class MainViewModel : SimpleViewModel, ICatalogGridBridge, IModelViewBrid
     private CancellationTokenSource _searchDebounce;
 
     private string _downloadFolder;
+
+    //The caption for a download folder that is not the picked one (null: show the path itself)
+    private string _downloadFolderLabel;
 
     private LoadedModel _currentModel;
     private PolyHavenAsset _currentAsset;
@@ -222,7 +226,7 @@ public class MainViewModel : SimpleViewModel, ICatalogGridBridge, IModelViewBrid
     public bool HasDownloadFolder => !string.IsNullOrWhiteSpace(_downloadFolder);
 
     /// <summary>The folder-picker button's caption: an invitation, or the chosen path.</summary>
-    public string DownloadFolderLabel => HasDownloadFolder ? _downloadFolder : "Choose download folder…";
+    public string DownloadFolderLabel => HasDownloadFolder ? _downloadFolderLabel ?? _downloadFolder : "Choose download folder…";
 
     /// <summary>Opens the folder picker to choose where models download to.</summary>
     public SimpleCommand PickFolderCommand => field ??=
@@ -239,9 +243,22 @@ public class MainViewModel : SimpleViewModel, ICatalogGridBridge, IModelViewBrid
         var folder = await picker.PickSingleFolderAsync();
         if (folder == null) { return; }
 
-        //Same encoding trap as the save picker: a folder called "My Models" would otherwise
-        //  come back as "My%20Models" and every download would go to the wrong place.
-        _downloadFolder = FileDialogHelper.ToFileSystemPath(folder.Path);
+        if (string.IsNullOrEmpty(folder.Path))
+        {
+            //A folder picked on Android has no local path for the download code to write to;
+            //  download into the app's own storage instead (the button caption says so)
+            _downloadFolder = Path.Combine(ApplicationData.Current.LocalFolder.Path, "Downloads");
+            Directory.CreateDirectory(_downloadFolder);
+            _downloadFolderLabel = $"App storage (“{folder.Name}” has no local path)";
+        }
+        else
+        {
+            //Same encoding trap as the save picker: a folder called "My Models" would otherwise
+            //  come back as "My%20Models" and every download would go to the wrong place.
+            _downloadFolder = FileDialogHelper.ToFileSystemPath(folder.Path);
+            _downloadFolderLabel = null;
+        }
+
         NotifyPropertyChanged(nameof(HasDownloadFolder));
         NotifyPropertyChanged(nameof(DownloadFolderLabel));
     }

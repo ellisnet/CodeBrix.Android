@@ -15,6 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Storage;
 using Windows.Storage.Pickers;
 
 // ReSharper disable once CheckNamespace
@@ -80,6 +81,9 @@ public class MainViewModel : SimpleViewModel, IImageCanvasBridge, IAudioPlayerBr
     private AssetBundle _selectedBundle;
     private BundleArchive _archive;
     private string _assetsFolder;
+
+    //A picked folder with no local path (Android): read through its own members, for this session only
+    private StorageFolder _pickedFolder;
     private string _selectedCategory = AllCategories;
     private bool _suppressCategoryRebuild;
     private CancellationTokenSource _searchDebounce;
@@ -114,10 +118,13 @@ public class MainViewModel : SimpleViewModel, IImageCanvasBridge, IAudioPlayerBr
     #region | Assets folder |
 
     /// <summary>Whether the user has chosen their bundle folder yet.</summary>
-    public bool HasAssetsFolder => !string.IsNullOrWhiteSpace(_assetsFolder);
+    public bool HasAssetsFolder => !string.IsNullOrWhiteSpace(_assetsFolder) || _pickedFolder != null;
 
-    /// <summary>The folder-picker button's caption: an invitation, or the chosen path.</summary>
-    public string AssetsFolderLabel => HasAssetsFolder ? _assetsFolder : "Choose assets folder…";
+    /// <summary>The folder-picker button's caption: an invitation, or the chosen path (or folder name).</summary>
+    public string AssetsFolderLabel =>
+        !string.IsNullOrWhiteSpace(_assetsFolder) ? _assetsFolder
+        : _pickedFolder != null ? _pickedFolder.Name
+        : "Choose assets folder…";
 
     /// <summary>The first-launch prompt's visibility (shown until an assets folder is chosen).</summary>
     public Visibility FolderPromptVisibility => HasAssetsFolder ? Visibility.Collapsed : Visibility.Visible;
@@ -125,7 +132,7 @@ public class MainViewModel : SimpleViewModel, IImageCanvasBridge, IAudioPlayerBr
     /// <summary>The catalog area's visibility (the inverse of the first-launch prompt).</summary>
     public Visibility CatalogAreaVisibility => HasAssetsFolder ? Visibility.Visible : Visibility.Collapsed;
 
-    /// <summary>Opens the folder picker to choose where the bundle zips live; the choice persists in settings.sqlite.</summary>
+    /// <summary>Opens the folder picker to choose where the bundle zips live; the choice persists in settings.sqlite (a folder with no local path, picked on Android, lasts for the session).</summary>
     public SimpleCommand PickFolderCommand => field ??=
         new SimpleCommand((Func<object, Task>)(_ => PickFolderAsync()));
 
@@ -140,8 +147,20 @@ public class MainViewModel : SimpleViewModel, IImageCanvasBridge, IAudioPlayerBr
         var folder = await picker.PickSingleFolderAsync();
         if (folder == null) { return; }
 
-        _assetsFolder = folder.Path;
-        SettingsService.Set(AssetsFolderKey, _assetsFolder);
+        if (string.IsNullOrEmpty(folder.Path))
+        {
+            //A folder picked on Android has no local path to remember; read it through the
+            //  StorageFolder itself for this session (the next launch asks again)
+            _pickedFolder = folder;
+            _assetsFolder = null;
+        }
+        else
+        {
+            _pickedFolder = null;
+            _assetsFolder = folder.Path;
+            SettingsService.Set(AssetsFolderKey, _assetsFolder);
+        }
+
         NotifyPropertyChanged(nameof(HasAssetsFolder));
         NotifyPropertyChanged(nameof(AssetsFolderLabel));
         NotifyPropertyChanged(nameof(FolderPromptVisibility));
@@ -222,7 +241,9 @@ public class MainViewModel : SimpleViewModel, IImageCanvasBridge, IAudioPlayerBr
         Cells = new AssetCellCollection([]);
         ResultCountText = string.Empty;
 
-        _catalog = await _catalogService.LoadCatalogAsync(_assetsFolder);
+        _catalog = _pickedFolder != null
+            ? await _catalogService.LoadCatalogAsync(_pickedFolder)
+            : await _catalogService.LoadCatalogAsync(_assetsFolder);
 
         CatalogWarningsText = _catalog.Warnings.Count == 0
             ? string.Empty
