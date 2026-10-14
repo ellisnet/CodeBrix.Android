@@ -36,6 +36,12 @@ internal sealed class ActivityInputRouter : IActivityInputHook
     public bool OnKeyEvent(AKeyEvent e, out bool viewsSawKey)
     {
         viewsSawKey = false;
+        if (Gamepads.TryHandleKey(e))
+        {
+            // A started gamepad reader owns its controller's buttons and D-pad: nothing else sees them.
+            return true;
+        }
+
         if (FocusedNativeEditor() != null && !e.IsSystem)
         {
             viewsSawKey = true;
@@ -96,6 +102,19 @@ internal sealed class ActivityInputRouter : IActivityInputHook
     /// <inheritdoc />
     public bool OnGenericMotionEvent(AMotionEvent e)
     {
+        if (Gamepads.TryHandleMotion(e))
+        {
+            return true;
+        }
+
+        if (Gamepads.IsGamepadSource(e.Source))
+        {
+            // A joystick move is not a pointer: before the gamepads existed it was handed to the pointer source,
+            // which read its axis values as a mouse position. Left to Android (and so to nothing) when no reader
+            // is started.
+            return false;
+        }
+
         // Hover and wheel: Core first (the native views do not use them; native scroll views follow
         // Core's offsets, so the wheel is Core's).
         if (Source() is not { } source)

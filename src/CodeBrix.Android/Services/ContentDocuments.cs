@@ -366,6 +366,7 @@ internal sealed class ContentDocumentFolder : StorageFolder.ImplementationBase
 internal static class ContentDocuments
 {
     private static readonly List<WriteBack> _writeBacks = new();
+    private static readonly Dictionary<string, AUri> _documentsByPath = new(StringComparer.Ordinal);
     private static int _next;
 
     /// <summary>The application's content resolver.</summary>
@@ -489,7 +490,36 @@ internal static class ContentDocuments
             input.CopyTo(output);
         }
 
+        Remember(path, uri);
         return path;
+    }
+
+    /// <summary>
+    /// The document a compatibility path stands for (an opened document's cache copy, or a created document's
+    /// write-back file), or null for any other path. The launcher uses it: another app cannot open a file:// path
+    /// in this app's cache, but it can open the document itself through its content URI.
+    /// </summary>
+    /// <param name="path">A file-system path, as an app holds it (StorageFile.Path).</param>
+    /// <returns>The document's content URI, or null.</returns>
+    internal static AUri DocumentForPath(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+        {
+            return null;
+        }
+
+        lock (_documentsByPath)
+        {
+            return _documentsByPath.TryGetValue(System.IO.Path.GetFullPath(path), out var uri) ? uri : null;
+        }
+    }
+
+    private static void Remember(string path, AUri uri)
+    {
+        lock (_documentsByPath)
+        {
+            _documentsByPath[System.IO.Path.GetFullPath(path)] = uri;
+        }
     }
 
     /// <summary>
@@ -505,6 +535,8 @@ internal static class ContentDocuments
         {
             _writeBacks.Add(writeBack);
         }
+
+        Remember(path, uri);
 
         writeBack.StartWatching();
         return path;

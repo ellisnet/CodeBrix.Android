@@ -25,6 +25,7 @@ public sealed class SaveWriteBackSteps
 {
     private AUri? _document;
     private string? _path;
+    private global::Android.Content.Intent? _viewIntent;
 
     /// <summary>A document created for saving, wrapped as the save picker wraps it (the framework's own type).</summary>
     [Given("a Downloads document {string} created for saving")]
@@ -87,4 +88,65 @@ public sealed class SaveWriteBackSteps
 
         length.Should().Be(count, "the bytes written at the compatibility path must reach the document");
     }
+
+    /// <summary>The intent the framework's launcher would start for the compatibility path, as a file:// URI.</summary>
+    [When("the app asks the launcher to open the compatibility path as a file URI")]
+    public Task When_launch_compatibility_path() => ViewIntentAsync(_path!);
+
+    /// <summary>The document itself is what gets viewed - never the private file:// path.</summary>
+    [Then("the launcher views the document's content URI with read permission granted")]
+    public void Then_views_the_document()
+    {
+        try
+        {
+            _viewIntent.Should().NotBeNull("an existing compatibility path is something to open");
+            _viewIntent!.Action.Should().Be(global::Android.Content.Intent.ActionView);
+            _viewIntent.Data!.ToString().Should().Be(_document!.ToString(), "the saved document is opened, not the cache file behind it");
+            _viewIntent.Type.Should().Be("application/pdf");
+            ((int)_viewIntent.Flags & (int)global::Android.Content.ActivityFlags.GrantReadUriPermission).Should().NotBe(0,
+                "the viewing app needs read permission for the document");
+        }
+        finally
+        {
+            AppHost.Activity!.ContentResolver!.Delete(_document!, null, null);
+        }
+    }
+
+    /// <summary>A file in the app's own files folder, which no other app can read by path.</summary>
+    [Given("an app file {string} holding {int} bytes")]
+    public async Task Given_an_app_file(string name, int count)
+    {
+        _path = Path.Combine(AppHost.Activity!.FilesDir!.AbsolutePath, name);
+        await File.WriteAllBytesAsync(_path, new byte[count]).ConfigureAwait(false);
+    }
+
+    /// <summary>The intent the framework's launcher would start for that file, as a file:// URI.</summary>
+    [When("the app asks the launcher to open that file as a file URI")]
+    public Task When_launch_app_file() => ViewIntentAsync(_path!);
+
+    /// <summary>The file is viewed through the CodeBrix FileProvider (a content URI), with read permission granted.</summary>
+    [Then("the launcher views a CodeBrix file provider URI with read permission granted")]
+    public void Then_views_a_provider_uri()
+    {
+        try
+        {
+            _viewIntent.Should().NotBeNull("an existing app file is something to open");
+            _viewIntent!.Data!.Scheme.Should().Be("content", "another app cannot open a file:// path in this app's storage");
+            _viewIntent.Data.Authority.Should().Contain("codebrix", "the file is shared through the CodeBrix FileProvider");
+            _viewIntent.Type.Should().Be("text/plain");
+            ((int)_viewIntent.Flags & (int)global::Android.Content.ActivityFlags.GrantReadUriPermission).Should().NotBe(0,
+                "the viewing app needs read permission for the shared copy");
+        }
+        finally
+        {
+            File.Delete(_path!);
+        }
+    }
+
+    private Task ViewIntentAsync(string path) => TestTargetFixture.RunOnUIThreadAsync(() =>
+    {
+        var launcher = Type.GetType("CodeBrix.Android.Services.LauncherAndroidExtension, CodeBrix.Android", throwOnError: true)!;
+        var method = launcher.GetMethod("ViewIntentFor", BindingFlags.Static | BindingFlags.NonPublic)!;
+        _viewIntent = (global::Android.Content.Intent?)method.Invoke(null, new object[] { new Uri(path) });
+    });
 }

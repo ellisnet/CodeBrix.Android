@@ -34,6 +34,7 @@ CodeBrix.Platform package never reaches the APK.
 dotnet build samples/HelloPaste/HelloPaste.Android -c Debug -t:Install "-p:AdbTarget=-s emulator-5554"
 adb shell am start -n com.codebrix.hellopaste/com.codebrix.hellopaste.MainActivity --es page jbu
 adb shell am start -n com.codebrix.hellopaste/com.codebrix.hellopaste.MainActivity --es page pdf
+adb shell am start -n com.codebrix.hellopaste/com.codebrix.hellopaste.MainActivity --ez gamepad true
 ```
 
 The `page` extra picks the start page (`jbu`, the default, or `pdf`). A Release build is

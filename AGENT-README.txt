@@ -180,7 +180,11 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     path made when you first read it - a copy of an opened document, or for a
     saved document a file copied back to it every time you close it after
     writing - so desktop code that opens file.Path keeps working; prefer the
-    StorageFile's streams. A picked folder's Path is empty: a picked folder
+    StorageFile's streams. Launcher.LaunchUriAsync(new Uri(file.Path)) opens
+    the document itself (another app cannot open a file:// path in your app's
+    storage, so the launcher views the document's content URI, or for any
+    other file of yours a copy shared through the CodeBrix FileProvider, with
+    read permission granted). A picked folder's Path is empty: a picked folder
     has no local path on Android, so desktop code that hands folder.Path to
     System.IO finds nothing there - use the StorageFolder's own members
     (GetFilesAsync, GetFolderAsync, CreateFileAsync, ...) instead.
@@ -339,10 +343,14 @@ BUILD DIAGNOSTICS (CBAND)
 The package's analyzer reports, as WARNINGS that never fail a build (they are
 kept out of TreatWarningsAsErrors), the CodeBrix.Platform constructs Android
 accepts but does not show as they look on the desktop, at the C# line or the
-XAML file and line that uses them. The analyzer is built against the compiler
-of SDK 10.0.4xx (Roslyn 5.9): an older SDK's compiler cannot load it, reports
-CS8032 and the CBAND warnings are off (the app still builds):
-  CBAND0001  a ControlTemplate on a control Android shows as a native control
+XAML file and line that uses them. One of them, CBAND0001, is INFORMATION
+rather than a warning (it is not shown by a command-line build; an IDE lists
+it): the construct it records is honoured, not ignored. The analyzer is built
+against the compiler of SDK 10.0.4xx (Roslyn 5.9): an older SDK's compiler
+cannot load it, reports CS8032 and the CBAND warnings are off (the app still
+builds):
+  CBAND0001  a ControlTemplate on a control Android would otherwise show as a
+             native control (information: the template is shown as written)
   CBAND0002  template members (OnApplyTemplate, GetTemplateChild,
              VisualStateManager.GoToState) used on such a control
   CBAND0003  composition APIs, system backdrops, ThemeShadow (ignored)
@@ -401,6 +409,77 @@ second registration throws) and cannot register native element handlers
   Codec opt-ins: AV1 (CodeBrix.VideoPlayback.Dav1d.BsdLicenseForever) and Opus
     (CodeBrix.Audio.Opus.BsdLicenseForever) are referenced and their
     Register() methods called by the app, exactly as on the desktop heads.
+
+
+GAMEPADS
+--------
+A game controller (Bluetooth or USB; Xbox-style, PlayStation-style, any
+standard HID gamepad) is read through CodeBrix.Android.UI.Input.Gamepads,
+built into this package - no add-in, no native library. Until an app starts
+it, a controller behaves as Android makes it behave (its D-pad moves the
+focus, its buttons are ordinary keys). Once started, every gamepad button,
+stick and trigger event is consumed by the gamepads and reaches nothing else.
+
+    using CodeBrix.Android.UI.Input;
+
+    Gamepads.Start();                       // UI thread; idempotent
+    foreach (Gamepad pad in Gamepads.ConnectedGamepads)   // poll each frame
+    {
+        if (pad.IsPressed(GamepadButtons.A)) { ... }
+        GamepadStick left = pad.LeftStick;  // X, Y in -1..1, Y positive UP
+        float lt = pad.LeftTrigger;         // 0..1
+    }
+    Gamepads.GamepadConnected / GamepadDisconnected / GamepadStateChanged
+                                            // or listen instead of polling
+    Gamepads.Stop();                        // hand the controller back to Android
+
+  Gamepad        Id ("android:<device id>"), DeviceId, Name, Info (vendor and
+                 product ids, Android's descriptor, the axis layout),
+                 IsConnected, PressedButtons (names), IsPressed(name),
+                 LeftStick, RightStick (GamepadStick), LeftTrigger,
+                 RightTrigger. A snapshot: read it on the UI thread.
+  GamepadButtons The 15 names of the standard layout: A, B, X, Y, Back, Guide,
+                 Start, LeftStick, RightStick, LeftShoulder, RightShoulder,
+                 DPadUp, DPadDown, DPadLeft, DPadRight - the same strings a
+                 CodeBrix game binds against on the desktop heads, so a
+                 binding table ports unchanged. The D-pad reads as pressed
+                 whether the controller reports it as keys or as the hat
+                 axes; a trigger reads 1 while its digital button (L2 / R2)
+                 is down on a controller without analogue triggers. Guide is
+                 reserved by Android on most phones and tablets and rarely
+                 reaches an app.
+  Axis layout    Controllers put the right stick on Z/RZ (most) or RX/RY, and
+                 the triggers on LTRIGGER/RTRIGGER or BRAKE/GAS. The device's
+                 own axis list decides, preferring the first pair of each;
+                 each axis's dead zone (Android's "flat") centres small
+                 readings. The connection is logged (Information, category
+                 CodeBrix.Android.UI.Input.Gamepad) with the name, the vendor
+                 and product ids and that layout - the line to read when a
+                 controller behaves oddly, and what tells a controller's
+                 firmware generation apart (an old firmware shows a
+                 different layout and ids from an updated one). The layout
+                 also depends on the Android version's key-layout files: one
+                 controller on one firmware reports LTRIGGER/RTRIGGER on one
+                 device and BRAKE/GAS on another - read a Gamepad's triggers,
+                 never the axes.
+  VirtualGamepad Gamepads.AddVirtual("name") adds a gamepad the app or a test
+                 drives itself (Press / Release / Tap a button name,
+                 SetLeftStick, SetRightStick, SetLeftTrigger, SetRightTrigger,
+                 ReleaseAll, Disconnect). It is listed like a physical one,
+                 whether or not Start() was called, so a PlayTest or a
+                 host-free test (net10.0: the gamepad types have no Android
+                 dependency) exercises the same state a game reads on a
+                 device. GamepadTracker is the state machine itself, for a
+                 test that feeds raw Android key codes and axis values
+                 (AndroidGamepadCodes).
+  Injected input "adb shell input gamepad keyevent KEYCODE_BUTTON_A" (and the
+                 other BUTTON_* / DPAD_* codes) reaches a started app as a
+                 gamepad with no device behind it (Origin InjectedInput, no
+                 axis layout); sticks and triggers cannot be injected that
+                 way - script them through a VirtualGamepad.
+  Not done       Rumble / haptics on the controller, controller light bars,
+                 touchpads, motion sensors, more than the standard layout's
+                 15 buttons.
 
 
 ADD-INS ON ANDROID
@@ -706,10 +785,12 @@ COMMON PITFALLS TO AVOID
     not packaged.
   * A ControlTemplate (or a Style that sets Template) on a control takes that
     control off its native widget: the template is shown as written, with
-    native views, but the control loses the Material widget's look, ripple and
-    accessibility. Leave the Template of Button, CheckBox, TextBox, ... unset
-    to get the native control (CBAND0001 points such templates out); restyle
-    it with properties and the Fluent lightweight-styling resource keys.
+    native views, as on the desktop heads, but the control gives up the
+    Material widget's look, ripple and accessibility. That is a legitimate
+    choice for an app that draws its own look (CBAND0001 records it as
+    information, not a warning). To get the native control instead, leave the
+    Template of Button, CheckBox, TextBox, ... unset and restyle it with
+    properties and the Fluent lightweight-styling resource keys.
 
 
 WHAT THIS PACKAGE DOES NOT DO
@@ -758,6 +839,9 @@ QUICK REFERENCE CARD
   Head         MainApplication : CodeBrixApplication (CreateApp => new App()),
                MainActivity : CodeBrixActivity (ConfigurationChanges =
                CodeBrixActivity.HandledConfigurationChanges, Material3 theme)
+  Gamepads     CodeBrix.Android.UI.Input.Gamepads.Start(); poll
+               ConnectedGamepads (GamepadButtons names, sticks Y-up, triggers
+               0..1); AddVirtual() for tests and PlayTests (see GAMEPADS)
   Deploy       dotnet build -t:Install (Debug), Release APK for side-loading
   Warnings     CBANDnnnn: accepted-but-ignored constructs, never errors
                (see BUILD DIAGNOSTICS)

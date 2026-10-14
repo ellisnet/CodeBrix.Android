@@ -61,3 +61,15 @@ Scenario: CompositionTarget.Rendering ticks while subscribed and stops when not
 	Then CompositionTarget.Rendering is raised on display frames
 	When app code unsubscribes from CompositionTarget.Rendering
 	Then CompositionTarget.Rendering is no longer raised and the frame clock is idle
+
+Scenario: CompositionTarget.Rendering starts while the UI thread is never idle
+	The frame clock used to start only when the main looper went idle, so an app whose UI thread never idles - a
+	dispatcher timer doing a frame's worth of work on every tick, as a living background does - never started its
+	Storyboards: they stayed Active at their first value and never completed. The clock is now also started after every
+	dispatch of Core's queues, so a subscriber is ticked within one dispatch however busy the thread is.
+	Given the UI thread is kept busy so its message queue is never idle
+	When app code subscribes to CompositionTarget.Rendering
+	Then CompositionTarget.Rendering is raised on display frames
+	When app code unsubscribes from CompositionTarget.Rendering
+	Then CompositionTarget.Rendering is no longer raised and the frame clock is idle
+	And the UI thread is no longer kept busy

@@ -4,27 +4,30 @@ namespace CodeBrix.Android.Analyzers.Diagnostics;
 
 /// <summary>
 /// The CBAND diagnostics: CodeBrix.Platform constructs that compile unchanged for Android but that CodeBrix.Android
-/// accepts and ignores (or shows differently) at run time. Every one is a WARNING, never an error (decision D-P12):
-/// a pasted page always builds, and the build says what will not look or behave as on the desktop heads.
+/// accepts and ignores (or shows differently) at run time. None is ever an error (decision D-P12): a pasted page always
+/// builds, and the build says what will not look or behave as on the desktop heads. Every one is a WARNING except
+/// CBAND0001, which is INFORMATION: an app ControlTemplate is honoured, not ignored (ruling of 2026-10-12).
 /// </summary>
 public static class CbandDescriptors
 {
     /// <summary>The diagnostic category.</summary>
     public const string Category = "CodeBrix.Android";
 
-    /// <summary>CBAND0001: a ControlTemplate on a control CodeBrix.Android shows as a native Material control.</summary>
+    /// <summary>CBAND0001: a ControlTemplate on a control CodeBrix.Android would otherwise show as a native Material control.</summary>
     /// <remarks>
-    /// The wording follows the behaviour today (AP6 C6: app templates on native-handled controls are kept and their parts
-    /// rendered natively; Jeremy has not ruled): the template does not style the native Material control.
+    /// Information, not a warning (ruling of 2026-10-12, closing AP6 C6): a local Template, or a Style in the chain that
+    /// sets Template, takes the control off its native widget (NativeControlPolicy.IsNative is false), and the templated
+    /// fallback shows the template as written, as on the desktop heads. Nothing is ignored; the control gives up the
+    /// Material widget's look, ripple and accessibility, which is what this diagnostic records.
     /// </remarks>
     public static readonly DiagnosticDescriptor ControlTemplateOnNativeControl = new(
         "CBAND0001",
-        "ControlTemplate on a control that Android shows as a native control",
-        "{0} sets a ControlTemplate on {1}: on Android the template is not used for the native control's visuals; its parts may be shown through the native control",
+        "ControlTemplate on a control that Android would otherwise show as a native control",
+        "{0} sets a ControlTemplate on {1}: on Android the template is shown as written, so {1} is not the native Material control and has none of its look, ripple or accessibility",
         Category,
-        DiagnosticSeverity.Warning,
+        DiagnosticSeverity.Info,
         isEnabledByDefault: true,
-        description: "CodeBrix.Android shows this control as a native Material control. An app ControlTemplate does not restyle the native control; the control keeps its non-template properties (Background, Foreground, BorderBrush, Padding, FontFamily...), and parts of the template may be shown through the native control.");
+        description: "CodeBrix.Android shows this control's family as a native Material control when the control keeps the Fluent styles the native widget reproduces. A ControlTemplate, local or set by a Style in the chain, takes the control off its native widget: the template is shown as written, as on the desktop heads, and the control gives up the Material widget's look, ripple and accessibility. Reported as information because the template is honoured, not ignored.");
 
     /// <summary>CBAND0002: template members used on a control CodeBrix.Android shows as a native control.</summary>
     public static readonly DiagnosticDescriptor TemplateMemberOnNativeControl = new(

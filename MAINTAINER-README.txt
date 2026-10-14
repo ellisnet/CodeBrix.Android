@@ -239,10 +239,12 @@ name):
                                      multi-targets net10.0 (Portable/,
                                      Diagnostics/, Handlers/Core/,
                                      Overlay/Portable/ and the lanes' portable
-                                     helpers Platform/Recycler/Portable/ and
-                                     Handlers/<Family>/Portable/ - pure C#, no
-                                     Android type - for host-free tests) and
-                                     net10.0-android36.1 (everything).
+                                     helpers Platform/Recycler/Portable/,
+                                     Handlers/<Family>/Portable/ and the
+                                     gamepads' Input/Gamepad/Portable/ - pure
+                                     C#, no Android type - for host-free
+                                     tests) and net10.0-android36.1
+                                     (everything).
 The net10.0 flavors exist for tests only (nothing ships them in an app); their
 HostFree/ registrations are internal and granted to CodeBrix.Android.UI.Tests.
 Folders inside a project: Android/ = Android implementations of Core contracts
@@ -511,6 +513,36 @@ Pointer positions are measured from the content layer's position relative to the
 DECOR VIEW (the activity receives decor-view coordinates): with the soft keyboard up
 on a window that shows the status bar, Android lays the decor view out below the
 status bar inside the window (AP7-B TerminalView fix; fence AndroidTerminal).
+GAMEPADS (Input/Gamepad/): the public gamepad API of the package (namespace
+CodeBrix.Android.UI.Input; see the AGENT-README's GAMEPADS). Input/Gamepad/Portable/
+is the whole state machine - GamepadTracker (the device table; key codes and axis
+values in, Gamepad state out), Gamepad, GamepadButtons (the 15 standard names, spelled
+as the desktop controller backends spell them - never rename one), GamepadStick (Y
+flipped to point up), GamepadAxisProfile (which axes a device reports: right stick
+Z/RZ before RX/RY, triggers LTRIGGER/RTRIGGER before BRAKE/GAS, the per-axis flat
+as the dead zone), VirtualGamepad (the scripted feed tests and PlayTests use) and the
+portable half of the static Gamepads (Start/Stop flags, the tracker, AddVirtual) -
+compiled for net10.0 too and tested host-free in tests/CodeBrix.Android.UI.Tests/
+Input/Gamepad/. Gamepads.Android.cs is the Android half: on Start it lists the
+gamepad / joystick input devices (InputDevice.GetDeviceIds, the motion ranges of the
+joystick source give the profile), follows connections through the InputManager's
+device listener on the main looper, logs each connection with the device's name,
+vendor / product ids and axis layout (Information; the line that identifies a
+controller's firmware generation), and feeds the activity's events to the tracker.
+ActivityInputRouter offers every key event to Gamepads.TryHandleKey BEFORE the
+focused native editor and Core (a started reader owns its controller's buttons and
+D-pad), and every generic-motion event to Gamepads.TryHandleMotion before the
+pointer source; a joystick-sourced motion event is never handed to the pointer
+source (before the gamepads existed it was, and its axis values were read as a
+mouse position) - when no reader is started it is left to Android. An event from a
+device the listener has not reported yet is described from the device on the spot;
+input injected through the system (adb shell input gamepad keyevent) has no
+device and appears as an InjectedInput gamepad without a profile. A hardware
+keyboard's arrow keys are D-pad key codes too: a D-pad code is only a gamepad's when
+the event's source says so or its device is a known gamepad. Nothing starts the
+gamepads but the app: an app that never calls Gamepads.Start sees no change.
+Device validation: HelloPaste started with "--ez gamepad true" starts the gamepads
+and logs GAMEPAD CONNECTED / STATE / DISCONNECTED lines (samples/HelloPaste/README.md).
 CUSTOM TEXT-ENTRY CONTROLS (Input/TextInput/, AP7-B): the Core controls that are
 typed into but are not a TextBox (TerminalView, AdvancedTextEdit) report their focus
 through CodeBrix.Platform's SoftwareKeyboardFocus seam; CoreTextInputController (the
@@ -682,7 +714,11 @@ changes play Material motion (FrameTransitions); NavigationStateKeeper keeps the
 frame's navigation state across process death.
 WinRT services (src/CodeBrix.Android/Services/, registered by the WinRT bootstrap):
 clipboard (text, links, HTML, bitmaps through the CodeBrix FileProvider declared by
-Overlay/SharedFileProvider.cs), launcher, share sheet, connectivity (needs
+Overlay/SharedFileProvider.cs), launcher (a file:// URI is viewed as a content URI with
+read permission granted: a picker compatibility path as its document -
+ContentDocuments.DocumentForPath - any other existing file as a FileProvider copy;
+LauncherAndroidExtension.ViewIntentFor, fenced on the device by AndroidNative
+SaveCompatibilityPath "Launching ..."), share sheet, connectivity (needs
 ACCESS_NETWORK_STATE in the app manifest), haptics, FileOpenPicker / FileSavePicker over
 the Storage Access Framework and FolderPicker over a document tree: since pin 1.0.268.12
 the results are StorageFile / StorageFolder.FromImplementation over the content URI
@@ -737,8 +773,12 @@ TypeScalePolicy: FontSize in sp while IsTextScaleFactorEnabled; framework TextBl
 styles -> Material type roles (app-authored TextBlocks only). Motion:
 CoreAnimationTicker raises CompositionTarget.Rendering from Choreographer while Core
 has subscribers (Storyboards, VisualState transitions, TeachingTip); it looks at every
-looper idle and at each of Core's own frame requests (AndroidXamlRootHost.
-InvalidateRender -> Poke); the per-frame decision (one raise per display frame,
+looper idle, at each of Core's own frame requests (AndroidXamlRootHost.
+InvalidateRender -> Poke) and after every dispatch of Core's queues
+(DispatcherPumpAndroidPlatform.AfterDispatch -> Poke: a main looper that is never
+idle - an app whose UI thread always has a message due - never runs idle handlers, and
+its Storyboards used to stay at their first frame; fenced on the device by AndroidNative
+"CompositionTarget.Rendering starts while the UI thread is never idle"); the per-frame decision (one raise per display frame,
 next frame only while subscribers remain) is Platform/Animation/Portable/
 RenderingFramePump, fenced host-free (HostFree/RenderingFramePumpTests) and on the
 device (AndroidNative "CompositionTarget.Rendering ticks while subscribed and stops
@@ -1053,14 +1093,16 @@ build/nuget/buildTransitive/CodeBrix.Android.ApacheLicenseForever.props and
     Android accepts and ignores: CbandCSharpAnalyzer in hand-written C#,
     CbandXamlAnalyzer in the Page / ApplicationDefinition XAML (the additional
     files the XAML generator's build logic passes to the compiler), at the XAML
-    file and line. CBAND0001 template on a native control, 0002 template members
-    on a native control, 0003 composition / backdrops / ThemeShadow, 0004 3-D
-    projection, 0005 ScrollViewer zoom, 0006 PasswordChar not one character,
-    0007 frame-buffer head options, 0008 acrylic / Mica. The ids are appended to
-    WarningsNotAsErrors (CodeBrixAndroidCbandIds), so they never fail a build
-    with TreatWarningsAsErrors; CodeBrixAndroidXamlScan=false turns the XAML scan
-    off. The native-control list the rules use (AndroidSurface.NativeControls)
-    follows the native registrations (CodeBrixHandlers.cs and the add-ins);
+    file and line. CBAND0001 template on a native control (INFORMATION, not a
+    warning, since the template is honoured - ruling of 2026-10-12), 0002
+    template members on a native control, 0003 composition / backdrops /
+    ThemeShadow, 0004 3-D projection, 0005 ScrollViewer zoom, 0006 PasswordChar
+    not one character, 0007 frame-buffer head options, 0008 acrylic / Mica. The
+    ids are appended to WarningsNotAsErrors (CodeBrixAndroidCbandIds), so they
+    never fail a build with TreatWarningsAsErrors; CodeBrixAndroidXamlScan=false
+    turns the XAML scan off. The native-control list the rules use
+    (AndroidSurface.NativeControls) follows the native registrations
+    (CodeBrixHandlers.cs and the add-ins);
     keep them in step. In the repo, build/inrepo/CodeBrix.Android.InRepo.targets
     references the analyzer project (as the package's analyzers/ folder would);
   * never import the Platform head, runtime-replace, single-project,

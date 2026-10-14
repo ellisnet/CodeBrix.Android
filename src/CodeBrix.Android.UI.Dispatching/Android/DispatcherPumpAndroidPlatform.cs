@@ -35,6 +35,14 @@ internal sealed class DispatcherPumpAndroidPlatform : IDispatcherPumpPlatform
     /// <summary>The number of dispatches scheduled so far.</summary>
     internal long ScheduledCount { get; private set; }
 
+    /// <summary>
+    /// Run on the UI thread after every dispatch of Core's queues (set by the animation frame clock, which uses it to
+    /// start its frame loop when a dispatch began an animation). A looper that is never idle - an app whose UI thread
+    /// always has a message due - never runs idle handlers, so "after a dispatch" is the moment that is always there.
+    /// It must be cheap; an exception it throws is swallowed so the pump keeps running.
+    /// </summary>
+    internal static Action AfterDispatch { get; set; }
+
     /// <inheritdoc />
     public void Schedule(Action dispatchCallback, NativeDispatcherPriority priority)
     {
@@ -74,6 +82,23 @@ internal sealed class DispatcherPumpAndroidPlatform : IDispatcherPumpPlatform
 
         public CallbackRunnable(Action callback) => _callback = callback;
 
-        public void Run() => _callback();
+        public void Run()
+        {
+            try
+            {
+                _callback();
+            }
+            finally
+            {
+                try
+                {
+                    AfterDispatch?.Invoke();
+                }
+                catch (Exception exception) when (exception is not OutOfMemoryException)
+                {
+                    // the hook is a hint, never a reason for the dispatcher to stop
+                }
+            }
+        }
     }
 }

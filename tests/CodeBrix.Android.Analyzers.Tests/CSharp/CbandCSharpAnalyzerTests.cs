@@ -1,4 +1,5 @@
 using System.Linq;
+using CodeBrix.Android.Analyzers.Diagnostics;
 using CodeBrix.Android.Analyzers.Tests.Support;
 using SilverAssertions;
 using Xunit;
@@ -201,7 +202,20 @@ public class CbandCSharpAnalyzerTests
     }
 
     [Fact]
-    public void Every_cband_diagnostic_is_a_warning()
+    public void Every_cband_diagnostic_but_cband0001_is_a_warning()
+    {
+        //Arrange
+        var descriptors = typeof(CbandDescriptors).GetFields()
+            .Select(f => f.GetValue(null)).OfType<Microsoft.CodeAnalysis.DiagnosticDescriptor>()
+            .Where(d => d.Id != "CBAND0001").ToArray();
+
+        //Assert
+        descriptors.Should().NotBeEmpty();
+        descriptors.Should().OnlyContain(d => d.DefaultSeverity == Microsoft.CodeAnalysis.DiagnosticSeverity.Warning);
+    }
+
+    [Fact]
+    public void Cband0001_is_information_because_the_template_is_honoured()
     {
         //Act
         var diagnostics = AnalyzerHarness.RunCSharp("""
@@ -210,7 +224,9 @@ public class CbandCSharpAnalyzerTests
             """);
 
         //Assert
-        diagnostics.Should().OnlyContain(d => d.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Warning);
+        diagnostics.Should().ContainSingle(d => d.Id == "CBAND0001")
+            .Which.Severity.Should().Be(Microsoft.CodeAnalysis.DiagnosticSeverity.Info);
+        diagnostics.Single(d => d.Id == "CBAND0001").GetMessage().Should().Contain("shown as written");
     }
 
     [Fact]

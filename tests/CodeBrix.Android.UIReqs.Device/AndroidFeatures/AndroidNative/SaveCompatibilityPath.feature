@@ -9,3 +9,15 @@ Scenario: A compatibility file deleted and written again still reaches its docum
 	Given a Downloads document "ap8s2_writeback.png" created for saving
 	When the app deletes the compatibility file and, a second later, writes 4096 bytes to it
 	Then the document holds 4096 bytes
+
+# [2026-10-12 LAUNCH] InannaOctaquetra: "Open" on the "Report saved" panel did nothing - the app launched the saved
+# report's compatibility path as a file:// URI, which Android refuses to hand to another app.
+Scenario: Launching a saved document's compatibility path opens the document itself
+	Given a Downloads document "launch_report.pdf" created for saving
+	When the app asks the launcher to open the compatibility path as a file URI
+	Then the launcher views the document's content URI with read permission granted
+
+Scenario: Launching one of the app's own files shares it through the CodeBrix file provider
+	Given an app file "launch_notes.txt" holding 64 bytes
+	When the app asks the launcher to open that file as a file URI
+	Then the launcher views a CodeBrix file provider URI with read permission granted

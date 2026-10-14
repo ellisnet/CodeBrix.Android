@@ -19,7 +19,8 @@ namespace CodeBrix.Android.UI.Platform.Animation;
 /// Starting: Core gives the platform no reliable "a Rendering subscriber appeared" call on Android (its render
 /// request goes through a render state machine that only a recording compositor resets), so the ticker looks
 /// whenever the main looper goes idle - after every batch of UI-thread work, which is where a Storyboard is
-/// begun - and starts the frame loop when Core has subscribers. The loop stops by itself when the last
+/// begun - and after every dispatch of Core's queues (a looper that is never idle never runs idle handlers), and
+/// starts the frame loop when Core has subscribers. The loop stops by itself when the last
 /// subscriber goes. Nothing runs while nothing animates (no per-frame wake-ups when idle). The per-frame decision
 /// (subscribers? one raise per display frame, next frame only while subscribers remain) is the portable
 /// <see cref="RenderingFramePump"/>, fenced host-free (AP10-C); app code that subscribes to Rendering directly (a
@@ -55,6 +56,11 @@ internal static class CoreAnimationTicker
         _frameCallback = new FrameCallback();
         _idleHandler = new IdleHandler();
         ALooper.MainLooper?.Queue?.AddIdleHandler(_idleHandler);
+
+        // A main looper that is never idle (an app whose UI thread always has a message due - a living background
+        // moving hundreds of elements every few milliseconds) never runs the idle handler, and its Storyboards would
+        // stay at their first frame; looking after every dispatch of Core's queues starts the loop there too.
+        CodeBrix.Android.UI.Dispatching.Android.DispatcherPumpAndroidPlatform.AfterDispatch = Poke;
         if (!RenderingFramePump.CanReadSubscribers)
         {
             HostLog.For("CodeBrix.Android.UI.Motion").LogWarning(

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using CodeBrix.Android.UI.Platform.Animation;
 using CodeBrix.Platform.UI.Core.UIReqs.Hosting;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Media;
 using Reqnroll;
 using SilverAssertions;
@@ -28,6 +29,52 @@ public sealed class RenderingPumpSteps
     private long _tickerFramesWhileSubscribed;
     private Stopwatch _subscribed;
     private double _subscribedMs;
+    private bool _keepBusy;
+    private int _busyDispatches;
+
+    /// <summary>
+    /// Keeps the UI thread's message queue from ever going idle: a dispatcher work item that does a little work and
+    /// queues itself again, so a message is always due - the condition under which the frame clock used to never start
+    /// (a living background moving hundreds of elements every few milliseconds does the same).
+    /// </summary>
+    [Given("the UI thread is kept busy so its message queue is never idle")]
+    public Task Given_the_UI_thread_is_kept_busy() => TestTargetFixture.RunOnUIThreadAsync(() =>
+    {
+        _keepBusy = true;
+        _busyDispatches = 0;
+        var queue = DispatcherQueue.GetForCurrentThread();
+
+        void Work()
+        {
+            if (!_keepBusy)
+            {
+                return;
+            }
+
+            _busyDispatches++;
+            var spin = Stopwatch.StartNew();
+            while (spin.Elapsed.TotalMilliseconds < 2) { }
+            queue.TryEnqueue(DispatcherQueuePriority.Low, Work);
+        }
+
+        queue.TryEnqueue(DispatcherQueuePriority.Low, Work);
+    });
+
+    /// <summary>Lets the UI thread go idle again, and asserts it really was kept busy.</summary>
+    [Then("the UI thread is no longer kept busy")]
+    public async Task Then_the_UI_thread_is_no_longer_kept_busy()
+    {
+        var dispatches = await OnUIThreadAsync(() =>
+        {
+            _keepBusy = false;
+            return _busyDispatches;
+        }).ConfigureAwait(false);
+        dispatches.Should().BeGreaterThan(100, "the busy work item ran continuously for the whole scenario");
+    }
+
+    /// <summary>A scenario that failed before its last step still lets the UI thread go idle again.</summary>
+    [AfterScenario]
+    public void StopKeepingBusy() => _keepBusy = false;
 
     /// <summary>Subscribes a counting handler to CompositionTarget.Rendering on the UI thread.</summary>
     [When("app code subscribes to CompositionTarget.Rendering")]

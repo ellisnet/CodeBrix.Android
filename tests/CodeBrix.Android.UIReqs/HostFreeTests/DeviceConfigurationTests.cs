@@ -21,4 +21,20 @@ public sealed class DeviceConfigurationTests
     [InlineData(null, false)]
     public void ConfigurationPreservingShellAllowsOnlyQueries(string? command, bool expected) =>
         Assert.Equal(expected, DeviceSession.IsAllowedShell(command, preserveConfiguration: true));
+
+    /// <summary>A scenario may inject a gamepad button or D-pad key through the system, and nothing else of the input tool.</summary>
+    [Theory]
+    [InlineData("input gamepad keyevent KEYCODE_BUTTON_A", true)]
+    [InlineData("input gamepad keyevent KEYCODE_BUTTON_START", true)]
+    [InlineData("input gamepad keyevent KEYCODE_BUTTON_THUMBR", true)]
+    [InlineData("input gamepad keyevent KEYCODE_DPAD_LEFT", true)]
+    [InlineData("input gamepad keyevent KEYCODE_DPAD_CENTER", true)]
+    [InlineData("input tap 1 1", true)]
+    [InlineData("input gamepad keyevent KEYCODE_BACK", false)]
+    [InlineData("input gamepad keyevent 96", false)]
+    [InlineData("input keyevent KEYCODE_BUTTON_A", false)]
+    [InlineData("input gamepad keyevent KEYCODE_BUTTON_A; reboot", false)]
+    [InlineData("input gamepad text hello", false)]
+    public void ShellAllowsGamepadKeyInjectionOnly(string? command, bool expected) =>
+        Assert.Equal(expected, DeviceSession.IsAllowedShell(command));
 }
