@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CodeBrix.Android.UI.WebGpu: the Android side of the CodeBrix.Platform WebGpu add-in. Its Core
+    (CodeBrix.Platform.UI.WebGpu.Core, re-shipped by the intake) holds the enums and event args that name no WebGPU type,
+    the element's rules, the frame scheduler and the platform contract the scheduler reaches its owner's thread through.
+    The WebGpuRenderView ELEMENT's public API names CodeBrix.WebGpu.Native types (Device, Texture, CommandEncoder, the
+    sharing contracts and hand-off structs) and SkiaSharp types (the overlay's SKCanvas), so on the Platform it lives in
+    the Skia assembly with the frame protocol and the Readback presenter. This assembly therefore re-provides it
+    (Public/: WebGpuRenderView, IWebGpuRenderer, WebGpuFrame, WebGpuDeviceInfo, the device-ready / render / overlay event
+    args and the native-module hand-off struct - the same public types in the same namespace; Internal/: the frame
+    protocol engine, the Readback presenter, the paint surface and the hand-off block - ported from the Platform's Skia
+    side with provenance headers). The default render path is Readback: the view's own WebGPU device (Vulkan on Android,
+    through CodeBrix.WebGpu.Skia), an off-screen target the size of the element, one read-back per frame, painted on the
+    SkiaSharp.Views add-in's canvas (the same canvas-host path as the VideoPlayer's picture). With the application's
+    direct GPU rendering opt-in the path is DirectSurface (Internal/WebGpuSurfacePresenter, Android/
+    WebGpuSurfaceHostHandler): the same target, drawn on the GPU onto a SurfaceView's window surface under the canvas and
+    presented. The Core rules come from the re-shipped Core and are never duplicated here.
+    The WebGPU engine's native library (libcodebrix_wgpu.so for arm64-v8a and x86_64) comes with
+    CodeBrix.WebGpu.Native.MitLicenseForever (through CodeBrix.WebGpu.Skia) and lands in the APK's lib/<abi>/ folder,
+    where the binding's loader finds it - no Android-specific loading code. Its natives need API 33, which is
+    $(CodeBrixAndroidMinimumApiLevel).
+    AssemblyName = the name CodeBrix.Platform.UI.WebGpu.Core (and UI.Core, UI.Composition.Core) grant InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <AssemblyName>CodeBrix.Android.UI.WebGpu</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.WebGpu</RootNamespace>
+    <!-- Recording WebGPU commands takes pointers to descriptor structs, and the native-module hand-off is a blittable
+         struct with unmanaged function pointers (as on the Platform). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/CodeBrix.Android.UI/CodeBrix.Android.UI.csproj" />
+    <!-- The picture is painted through this add-in's canvas-host factory and shown by its canvas-element handler. -->
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.SkiaSharp.Views/CodeBrix.Android.SkiaSharp.Views.csproj" />
+    <!-- The add-in Cores (re-shipped from the pinned Platform build by the intake). -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.SkiaSharp.Views.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.WebGpu.Core.dll" />
+    <!-- The WebGPU side, exactly as the Platform add-in takes it: CodeBrix.WebGpu.Skia owns the device
+         (WebGpuSkiaDevice) and the off-screen target (WebGpuSkiaTarget) and brings CodeBrix.WebGpu.Native (the raw
+         binding, the engine's natives for every runtime identifier - android-arm64 and android-x64 included - the
+         sharing contracts the view implements and the hand-off structs). NEVER CodeBrix.WebGpu.Graphics: that higher
+         layer is the application's choice. -->
+    <PackageReference Include="CodeBrix.WebGpu.Skia.MitLicenseForever" />
+    <PackageReference Include="SkiaSharp" />
+  </ItemGroup>
+
+</Project>

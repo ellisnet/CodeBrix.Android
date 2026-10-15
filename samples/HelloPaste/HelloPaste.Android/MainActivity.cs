@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Android.App;
+using Android.Content.PM;
 using Android.OS;
 using CodeBrix.Android.UI.Hosting;
 using CodeBrix.Android.UI.Input;
@@ -20,6 +21,7 @@ namespace HelloPaste;
     Label = "HelloPaste",
     MainLauncher = true,
     Theme = "@style/Theme.Material3.DayNight.NoActionBar",
+    LaunchMode = LaunchMode.SingleTask,
     ConfigurationChanges = CodeBrixActivity.HandledConfigurationChanges)]
 public class MainActivity : CodeBrixActivity
 {

@@ -37,3 +37,5 @@ CodeBrix.Platform.TerminalView.ApacheLicenseForever
 CodeBrix.Platform.TextLayout.ApacheLicenseForever
 CodeBrix.Platform.VideoPlayer.ApacheLicenseForever
 CodeBrix.Platform.WebView.ApacheLicenseForever
+CodeBrix.Platform.WebGpu.ApacheLicenseForever
+CodeBrix.Platform.PlayTest.WebGpu.ApacheLicenseForever

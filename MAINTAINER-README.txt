@@ -85,7 +85,7 @@ REPOSITORY LAYOUT
                                 paste-always compile heads (not in the slnx).
     tools/                      repository tools: UIReqsFrameCompare and
                                 CodeBrix.Android.ParityScore (see TESTING).
-    samples/                    HelloPaste (in the slnx); SimpleDebugApp_API_36/
+    samples/                    HelloPaste and WebGpuDemo (in the slnx); SimpleDebugApp_API_36/
                                 _37 are standalone (see EXTRAS-README.txt).
     templates/                  the Android head of the CodeBrix.Platform
                                 application template (AndroidHead/) and
@@ -962,6 +962,68 @@ initializer (Android/AndroidPlatformBootstrap) registers its contracts and handl
     line: CodeBrix.VideoPlayback 1.0.280.1149 and CodeBrix.Audio.Android 1.0.271.1201 both depend on
     CodeBrix.Audio.Core.MitLicenseForever 1.0.271.1165 (never the desktop CodeBrix.Audio package's own assemblies).
     Fences: the copied VideoPlayer group (informational for frames) and AndroidVideoPlayer.
+    Since pin 1.0.287.1311 the port carries two Platform fixes: the surface draws NOTHING before the first picture
+    (never Clear(Transparent); host fence tests/..VideoPlayer.Tests/Surface/VideoSurfaceElementTests, which paints the
+    linked element on a raster canvas under the host-free Core), and the render driver presents through
+    Internal/VideoFrameReadback (reference-counted read-back buffers instead of two alternating bitmaps; RGBA - ANDROID
+    PORT; the Platform's tests ported to Surface/VideoFrameReadbackTests). On Android neither hazard could show: the
+    canvas host paints synchronously into its native view's own bitmap (nothing is recorded and replayed), so these are
+    parity fixes that keep the ports identical.
+  WebGpu: the Core (CodeBrix.Platform.UI.WebGpu.Core) holds the enums and event args that name no WebGPU type, the
+    element's rules, the frame scheduler (when frames run for each driver), the owned-device gate evaluation and the
+    platform contract IWebGpuFrameTimer. The ELEMENT's public API names CodeBrix.WebGpu.Native and SkiaSharp types, so
+    the Platform keeps it in its Skia assembly; the Android assembly re-provides it: Public/ (WebGpuRenderView,
+    IWebGpuRenderer, WebGpuFrame, WebGpuDeviceInfo, the device-ready / render / overlay args, WebGpuRenderViewHandoff -
+    the same 40-byte layout) and Internal/ (WebGpuRenderEngine - the frame protocol and device lifetime -, the
+    Readback presenter, the paint surface, the hand-off block), ported with provenance headers. ANDROID PORT changes:
+    the desktop direct paths (adopting a head's Vulkan / Metal device: INativeGpuDeviceProvider, the direct presenters)
+    are not ported - Android's direct path is DirectSurface (below); the error scope helper is ported for it; the
+    WebGpu.Native Adapter type is written qualified (the
+    framework namespace CodeBrix.Platform.UI.Adapter hides it inside CodeBrix.Platform.UI.WebGpu). The view IS the
+    canvas-host element (CreateElementVisual from the SkiaSharp.Views factory, Compositor.GetSharedCompositor through
+    Composition.Core's grant) and Android/AndroidPlatformBootstrap registers the frame timer (Android/
+    WebGpuFrameTimerAndroidPlatform, a DispatcherQueueTimer + low-priority posts on the main looper) and
+    the handler of WebGpuRenderView - SkiaCanvasElementHandler, or with DirectGpuRenderingMode on (decided per view at
+    handler creation, after CodeBrixApplication.OnCreate set the latch) Android/WebGpuSurfaceHostHandler. The owned-device gate (IOwnedGpuDeviceGate, UI.Core) is resolved
+    if a head registered one - no Android head does, so the view always creates its device. The device is
+    CodeBrix.WebGpu.Skia's own (Vulkan); the engine's natives come in CodeBrix.WebGpu.Native's runtimes/android-arm64
+    and android-x64 folders and land in the APK's lib/<abi>/ (no loader code; their API 33 floor equals
+    CodeBrixAndroidMinimumApiLevel).
+    DIRECT SURFACE (CodeBrixApplication.UseDirectGpuRenderingMode -> Portable/DirectGpuRenderingOptIn ->
+    DirectGpuRenderingMode.Enable() through UI.Core's grant): WebGpuSurfaceHostHandler's view group holds a SurfaceView
+    (default Z, below the window) under the same SkiaCanvasView; SurfaceHolder.Callback hands the engine the
+    ANativeWindow (ANativeWindow_fromSurface/_release from libandroid.so) - AttachWindow / ResizeWindow / DetachWindow,
+    which releases the WebGPU surface under the frame gate (or at the holding frame's EndFrame) before the window is
+    given back. Internal/WebGpuSurfacePresenter keeps the view's own device and the headless BGRA8Unorm target (the
+    frame protocol is Readback's) and draws each finished frame onto the surface's frame with Internal/WebGpuSurfaceBlit
+    (one full-screen pass: both test devices' surfaces offer RGBA8Unorm/Srgb, RGBA16Float, RGB10A2Unorm - no BGRA), then
+    presents (Fifo). Configuration from the capabilities only (Internal/WebGpuSurfaceRules: wgpu-native ends the
+    process on a configuration the surface does not allow, or an acquire on an unconfigured surface); the pass's finish
+    runs in an error scope (a failed command buffer must never be submitted). Failure -> FailureReason -> the engine's
+    FallBackToReadback (one line, DeviceLost) and the view drops the SurfaceView (WantsWindowSurface). The surface is
+    behind Internal/IWebGpuWindowSurface so the host tests run the whole path on the laptop's Vulkan device with a fake
+    surface (DirectSurfaceGpuTests). Measured on the sample (Fifo, target 60): Pixel 4 XL 59-61 fps on every page
+    (Readback ~4), HP 56-60 (Readback 42-60). Readback speed is the CodeBrix.WebGpu.Skia ReadPixels call:
+    on Adreno 640 it reads ~50 MB/s (FIXLIST_webgpu_addin_found_along_the_way_2026-10-14.txt) - a full-screen view on
+    the Pixel 4 XL runs at ~4 frames/s while the HP laptop's Intel Xe runs ~55. Fences: tests/CodeBrix.Android.UI.
+    WebGpu.Tests (host-free: the Core contract; the add-in's Internal/ and the non-element Public/ files linked in, with
+    the Platform suite's engine, surface and hand-off tests ported and run on the host's real Vulkan device - GPU tests
+    skip with the engine's reason without an adapter) and the AndroidWebGpu UIReqs group.
+    Intake and pin (WebGpu): the add-in needs a pinned Platform build that carries the WebGpu add-in package
+    (CodeBrix.Platform.WebGpu.ApacheLicenseForever, a PackageDownload in build/intake/CodeBrix.Android.Intake.proj)
+    and DirectGpuRenderingMode in UI.Core - 1.0.287.1311 was the first, packed from an unpublished Platform working
+    tree into a local feed, so before a release pack the pin moves to the PUBLISHED family version that carries the
+    add-in (PIN BUMP; never pack a release from a pin that is not on nuget.org). The intake takes the Core
+    CodeBrix.Platform.UI.WebGpu.Core.dll + .xml (the Platform packs no .pdb for it) and the package's notices
+    (gates/expected-files.txt); gate 2 holds because the Core references neither SkiaSharp nor CodeBrix.WebGpu (the
+    WebGPU binding is the Android add-in's own package dependency); gate 3 has the add-in's grants (WebGpu.Core,
+    UI.Core, Composition.Core) and the tests' (WebGpu.Core); gate 5 fingerprints the latch, the owned-device gate
+    and IWebGpuFrameTimer. build/platform-repo-package-ids.txt lists both new Platform ids - the add-in and
+    CodeBrix.Platform.PlayTest.WebGpu.ApacheLicenseForever (the desktop PlayTest provider, never taken by the
+    intake) - so CBAP0001 rejects a dependency on either. Directory.Packages.props pins
+    CodeBrix.WebGpu.Skia.MitLicenseForever (the add-in's) and, in the sample section, CodeBrix.WebGpu.Graphics and
+    CodeBrix.Graphics3D.Gltf2 (the WebGpuDemo sample's only); move the WebGpu.Skia pin together with the
+    Platform add-in's own reference, so both heads run the same engine.
   UIReqs: each add-in's group is copied (tests/CodeBrix.Android.UIReqs.Device/PORTING.txt,
   ADD-IN GROUPS).
 
@@ -1314,7 +1376,12 @@ PORTING.txt: source commit, every adaptation). Two halves:
       hook puts the native CommandBar switch back on), AndroidElements10B (AP10-B,
       AndroidSteps/Elements10BSteps.cs + Elements10BSamples.cs: the second AP10
       lane, built by sample name; the AndroidElements10A generic steps are shared;
-      @native-overlays scenarios let flyouts be Material menus).
+      @native-overlays scenarios let flyouts be Material menus), AndroidWebGpu (AndroidSteps/WebGpuAndroidSteps.cs:
+      the WebGpu add-in's own element on the native Skia view, RenderPath Readback, its picture checked in the view's
+      own presented frame - not a screen region, so it holds at any density and on colour-managed displays - and the
+      OnDemand / Manual drivers, a Manual frame from a worker thread; a second scenario sets the DirectGpuRenderingMode
+      latch by reflection for itself (restored in an AfterScenario hook): WebGpuSurfaceHostHandler, a SurfaceView under
+      the canvas, RenderPath DirectSurface, the SurfaceView's buffer read with PixelCopy, the same drivers).
       Isolation hook for a single-session run (android-uireqs-run.sh --group
       all: every feature in one app process): AndroidSteps/SoftKeyboardHooks.cs
       hides a soft keyboard a scenario left up (logcat UIReqs.Keyboard). (The
@@ -1427,7 +1494,8 @@ package. Only Android target frameworks get the generator; the net10.0 flavor of
 a multi-targeted app library compiles against the same Core assemblies. Add-in
 Cores: CodeBrixAndroidInRepoAddIns="FlexPanel;AudioPlayer;CommandBar;AppSettings;TextLayout" (the names are listed in
 build/inrepo/CodeBrix.Android.InRepo.targets; an Android head also gets each named add-in's Android assembly).
-samples/HelloPaste uses Svg (one of its pasted pages shows SVG icons).
+samples/HelloPaste uses Svg (one of its pasted pages shows SVG icons). samples/WebGpuDemo uses WebGpu (it is NOT
+built by device-smoke.sh; deploy its Release APK with adb install and read logcat tag WebGpuDemo, see its README.md).
 A head's RootNamespace must differ from its app libraries' (the generator names
 per-assembly types after it; the paste-always heads use <App>.PasteAlways).
 
@@ -1583,6 +1651,55 @@ stay INTERNAL (decision D-O1, Jeremy's): apps cannot register native handlers in
 this version.
 
 
+SINGLE-TASK MAIN ACTIVITY (design note)
+=======================================
+  A CodeBrix app has ONE XAML window (NativeWindowFactoryAndroidExtension's
+  MainWindow), shown by one CodeBrixActivity. With Android's standard launch
+  mode a launch whose intent does not match the task's root intent - the
+  launcher icon after `adb shell am start -n <package>/<activity>`, a deep
+  link, a notification - stacks a SECOND activity instance in the same task
+  (or, for some intents, in another task). Moving a live XAML window (its
+  native view tree, insets, input routing, GPU surfaces) to another activity
+  and back is deliberately NOT done. Instead, three layers:
+  1. The requirement: the main activity is declared
+     LaunchMode = LaunchMode.SingleTask (the application template, every
+     sample, the UIReqs device app; consumer docs in AGENT-README, THE
+     ANDROID HEAD'S TWO CLASSES). Android then never creates a second
+     instance; a repeated launch is delivered to the running one.
+  2. Repeated launches arrive as intents: CodeBrixActivity.OnNewIntent ->
+     ReceiveLaunchIntent (the intent becomes the activity's Intent) ->
+     CodeBrixApplication.DeliverLaunchIntent (one Information log line) ->
+     the app's protected virtual OnLaunchIntent(Intent). The host's own
+     bring-to-front intent (extra ActivityInstancePolicy.BringToFrontExtra)
+     is not surfaced.
+  3. Host safety for an app that forgot layer 1: CodeBrixActivity.OnCreate
+     asks ActivityInstancePolicy (Portable/, pure, host-tested) right after
+     base.OnCreate, before it builds anything. Window exists and another
+     activity that is neither destroyed nor finishing shows it -> one
+     warning naming the single-task requirement, the intent goes through
+     layer 2 to the running activity, this instance Finish()es, then
+     StartActivity(running activity's class, NEW_TASK | REORDER_TO_FRONT +
+     the marker extra) brings the running task and activity forward (no
+     permission needed; MoveTaskToFront would need REORDER_TASKS). Finish
+     comes first so the reorder finds the running instance, not this one.
+     Window exists and no live host (Android re-created the activity, or the
+     host is finishing) -> the old path, AttachActivity. No window ->
+     EnsureXamlApplicationStarted.
+  Fixed along the way (WP9): a finishing activity that lost the window kept
+  its WindowWrapper, so its stop could hide and its destroy CLOSE the window
+  the new activity showed. AndroidNativeWindowWrapper.AttachActivity now
+  makes the previous activity let go (ReleaseWindow), and OnDestroy closes
+  the window only when it is still the host.
+  Fences: tests/CodeBrix.Android.UI.Tests/Hosting/ActivityInstancePolicyTests
+  (the decision table) and LaunchIntentHookTests (the Android-only source:
+  hook, OnCreate order, forward-then-finish, handover, and every
+  MainActivity.cs under templates/, samples/ and tests/ being single-task -
+  a new sample must declare it too). Device check: WebGpuDemo, default
+  build (single-task) and -p:WebGpuDemoStandardLaunchMode=true (layer 3):
+  `am start -n`, Home, launcher icon -> the running app, one activity in
+  the task (dumpsys activity activities), the LAUNCH INTENT line.
+
+
 CODING CONVENTIONS
 ==================
   * .cs layout: no leading blank line; (ported files only) the provenance
@@ -1637,7 +1754,11 @@ and still restarts the app per group. --repeat 3 performs three runs.
 
 UIREQS_PRESERVE_DEVICE_CONFIGURATION=1 travels in the host handshake. The host
 rejects configuration-changing shell requests even if a scenario sends one.
-Density-changing scenarios therefore fail; the custom keyboard cleanup omits
+Density-changing scenarios therefore fail, and so do the copied
+"the region of {string} shows ..." checks on a device whose density is not 1 (they measure the
+element's DIP rectangle in device pixels; seen on the Pixel 4 XL and the HP laptop in the
+AndroidVideoPlayer group) - an Android-only group that must pass on real devices checks the
+element's own picture instead (AndroidWebGpu); the custom keyboard cleanup omits
 IME reset and system corner taps. IME-reset isolation remains UNVERIFIED in
 this mode. The normal hook still hides the app's own soft keyboard. Existing
 pixel baselines require the same density, display size and animation settings;

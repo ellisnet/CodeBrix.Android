@@ -133,6 +133,26 @@ element handlers (native views at Core's layout), with an on-device self-check. 
 of every copied file.
 
 
+WEBGPUDEMO SAMPLE
+=================
+    samples/WebGpuDemo/
+
+The WebGpu add-in's sample app: the CodeBrix.Platform WebGpuDemo sample's four
+pages (Triangle - the raw WebGPU binding in the Render event; Models - glTF
+models drawn through CodeBrix.WebGpu.Graphics; Renderer class - an
+IWebGpuRenderer set from XAML; Controls - frame drivers, pausing, the frame
+rate and a SkiaSharp HUD) copied into an Android head, with the CC0 models and
+their licence files. The launch intent's page extra picks the start page; the
+app logs its frame count and frame rate once a second (logcat tag WebGpuDemo).
+Built with -p:WebGpuDemoDirectGpu=true it opts in to direct GPU rendering (the
+DirectSurface render path, no read-back); a plain build shows the default
+Readback path. Its main activity is single-task; built with
+-p:WebGpuDemoStandardLaunchMode=true it is standard instead, only to check the
+host's second-instance safety net. MainApplication logs every later launch
+(OnLaunchIntent) as a LAUNCH INTENT line.
+Its README.md lists the source of every copied file and the few Android changes.
+
+
 STANDALONE DEBUGGING SAMPLES
 ============================
     samples/SimpleDebugApp_API_36/     (net10.0-android36.1)

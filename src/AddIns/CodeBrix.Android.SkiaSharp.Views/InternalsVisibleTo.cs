@@ -11,4 +11,5 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("CodeBrix.Android.UI.TerminalView")]
 [assembly: InternalsVisibleTo("CodeBrix.Android.UI.PlotterView")]
 [assembly: InternalsVisibleTo("CodeBrix.Android.UI.VideoPlayer")]
+[assembly: InternalsVisibleTo("CodeBrix.Android.UI.WebGpu")]
 [assembly: InternalsVisibleTo("CodeBrix.Android.UI.Graphics3DGL")]

@@ -1,0 +1,74 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    WebGpuDemo.Android: the WebGpu add-in's sample app on Android.
+
+    Pages/Views/ and Rendering/ are copies of the CodeBrix.Platform WebGpuDemo sample's four pages (Triangle, Models,
+    Renderer class, Controls), its main page and its renderers (see ../README.md; the few Android changes are marked
+    "Android sample:"). App.xaml / App.xaml.cs are this app's; the start page comes from the launch intent (StartPages);
+    FrameRateLog writes one logcat line per second with the page's frame count and rate. The WebGpu add-in comes from
+    this repository (CodeBrixAndroidInRepoAddIns), exactly as an app outside it takes the
+    CodeBrix.Android.WebGpu.ApacheLicenseForever package; the wgpu engine's natives come with it (CodeBrix.WebGpu.Native,
+    android-arm64 and android-x64) and land in the APK's lib/<abi>/ folders.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-android36.1</TargetFramework>
+    <SupportedOSPlatformVersion>$(CodeBrixAndroidMinimumApiLevel)</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <ApplicationId>com.codebrix.webgpudemo</ApplicationId>
+    <ApplicationTitle>WebGpuDemo</ApplicationTitle>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <RootNamespace>WebGpuDemo</RootNamespace>
+    <AssemblyName>WebGpuDemo</AssemblyName>
+    <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
+    <CodeBrixAndroidInRepoAddIns>WebGpu</CodeBrixAndroidInRepoAddIns>
+    <!-- The renderers record WebGPU commands, which takes pointers to descriptor structs. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <!-- The direct GPU rendering opt-in (MainApplication.UseDirectGpuRenderingMode): OFF by default; build with
+       -p:WebGpuDemoDirectGpu=true to try the DirectSurface render path. -->
+  <PropertyGroup Condition="'$(WebGpuDemoDirectGpu)' == 'true'">
+    <DefineConstants>$(DefineConstants);WEBGPU_DEMO_DIRECT_GPU</DefineConstants>
+  </PropertyGroup>
+
+  <!-- The main activity's launch mode (MainActivity.MainLaunchMode): single-task by default, as every CodeBrix main
+       activity must be; -p:WebGpuDemoStandardLaunchMode=true builds it standard, only to check the host's safety net. -->
+  <PropertyGroup Condition="'$(WebGpuDemoStandardLaunchMode)' == 'true'">
+    <DefineConstants>$(DefineConstants);WEBGPU_DEMO_STANDARD_LAUNCH_MODE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- A self-contained APK that installs with a plain "adb install". -->
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+  </PropertyGroup>
+
+  <!-- The XAML (as the CodeBrix.Platform sample's shared UI project lists it). -->
+  <ItemGroup>
+    <Page Include="App.xaml" />
+    <Page Include="Pages\Views\MainPage.xaml" />
+    <Page Include="Pages\Views\TriangleView.xaml" />
+    <Page Include="Pages\Views\ModelsView.xaml" />
+    <Page Include="Pages\Views\RendererView.xaml" />
+    <Page Include="Pages\Views\ControlsView.xaml" />
+    <None Remove="**\*.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The Models page only: the OPTIONAL higher layer (the application's choice, never the add-in's) and the glTF
+         library the scene builds its ground plane with. -->
+    <PackageReference Include="CodeBrix.WebGpu.Graphics.MitLicenseForever" />
+    <PackageReference Include="CodeBrix.Graphics3D.Gltf2.MitLicenseForever" />
+    <PackageReference Include="CodeBrix.Platform.Fonts.OpenSans.ApacheLicenseForever" />
+  </ItemGroup>
+
+  <!-- The CC0 models with their licence files: Content, as in the CodeBrix.Platform sample. CodeBrix.Android packs a
+       Content file as an APK asset at its ms-appx path (Assets/models/...); SampleAssets copies the tree out to the
+       files folder on first use, because the model loader reads files. -->
+  <ItemGroup>
+    <Content Include="Assets\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

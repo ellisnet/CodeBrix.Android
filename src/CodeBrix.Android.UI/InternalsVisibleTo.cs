@@ -29,3 +29,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("CodeBrix.Android.UI.PlotterView")]
 [assembly: InternalsVisibleTo("CodeBrix.Android.UI.AudioPlayer")]
 [assembly: InternalsVisibleTo("CodeBrix.Android.UI.VideoPlayer")]
+[assembly: InternalsVisibleTo("CodeBrix.Android.UI.WebGpu")]

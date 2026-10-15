@@ -30,6 +30,10 @@ CodeBrix.Android.UI.Svg           <- CodeBrix.Platform.UI.Svg.Core, CodeBrix.Pla
 CodeBrix.Android.UI.TerminalView  <- CodeBrix.Platform.UI.TerminalView.Core, CodeBrix.Platform.UI.Core
 CodeBrix.Android.UI.TextLayout    <- CodeBrix.Platform.UI.TextLayout.Core, CodeBrix.Platform.UI.Core, CodeBrix.Platform.Foundation.Core
 CodeBrix.Android.UI.VideoPlayer   <- CodeBrix.Platform.UI.VideoPlayer.Core, CodeBrix.Platform.UI.Core
+# Since pin 1.0.287.1311: the WebGpu add-in's view IS a canvas-host element (it overrides UI.Core's CreateElementVisual and
+# takes the shared compositor, internal to Composition.Core), driven by the WebGpu Core's rules and frame scheduler.
+CodeBrix.Android.UI.WebGpu        <- CodeBrix.Platform.UI.WebGpu.Core, CodeBrix.Platform.UI.Core, CodeBrix.Platform.UI.Composition.Core
+CodeBrix.Android.UI.WebGpu.Tests  <- CodeBrix.Platform.UI.WebGpu.Core
 CodeBrix.Android.SkiaSharp.Views  <- CodeBrix.Platform.SkiaSharp.Views.Core, CodeBrix.Platform.UI.Core
 CodeBrix.Android.UI.Graphics2DSK  <- CodeBrix.Platform.WinUI.Graphics2DSK.Core, CodeBrix.Platform.UI.Core
 CodeBrix.Android.UI.Graphics3DGL  <- CodeBrix.Platform.WinUI.Graphics3DGL.Core, CodeBrix.Platform.UI.Core

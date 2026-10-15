@@ -1,0 +1,6 @@
+<Project>
+
+  <!-- The in-repository CodeBrix.Android consumer wiring (targets half). -->
+  <Import Project="$(CodeBrixAndroidRepoRoot)build/inrepo/CodeBrix.Android.InRepo.targets" />
+
+</Project>

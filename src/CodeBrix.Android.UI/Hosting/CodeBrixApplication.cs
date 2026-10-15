@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using CodeBrix.Android.UI.Diagnostics;
 using CodeBrix.Android.UI.Logging;
+using CodeBrix.Android.UI.Portable;
 using CodeBrix.Android.UI.Projection;
 using CodeBrix.Platform.Extensions;
 using CodeBrix.Platform.UI.Adapter.Microsoft.Extensions.Logging;
@@ -9,6 +10,7 @@ using CodeBrix.Platform.UI.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using AApplication = global::Android.App.Application;
+using AIntent = global::Android.Content.Intent;
 using JniHandleOwnership = global::Android.Runtime.JniHandleOwnership;
 using MUX = Microsoft.UI.Xaml;
 
@@ -28,7 +30,7 @@ namespace CodeBrix.Android.UI.Hosting;
 /// OnCreate configures logging (logcat) and runs the platform bootstrap (every CodeBrix
 /// Core contract gets its Android implementation) BEFORE any XAML type is used; the first
 /// <see cref="CodeBrixActivity"/> then starts the XAML application (Application.Start, the
-/// app's OnLaunched).
+/// app's OnLaunched). Later launches of the running app arrive in <see cref="OnLaunchIntent"/>.
 /// </summary>
 public abstract class CodeBrixApplication : AApplication
 {
@@ -57,6 +59,20 @@ public abstract class CodeBrixApplication : AApplication
     /// element handlers show the tree natively, so the default is false.
     /// </summary>
     protected virtual bool UseProjectionViewer => false;
+
+    /// <summary>
+    /// When true, opts the whole application into direct GPU rendering: add-ins that produce GPU content present it
+    /// directly where Android offers a way (the WebGpu add-in's WebGpuRenderView presents to a SurfaceView's window
+    /// surface - the DirectSurface render path), instead of reading frames back to the processor. - EXPERIMENTAL
+    /// </summary>
+    /// <remarks>
+    /// The Android equivalent of the desktop heads' <c>UseDirectGpuRenderingMode()</c> host-builder call, read once in
+    /// <see cref="OnCreate"/>. It is a one-way, app-wide latch (<see cref="DirectGpuRenderingMode"/>): it cannot be turned
+    /// off, and there is no per-element override - the whole app either runs in this mode or does not. An add-in that
+    /// cannot use the direct path (or anything on it fails) falls back to its read-back path on its own. If this is not
+    /// overridden, nothing changes. Default false.
+    /// </remarks>
+    protected virtual bool UseDirectGpuRenderingMode => false;
 
     private SoftInputAdjust? _softInputAdjust;
 
@@ -110,6 +126,12 @@ public abstract class CodeBrixApplication : AApplication
         ConfigureLoggingCore();
         _log = HostLog.For("CodeBrix.Android.UI.Hosting.Application");
 
+        // Before any XAML type exists: the add-ins read the latch when their views get handlers and devices.
+        if (DirectGpuRenderingOptIn.Apply(UseDirectGpuRenderingMode) && _log.IsEnabled(LogLevel.Information))
+        {
+            _log.LogInformation("Direct GPU rendering is enabled for this application (EXPERIMENTAL).");
+        }
+
         global::CodeBrix.Android.UI.Android.AndroidPlatformBootstrap.EnsureRegistered();
         RegisterActivityLifecycleCallbacks(new ApplicationLifecycleTracker());
 
@@ -117,6 +139,30 @@ public abstract class CodeBrixApplication : AApplication
         {
             _log.LogInformation("CodeBrix Android application created ({Package}); platform bootstrap registered.", PackageName);
         }
+    }
+
+    /// <summary>
+    /// Called on the main thread when a launch reaches the RUNNING application: the launcher icon tapped after the app
+    /// was started another way, a deep link, a notification tap, an <c>am start</c> - any intent Android delivers to
+    /// the single-task main activity (its OnNewIntent), and the intent of a second activity instance the host
+    /// redirected to the running one. The intent that started the app is not repeated here: it is the main activity's
+    /// <c>Intent</c> when the XAML application starts. The intent may be the launcher's plain MAIN intent; look at its
+    /// action, data and extras. The default does nothing.
+    /// </summary>
+    /// <param name="intent">The launch intent (also the main activity's <c>Intent</c> from now on).</param>
+    protected virtual void OnLaunchIntent(AIntent intent)
+    {
+    }
+
+    /// <summary>Surfaces a launch intent of the running application (<see cref="OnLaunchIntent"/>).</summary>
+    internal void DeliverLaunchIntent(AIntent intent)
+    {
+        if (_log?.IsEnabled(LogLevel.Information) == true)
+        {
+            _log.LogInformation("A launch reached the running application (action {Action}).", intent.Action ?? "none");
+        }
+
+        OnLaunchIntent(intent);
     }
 
     /// <summary>Creates the app's XAML Application (typically <c>new App()</c>).</summary>

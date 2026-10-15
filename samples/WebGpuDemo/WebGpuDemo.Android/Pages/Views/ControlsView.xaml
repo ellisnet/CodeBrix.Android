@@ -1,0 +1,68 @@
+<UserControl x:Class="WebGpuDemo.Views.ControlsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:webGpu="using:CodeBrix.Platform.UI.WebGpu">
+  <Grid RowSpacing="8">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <!-- Android sample: the caption and the readout lines wrap on a phone held upright; the readout shows the frame rate. -->
+    <TextBlock Text="Controls: frame drivers, pausing, the frame rate and a SkiaSharp HUD" FontSize="20" TextWrapping="Wrap" />
+
+    <!-- Android sample: the rows scroll sideways on a phone held upright. -->
+    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" HorizontalScrollMode="Enabled"
+                  VerticalScrollBarVisibility="Disabled" VerticalScrollMode="Disabled">
+    <StackPanel Orientation="Horizontal" Spacing="12">
+      <TextBlock Text="Frame driver" VerticalAlignment="Center" />
+      <ComboBox x:Name="DriverSelector" Width="160" SelectedIndex="0" SelectionChanged="OnDriverChanged"
+                AutomationProperties.AutomationId="DriverSelector" AutomationProperties.Name="Frame driver">
+        <ComboBoxItem Content="Continuous" />
+        <ComboBoxItem Content="OnDemand" />
+        <ComboBoxItem Content="Manual" />
+      </ComboBox>
+      <!-- OnDemand: one frame per Invalidate(). Manual: this page opens and ends the frame itself. -->
+      <Button x:Name="InvalidateButton" Content="Invalidate" Click="OnInvalidate" />
+      <Button x:Name="RenderOneButton" Content="Render one frame" Click="OnRenderOne" IsEnabled="False" />
+      <CheckBox x:Name="PauseCheck" Content="Pause" Checked="OnPauseChanged" Unchecked="OnPauseChanged" />
+      <TextBlock Text="Target frame rate" VerticalAlignment="Center" Margin="12,0,0,0" />
+      <Slider x:Name="RateSlider" Width="200" Minimum="0" Maximum="120" Value="60" StepFrequency="1"
+              ValueChanged="OnRateChanged" AutomationProperties.Name="Target frame rate" />
+      <TextBlock x:Name="RateText" Text="60" VerticalAlignment="Center" Width="40" AutomationProperties.AutomationId="RateText" />
+    </StackPanel>
+    </ScrollViewer>
+
+    <StackPanel Grid.Row="2" Spacing="2">
+      <StackPanel Orientation="Horizontal" Spacing="24">
+        <TextBlock x:Name="RenderPathText" Text="Render path: None" AutomationProperties.AutomationId="RenderPathText" />
+        <TextBlock x:Name="FrameCountText" Text="Frames: 0" AutomationProperties.AutomationId="FrameCount" />
+        <TextBlock x:Name="FpsText" Text="fps -" AutomationProperties.AutomationId="FpsText" />
+      </StackPanel>
+      <TextBlock x:Name="Status" Text="Waiting for a device" TextWrapping="Wrap" AutomationProperties.AutomationId="ControlsStatus" />
+    </StackPanel>
+
+    <!-- What the device is (WebGpuDeviceInfo, from DeviceReady): what a renderer checks its requirements against. -->
+    <StackPanel Grid.Row="3" Spacing="2">
+      <TextBlock x:Name="AdapterText" Text="Adapter: none" TextWrapping="Wrap" AutomationProperties.AutomationId="AdapterText" />
+      <TextBlock x:Name="CapabilitiesText" Text="Features: none" TextWrapping="Wrap" AutomationProperties.AutomationId="CapabilitiesText" />
+    </StackPanel>
+
+    <Grid Grid.Row="4">
+      <webGpu:WebGpuRenderView x:Name="View"
+                               AutomationProperties.AutomationId="ControlsViewport"
+                               ClearColor="#FF0B132B"
+                               DeviceReady="OnDeviceReady"
+                               Render="OnRender"
+                               Overlay="OnOverlay"
+                               RenderPathChanged="OnRenderPathChanged"
+                               DeviceLost="OnDeviceLost" />
+      <TextBlock x:Name="Placeholder" Visibility="Collapsed" TextWrapping="Wrap" MaxWidth="600"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 AutomationProperties.AutomationId="ControlsPlaceholder" />
+    </Grid>
+  </Grid>
+</UserControl>

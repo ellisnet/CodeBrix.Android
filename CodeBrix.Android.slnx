@@ -61,6 +61,14 @@
     </Project>
     <Project Path="samples/HelloPaste/PdfSideBySide.PdfRender/PdfSideBySide.PdfRender.csproj" />
   </Folder>
+  <Folder Name="/Samples/WebGpuDemo/">
+    <File Path="samples/WebGpuDemo/Directory.Build.props" />
+    <File Path="samples/WebGpuDemo/Directory.Build.targets" />
+    <File Path="samples/WebGpuDemo/README.md" />
+    <Project Path="samples/WebGpuDemo/WebGpuDemo.Android/WebGpuDemo.Android.csproj">
+      <BuildDependency Project="build/intake/CodeBrix.Android.Intake.proj" />
+    </Project>
+  </Folder>
   <Folder Name="/Templates/">
     <File Path="templates/TEMPLATE_INTEGRATION.md" />
   </Folder>
@@ -97,6 +105,7 @@
     <Project Path="src/AddIns/CodeBrix.Android.UI.PlotterView/CodeBrix.Android.UI.PlotterView.csproj" />
     <Project Path="src/AddIns/CodeBrix.Android.UI.AudioPlayer/CodeBrix.Android.UI.AudioPlayer.csproj" />
     <Project Path="src/AddIns/CodeBrix.Android.UI.VideoPlayer/CodeBrix.Android.UI.VideoPlayer.csproj" />
+    <Project Path="src/AddIns/CodeBrix.Android.UI.WebGpu/CodeBrix.Android.UI.WebGpu.csproj" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="tests/CodeBrix.Android.IntakeGate.Tests/CodeBrix.Android.IntakeGate.Tests.csproj" />
@@ -118,6 +127,7 @@
     <Project Path="tests/CodeBrix.Android.UI.PlotterView.Tests/CodeBrix.Android.UI.PlotterView.Tests.csproj" />
     <Project Path="tests/CodeBrix.Android.UI.AudioPlayer.Tests/CodeBrix.Android.UI.AudioPlayer.Tests.csproj" />
     <Project Path="tests/CodeBrix.Android.UI.VideoPlayer.Tests/CodeBrix.Android.UI.VideoPlayer.Tests.csproj" />
+    <Project Path="tests/CodeBrix.Android.UI.WebGpu.Tests/CodeBrix.Android.UI.WebGpu.Tests.csproj" />
     <Project Path="tests/CodeBrix.Android.Analyzers.Tests/CodeBrix.Android.Analyzers.Tests.csproj" />
     <Project Path="tests/CodeBrix.Android.ParityScore.Tests/CodeBrix.Android.ParityScore.Tests.csproj" />
     <Project Path="tests/UIReqsFrameCompare.Tests/UIReqsFrameCompare.Tests.csproj" />

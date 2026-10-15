@@ -259,12 +259,26 @@ https://github.com/ellisnet/CodeBrix.Android/issues
           Public/VideoPlayerRenderPathChangedEventArgs.cs
           Internal/VideoPresenter.cs, Internal/VideoRenderDriver.cs,
           Internal/VideoRectangles.cs, Internal/VideoSurfaceElement.cs,
-          Internal/YuvSurfaceRenderer.cs, Internal/VideoFailureExplanation.cs
+          Internal/YuvSurfaceRenderer.cs, Internal/VideoFailureExplanation.cs,
+          Internal/VideoFrameReadback.cs
         Parts of the presenter code came to CodeBrix.Platform from
         CodeBrix.VideoPlayback.Skia (https://github.com/ellisnet/
         CodeBrix.VideoPlayback, Copyright (c) 2026 Jeremy Ellis, MIT License
         - the same author), as those files' own headers say. The MIT License
         text is the one reproduced in item 1, with that copyright line.
+      src/AddIns/CodeBrix.Android.UI.WebGpu/ - the WebGpuRenderView element
+        with its frame protocol, Readback presenter, paint surface and
+        native-module hand-off (from src/AddIns/Platform.UI.WebGpu/, the
+        *.skia.cs files of the same names):
+          Public/WebGpuRenderView.cs, Public/IWebGpuRenderer.cs,
+          Public/WebGpuFrame.cs, Public/WebGpuDeviceInfo.cs,
+          Public/WebGpuDeviceReadyEventArgs.cs, Public/WebGpuRenderEventArgs.cs,
+          Public/WebGpuOverlayEventArgs.cs, Public/WebGpuRenderViewHandoff.cs,
+          Internal/WebGpuRenderEngine.cs, Internal/WebGpuPresenter.cs,
+          Internal/WebGpuReadbackPresenter.cs, Internal/WebGpuFrameSurface.cs,
+          Internal/WebGpuHandoffBlock.cs, Internal/WebGpuErrorScope.cs,
+          Android/WebGpuFrameTimerAndroidPlatform.cs (from
+          Skia/WebGpuFrameTimerSkiaPlatform.skia.cs)
 
     Test code copied from CodeBrix.Platform (same license, same copyright; not
     in any package): the UIReqs scenario suite - feature files, steps,
@@ -275,7 +289,18 @@ https://github.com/ellisnet/CodeBrix.Android/issues
     tools/UIReqsFrameCompare, and build/test-scripts/compare-uireqs-frames.sh
     and uireqs-frame-compare.informational.
     tests/CodeBrix.Android.UIReqs.Device/PORTING.txt names the source commit
-    and every adaptation (marked "ANDROID PORT" in the files).
+    and every adaptation (marked "ANDROID PORT" in the files). Also copied
+    (headers name each source file): the WebGpu add-in's test support and
+    engine tests under tests/CodeBrix.Android.UI.WebGpu.Tests/Support/ and
+    Engine/ (from src/AddIns/Platform.UI.WebGpu.Tests/), and
+    tests/CodeBrix.Android.UI.VideoPlayer.Tests/Surface/VideoFrameReadbackTests.cs
+    (from src/AddIns/Platform.UI.VideoPlayer.Tests/).
+
+    Sample code copied from CodeBrix.Platform (same license, same copyright;
+    not in any package): samples/WebGpuDemo/WebGpuDemo.Android/Pages/Views/
+    and Rendering/ come from the CodeBrix.Platform WebGpuDemo sample
+    (samples/CodeBrixPlatform/WebGpuDemo/); samples/WebGpuDemo/README.md lists
+    every file and the Android changes.
 
 ================================================================================
  4. Material Components for Android and AndroidX
@@ -295,7 +320,13 @@ https://github.com/ellisnet/CodeBrix.Android/issues
     CodeBrix.Sqlite, CodeBrix.Platform.OpenGL, CodeBrix.Terminal,
     CodeBrix.Plotter, CodeBrix.VideoPlayback, CodeBrix.Audio.Android and the
     CodeBrix.Platform RobotoMono font package); each carries its own license
-    and notice files.
+    and notice files. The WebGpu add-in package references
+    CodeBrix.WebGpu.Skia (MIT), which brings CodeBrix.WebGpu.Native (MIT) with
+    the wgpu engine's native libraries (wgpu-native, MIT or Apache License,
+    Version 2.0, and webgpu-headers, BSD-3-Clause); their provenance and
+    license texts are in those packages' own notice files, which the
+    CodeBrix.Platform WebGpu package's THIRD-PARTY-NOTICES.txt (re-shipped by
+    this package under notices/) also quotes.
 
 ================================================================================
  5. CodeBrix.Samples (sample and test code only - not in any package)
@@ -326,6 +357,20 @@ https://github.com/ellisnet/CodeBrix.Android/issues
     Reqnroll.xunit.v3 (https://github.com/reqnroll/Reqnroll, BSD-3-Clause), the
     Gherkin runner the CodeBrix.Platform UIReqs suite already uses. It is a
     test-only reference: no CodeBrix.Android package references or ships it.
+
+================================================================================
+ 7. Sample-only assets (samples/WebGpuDemo - not in any package)
+================================================================================
+
+    The glTF models and textures under samples/WebGpuDemo/WebGpuDemo.Android/
+    Assets/models/ are public domain (CC0 1.0 Universal), copied with their
+    licence files from the CodeBrix.Platform WebGpuDemo sample:
+      Cube Pets and Survival Kit by Kenney (www.kenney.nl) -
+        cube-pets/LICENSE-Kenney-cube-pets.txt,
+        survival-kit/LICENSE-Kenney-survival-kit.txt
+      the Avian from Crystals and Avian by Jeremy Ellis -
+        crystals-and-avian/LICENSE-JeremyEllis-crystals-and-avian.txt
+    CC0 asks for no attribution; it is given anyway.
 
 ================================================================================
 

@@ -15,6 +15,8 @@ templates/AndroidHead/src/
     TemplateApp.Android.csproj   the head project (net10.0-android36.1, SupportedOSPlatformVersion 33, Exe)
     MainApplication.cs           [Application] MainApplication : CodeBrixApplication, CreateApp() => new App()
     MainActivity.cs              [Activity] MainActivity : CodeBrixActivity (launcher, Material 3 theme,
+                                 LaunchMode = LaunchMode.SingleTask (required: one XAML window, so later
+                                 launches reach the running activity),
                                  ConfigurationChanges = CodeBrixActivity.HandledConfigurationChanges)
     AndroidManifest.xml          the application element (label); no permissions
   TemplateApp.Core/

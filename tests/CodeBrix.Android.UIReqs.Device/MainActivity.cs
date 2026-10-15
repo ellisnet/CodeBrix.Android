@@ -1,4 +1,5 @@
 using Android.App;
+using Android.Content.PM;
 using Android.OS;
 using AndroidX.Core.View;
 using CodeBrix.Android.UI.Hosting;
@@ -17,6 +18,7 @@ namespace CodeBrix.Android.UIReqs.Device;
     Label = "CodeBrix UIReqs",
     MainLauncher = true,
     Theme = "@style/Theme.Material3.Light.NoActionBar",
+    LaunchMode = LaunchMode.SingleTask,
     ConfigurationChanges = CodeBrixActivity.HandledConfigurationChanges)]
 public class MainActivity : CodeBrixActivity
 {

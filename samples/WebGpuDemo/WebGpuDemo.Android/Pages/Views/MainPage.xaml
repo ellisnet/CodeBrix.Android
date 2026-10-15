@@ -1,0 +1,28 @@
+<Page x:Class="WebGpuDemo.Views.MainPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+  <Grid Padding="16" RowSpacing="12">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <!-- One button per page. The pages are created once and kept, so going back to a page unloads and reloads the
+         same WebGpuRenderView: it releases its device when it leaves the visual tree and creates a new one when it
+         comes back (DeviceLost, then DeviceReady). -->
+    <!-- Android sample: the row scrolls sideways on a phone held upright (the desktop window is wide enough). -->
+    <ScrollViewer HorizontalScrollBarVisibility="Auto" HorizontalScrollMode="Enabled"
+                  VerticalScrollBarVisibility="Disabled" VerticalScrollMode="Disabled">
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <TextBlock Text="WebGpuDemo" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0" />
+        <Button Content="Triangle" Click="OnTriangle" />
+        <Button Content="Models" Click="OnModels" />
+        <Button Content="Renderer class" Click="OnRenderer" />
+        <Button Content="Controls" Click="OnControls" />
+      </StackPanel>
+    </ScrollViewer>
+
+    <Border x:Name="PageHost" Grid.Row="1" />
+  </Grid>
+</Page>

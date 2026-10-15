@@ -187,3 +187,16 @@ FocusProperties::IsInLiveFocusTree
 [CodeBrix.Platform.UI.TerminalView.Core] TerminalTouchState
 [CodeBrix.Platform.UI.TerminalView.Core] TerminalTouchOutcome
 # SoundEffect's Core-to-Core package-files access is fenced by gate 3 (ivt-grants.txt).
+
+# WebGpu add-in (pin 1.0.287.1311): the direct GPU rendering latch - CodeBrixApplication.UseDirectGpuRenderingMode turns
+# it on through UI.Core's grant (Portable/DirectGpuRenderingOptIn) and the WebGpu add-in reads it to pick its handler and
+# render path - the owned-device gate the add-in resolves, and the WebGpu Core's frame-timer contract the Android add-in
+# implements (Android/WebGpuFrameTimerAndroidPlatform).
+DirectGpuRenderingMode
+DirectGpuRenderingMode::IsEnabled
+DirectGpuRenderingMode::Enable
+IOwnedGpuDeviceGate
+[CodeBrix.Platform.UI.WebGpu.Core] IWebGpuFrameTimer
+[CodeBrix.Platform.UI.WebGpu.Core] IWebGpuFrameTimer::Schedule
+[CodeBrix.Platform.UI.WebGpu.Core] IWebGpuFrameTimer::Cancel
+[CodeBrix.Platform.UI.WebGpu.Core] IWebGpuFrameTimer::Post

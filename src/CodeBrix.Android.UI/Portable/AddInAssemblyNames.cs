@@ -23,6 +23,7 @@ internal static class AddInAssemblyNames
         "CodeBrix.Android.AppSettings",
         "CodeBrix.Android.UI.AudioPlayer",
         "CodeBrix.Android.UI.VideoPlayer",
+        "CodeBrix.Android.UI.WebGpu",
         "CodeBrix.Android.UI.MediaPlayer",
         "CodeBrix.Android.UI.WebView",
         "CodeBrix.Android.UI.Graphics3DGL",

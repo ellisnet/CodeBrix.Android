@@ -82,6 +82,14 @@ internal sealed class AndroidNativeWindowWrapper : NativeWindowWrapperBase //was
             return;
         }
 
+        if (Activity is { } previous)
+        {
+            // The previous activity is finishing (CodeBrixActivity never moves the window away from a live one): it
+            // lets go of the window, so its own stop / destroy can neither hide nor close the window shown here.
+            RemovePreDrawListener();
+            previous.ReleaseWindow(this);
+        }
+
         Activity = activity;
         activity.AttachWindow(this);
         OnActivityCreated();

@@ -67,6 +67,7 @@
     <PackageDownload Include="CodeBrix.Platform.TextLayout.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
     <PackageDownload Include="CodeBrix.Platform.VideoPlayer.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
     <PackageDownload Include="CodeBrix.Platform.WebView.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
+    <PackageDownload Include="CodeBrix.Platform.WebGpu.ApacheLicenseForever" Version="[$(CodeBrixPlatformVersion)]" />
   </ItemGroup>
 
   <!-- The gate tool: built before the intake runs (build order only). -->

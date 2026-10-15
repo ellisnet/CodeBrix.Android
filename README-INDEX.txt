@@ -19,7 +19,8 @@ MAINTAINER AND EXTRAS
 ---------------------
   MAINTAINER-README.txt
       Building, testing, packaging, versioning and provenance notes for
-      maintainers, including the CodeBrix.Platform intake.
+      maintainers, including the CodeBrix.Platform intake and the design notes
+      (for example SINGLE-TASK MAIN ACTIVITY).
   EXTRAS-README.txt
       Samples, tools and other non-package content in this repository.
   templates/TEMPLATE_INTEGRATION.md
@@ -27,7 +28,8 @@ MAINTAINER AND EXTRAS
       the application template and its skill need to offer it.
   samples/README.md
       The samples folder's map; each sample folder has its own README.md
-      (samples/HelloPaste, samples/SimpleDebugApp_API_36 and _37).
+      (samples/HelloPaste, samples/WebGpuDemo, samples/SimpleDebugApp_API_36
+      and _37).
   tests/CodeBrix.Android.UIReqs.Device/PORTING.txt
       Where the copied UIReqs scenario code comes from and every adaptation
       made to it.

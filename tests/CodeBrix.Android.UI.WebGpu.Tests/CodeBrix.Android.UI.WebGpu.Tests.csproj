@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Host-free tests (net10.0) of the Android side of the WebGpu add-in:
+    - Core/: the contract the Android assembly implements and relies on, read from the pinned WebGpu Core (the grants to
+      the Android assembly name, the by-name load, what the Core does NOT carry - the WebGpuRenderView element and its
+      public companions, which the Android add-in re-provides);
+    - Engine/: the add-in's frame protocol, Readback presenter, paint surface and native-module hand-off, compiled in
+      from the add-in's own sources (Linked/: they name no Android type) and run against the re-shipped Core's rules and
+      frame scheduler - the hand-off layout, the lifetime rules and, on this machine's real WebGPU device, the Readback
+      round trip from the threads the drivers and native modules use, and the DirectSurface path (its rules, and the
+      whole path on the real device with a fake window surface - Support/FakeWindowSurface). Every GPU test skips with the engine's reason
+      where no adapter exists (on the Linux development machines they run on its Vulkan device).
+    Most of Engine/ and Support/ is the Platform add-in suite ported (provenance headers). The element itself, its
+    native Skia view and the frame timer on the Android main looper run on the devices (the AndroidWebGpu UIReqs group
+    and the WebGpuDemo sample).
+
+    AssemblyName = the name CodeBrix.Platform.UI.WebGpu.Core grants InternalsVisibleTo to.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>CodeBrix.Android.UI.WebGpu.Tests</AssemblyName>
+    <RootNamespace>CodeBrix.Android.UI.WebGpu.Tests</RootNamespace>
+    <!-- The GPU tests record WebGPU commands (pointers to descriptor structs) and call the hand-off's function pointers. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\CodeBrix.Android.UI\CodeBrix.Android.UI.csproj" />
+    <ProjectReference Include="$(CodeBrixAndroidRepoRoot)build/intake/CodeBrix.Android.Intake.proj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- The add-in's portable sources (no Android type in them), compiled into this test assembly. -->
+  <ItemGroup>
+    <Compile Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.WebGpu/Internal/*.cs" Link="Linked\Internal\%(Filename)%(Extension)" />
+    <Compile Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.WebGpu/Public/WebGpuFrame.cs" Link="Linked\Public\WebGpuFrame.cs" />
+    <Compile Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.WebGpu/Public/WebGpuDeviceInfo.cs" Link="Linked\Public\WebGpuDeviceInfo.cs" />
+    <Compile Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.WebGpu/Public/WebGpuRenderViewHandoff.cs" Link="Linked\Public\WebGpuRenderViewHandoff.cs" />
+    <Compile Include="..\Shared\CoreMetadata.cs" Link="Shared\CoreMetadata.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Read as metadata only (PEReader), never loaded. -->
+    <AssemblyMetadata Include="CodeBrix.Android.Tests.CoreLib" Value="$(CodeBrixPlatformIntakeLibDir)" />
+    <!-- The WebGpu Core (rules, frame scheduler, gate) and what the linked engine is built on. -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.WebGpu.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Composition.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Foundation.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Extensions.Logging.Core.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CodeBrix.WebGpu.Skia.MitLicenseForever" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="SilverAssertions.ApacheLicenseForever" />
+  </ItemGroup>
+
+</Project>

@@ -111,6 +111,7 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
 
     [Activity(MainLauncher = true,
               Theme = "@style/Theme.Material3.DayNight.NoActionBar",
+              LaunchMode = LaunchMode.SingleTask,
               ConfigurationChanges = CodeBrixActivity.HandledConfigurationChanges)]
     public class MainActivity : CodeBrixActivity { }
 
@@ -124,6 +125,27 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     required: resizing, docking, orientation, density and night-mode changes
     must not re-create the activity. (Android reads it from the manifest, so
     it cannot be inherited from the base class.)
+  * LaunchMode = LaunchMode.SingleTask (using Android.Content.PM) is
+    required: the app has ONE XAML window, shown by one activity. A repeated
+    launch - the launcher icon after the app was started another way (an
+    `adb shell am start -n`, a deep link, a notification), another deep
+    link, another notification tap - then reaches the running activity
+    instead of creating a second one. Its intent arrives in
+    CodeBrixApplication.OnLaunchIntent(Intent) (override it in
+    MainApplication; main thread; the default does nothing), and it is the
+    activity's Intent from then on. The intent that started the app is not
+    repeated there: read it from the main activity's Intent (for example
+    before base.OnCreate, as the samples read their start page). A repeated
+    launch can be the launcher's plain MAIN intent - look at the action,
+    data and extras. A MainActivity that overrides OnNewIntent must call the
+    base method.
+    An activity that is not single-task still never shows a blank second
+    window: when Android creates a second instance while the first shows the
+    window, the host logs one warning naming this requirement, hands the
+    second instance's intent to OnLaunchIntent, brings the running activity
+    to the front and finishes the second instance (its IsFinishing is true
+    when base.OnCreate returns - code after base.OnCreate in an override
+    should return early then).
   * Content is laid out edge to edge; Window.Bounds is the whole Android
     window and XamlRoot / the window's visible bounds exclude the system bars
     and display cutout.
@@ -379,6 +401,17 @@ second registration throws) and cannot register native element handlers
     LogTag                         the logcat tag (default: package name)
     LogVisualTreeAfterLayout       diagnostic tree dump (default false)
     UseProjectionViewer            diagnostic overlay (default false)
+    UseDirectGpuRenderingMode      EXPERIMENTAL (default false): the Android
+                                   form of the desktop heads'
+                                   UseDirectGpuRenderingMode() host-builder
+                                   call - a one-way, app-wide latch
+                                   (DirectGpuRenderingMode.IsEnabled), read
+                                   once in OnCreate; add-ins that produce GPU
+                                   content then present it directly (the
+                                   WebGpu add-in: DirectSurface, see ADD-INS
+                                   ON ANDROID) and fall back to their
+                                   read-back path on their own:
+        protected override bool UseDirectGpuRenderingMode => true;
   App constructor (as on the desktop heads):
     FeatureConfiguration.Font.DefaultTextFontFamily = the app's default font
     file (see Fonts above).
@@ -516,6 +549,10 @@ compile and run unchanged. The add-in packages:
     VideoPlayer                CodeBrix.Android.VideoPlayer.ApacheLicenseForever
                                (brings SkiaSharp.Views, Graphics3DGL, CodeBrix.VideoPlayback
                                and CodeBrix.Audio.Android)
+    WebGpu                     CodeBrix.Android.WebGpu.ApacheLicenseForever
+                               (brings SkiaSharp.Views and CodeBrix.WebGpu.Skia, which
+                               brings CodeBrix.WebGpu.Native and the wgpu engine's
+                               Android natives)
     WebView                    CodeBrix.Android.WebView.ApacheLicenseForever
 
 What each add-in gives a page, and the namespace to import it from (in XAML
@@ -551,6 +588,9 @@ side of a framework element.
                       from code; draw its layouts on an
                       SKXamlCanvas
     VideoPlayer       VideoPlayer                         CodeBrix.Platform.UI.VideoPlayer.Skia
+    WebGpu            WebGpuRenderView; IWebGpuRenderer,  CodeBrix.Platform.UI.WebGpu
+                      WebGpuFrame, WebGpuDeviceInfo,      (WebGPU types: CodeBrix.WebGpu.Native)
+                      WebGpuRenderViewHandoff
     WebView           WebView2                            Default
 
 The TriPaneView of CodeBrix.Platform's Toolkit is part of the framework package.
@@ -703,6 +743,96 @@ What differs on Android:
     are opened. CodeBrix.VideoPlayback.Authoring (encoding) is not supported on
     Android. In XAML write AutoPlay="True" before Source="..." (as observed on
     Android: written after Source, the clip never starts).
+  * WebGpu: WebGpuRenderView is the CodeBrix.Platform WebGpu add-in's element
+    with the SAME public API in the SAME namespace (CodeBrix.Platform.UI.WebGpu;
+    in XAML xmlns:webGpu="using:CodeBrix.Platform.UI.WebGpu"), so pages and
+    renderers written for the desktop compile and run unchanged:
+      - properties FrameDriver (Continuous - the default - OnDemand, Manual),
+        TargetFrameRate (default 60; 0 = as fast as possible), IsPaused,
+        Renderer (an IWebGpuRenderer, settable from XAML), Stretch, ClearColor,
+        DeviceOptions (CodeBrix.WebGpu.Skia's WebGpuSkiaDeviceOptions for the
+        view's own device), RequireOwnedDevice; read-only RenderPath,
+        IsDeviceReady, DeviceInfo (adapter, backend, enabled and available
+        features and limits), PreferredFormat (BGRA8Unorm), PixelScale,
+        TextureWidth / TextureHeight;
+      - events DeviceReady, Render, Overlay (SkiaSharp HUD over each frame),
+        DeviceLost, RenderPathChanged; the renderer is called before the event;
+      - BeginFrame() / EndFrame() (Manual: any ONE thread at a time; BeginFrame
+        returns null when the view cannot render - skip the frame), Invalidate()
+        (OnDemand), GetDeviceHandoff() / GetViewHandoff() and
+        WebGpuFrame.GetHandoff() for native (Rust, C, C++) modules;
+      - the view is an IWebGpuDeviceSource and an IWebGpuTextureTarget, so
+        CodeBrix.WebGpu.Graphics (your app's own optional reference, never the
+        add-in's) draws straight into it.
+    The CodeBrix.Platform package's AGENT-README (CodeBrix.Platform.WebGpu.
+    ApacheLicenseForever) is the full reference - the lifetime rules, the
+    native-module hand-off's C declaration and the module contract apply here
+    as written. The view hand-off is the same 40-byte layout:
+        typedef struct WGPUCodebrixRenderViewHandoff {
+            uint32_t size;                                             /* 40 */
+            uint32_t version;                                          /* 1  */
+            void* context;                                             /* offset 8  */
+            WGPUCodebrixFrameHandoff* (*begin_frame)(void* context);   /* offset 16 */
+            void (*end_frame)(void* context);                          /* offset 24 */
+            WGPUCodebrixDeviceHandoff const * device;                  /* offset 32 */
+        } WGPUCodebrixRenderViewHandoff;
+    What is Android-specific:
+      - The view owns its WebGPU device, a Vulkan device (wgpu through
+        CodeBrix.WebGpu.Skia). The engine's native library comes with
+        CodeBrix.WebGpu.Native for android-arm64 and android-x64 and is packed
+        into the APK's lib/<abi>/ folder by the build; the binding loads it
+        from there - no code of yours is needed. Those natives require API 33,
+        which is this package's minimum (SupportedOSPlatformVersion 33): the
+        add-in adds no requirement of its own. An app that limits its
+        RuntimeIdentifiers must keep the ABI of each target device.
+      - RenderPath is Readback by default: each finished frame is read back
+        once and drawn by a native Skia view (the SkiaSharp.Views add-in's
+        canvas), so the view clips, overlaps and moves like any other element.
+      - Readback costs one GPU-to-processor copy of the whole texture per
+        frame, which grows with the view's pixel size: on some phone GPUs a
+        full-screen view at a high-density display's resolution renders only a
+        few frames a second. Size the view to what it shows, use a lower
+        TargetFrameRate / OnDemand, or opt in to the direct path.
+      - DIRECT PATH (EXPERIMENTAL): an application whose MainApplication
+        overrides CodeBrixApplication.UseDirectGpuRenderingMode => true gets
+        RenderPath DirectSurface. The view's native view then hosts a
+        SurfaceView UNDER its Skia canvas; each frame still renders into the
+        same BGRA8Unorm texture the size of the element on the view's OWN
+        device (so the frame protocol, the events, Renderer, DeviceOptions,
+        HasUncapturedErrorHandler = true and the native-module hand-off are
+        exactly Readback's), and is then drawn onto the SurfaceView's window
+        surface by one GPU pass and presented (Fifo: synchronised with the
+        display). Nothing is read back; the operating system composites the
+        surface with the window.
+          * Overlay: drawn by the canvas ABOVE the surface (over a transparent
+            background) and composited by the OS; it is repainted after each
+            presented frame while an Overlay handler or a Renderer is set.
+          * The surface punches through the window: content BEHIND the view
+            does not show through a transparent ClearColor (the surface is
+            opaque), while elements drawn after the view stay above it.
+          * Lifecycle: Android creates the window when the view is shown,
+            changes it on resize / rotation (the next frame reconfigures) and
+            destroys it when the activity goes to the background or the view
+            leaves the window - the view then renders no frames (BeginFrame
+            returns null, no DeviceLost) and continues on the same device when
+            the window comes back. The WebGPU surface is released under the
+            frame lock before Android's window is given back.
+          * Fallback: anything that fails on the direct path (no window surface
+            within 2 s of the view being loaded, a surface format or
+            configuration the window does not offer, a frame that cannot be
+            acquired) writes one log line, raises DeviceLost, removes the
+            SurfaceView and continues on Readback; the direct path is tried
+            again after the next Loaded. RequireOwnedDevice = true keeps the
+            view on Readback with the latch on.
+          * WebGpuRenderView.Surface captures (tests) hold no picture on this
+            path; read the SurfaceView with PixelCopy instead.
+      - The built-in drivers run on the main (user-interface) thread; the
+        Overlay runs inside the native view's draw, also on the main thread,
+        and must never touch WebGPU objects (the rule is the same on every
+        head). The device is created on the first frame after the view is
+        loaded and released when it is unloaded (DeviceLost "The view was
+        unloaded."), so an activity that goes to the background keeps it only
+        while the view stays in the visual tree.
 
 
 COMPLETE EXAMPLES
@@ -822,6 +952,9 @@ WORKING EXAMPLES ON GITHUB
   Samples:  https://github.com/ellisnet/CodeBrix.Android/tree/main/samples
             samples/HelloPaste: two CodeBrix.Samples pages pasted unchanged,
             with multi-targeted .Core libraries and an Android head.
+            samples/WebGpuDemo: the WebGpu add-in's four demo pages (the raw
+            binding in Render, glTF models through CodeBrix.WebGpu.Graphics,
+            an IWebGpuRenderer from XAML, frame drivers and a SkiaSharp HUD).
 
 
 QUICK REFERENCE CARD
@@ -838,7 +971,9 @@ QUICK REFERENCE CARD
   Mono.Android global::Android.* inside CodeBrix.Android namespaces
   Head         MainApplication : CodeBrixApplication (CreateApp => new App()),
                MainActivity : CodeBrixActivity (ConfigurationChanges =
-               CodeBrixActivity.HandledConfigurationChanges, Material3 theme)
+               CodeBrixActivity.HandledConfigurationChanges, LaunchMode =
+               LaunchMode.SingleTask, Material3 theme); later launches arrive
+               in CodeBrixApplication.OnLaunchIntent(Intent)
   Gamepads     CodeBrix.Android.UI.Input.Gamepads.Start(); poll
                ConnectedGamepads (GamepadButtons names, sticks Y-up, triggers
                0..1); AddVirtual() for tests and PlayTests (see GAMEPADS)

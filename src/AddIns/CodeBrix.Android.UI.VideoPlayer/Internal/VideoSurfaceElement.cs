@@ -1,6 +1,7 @@
 // Ported from CodeBrix.Platform (Apache License 2.0; THIRD-PARTY-NOTICES.txt item 3): src/AddIns/Platform.UI.VideoPlayer.Skia/Internal/VideoSurfaceElement.skia.cs
 // (branch platform-split @ ea87ba019bba176b3e7b5b297471c0baf0ef0bbc; the working tree the pinned build 1.0.271.248 was packed from).
 // Verbatim: its visual comes from the SkiaSharp.Views add-in's canvas-host factory, shown by that add-in's canvas-element handler (registered by this assembly's bootstrap).
+// Since pin 1.0.287.1311 the no-frame branch carries the Platform's fix (the source's working tree in the pinned build): it draws nothing.
 
 #nullable enable
 
@@ -212,9 +213,10 @@ internal sealed class VideoSurfaceElement : FrameworkElement
 			}
 		}
 
-		// No frame yet (nothing opened, or nothing decoded so far): leave the area transparent, so
-		// whatever the application put behind the player shows through until the first picture.
-		canvas.Clear(SKColors.Transparent);
+		// No frame yet (nothing opened, or nothing decoded so far): draw NOTHING, so whatever the
+		// application put behind the player shows through until the first picture. Not a
+		// Clear(Transparent): this canvas is the one everything behind the element was already
+		// painted on, and a clear would punch a transparent hole through it.
 	}
 
 	/// <summary>

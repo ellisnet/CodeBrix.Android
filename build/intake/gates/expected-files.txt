@@ -66,6 +66,8 @@ lib/CodeBrix.Platform.UI.Toolkit.Core.dll
 lib/CodeBrix.Platform.UI.Toolkit.Core.pdb
 lib/CodeBrix.Platform.UI.VideoPlayer.Core.dll
 lib/CodeBrix.Platform.UI.VideoPlayer.Core.xml
+lib/CodeBrix.Platform.UI.WebGpu.Core.dll
+lib/CodeBrix.Platform.UI.WebGpu.Core.xml
 lib/CodeBrix.Platform.WinUI.Graphics2DSK.Core.dll
 lib/CodeBrix.Platform.WinUI.Graphics2DSK.Core.pdb
 lib/CodeBrix.Platform.WinUI.Graphics3DGL.Core.dll
@@ -87,3 +89,4 @@ notices/CodeBrix.Platform.Svg.ApacheLicenseForever/THIRD-PARTY-NOTICES.txt
 notices/CodeBrix.Platform.TerminalView.ApacheLicenseForever/THIRD-PARTY-NOTICES.txt
 notices/CodeBrix.Platform.TextLayout.ApacheLicenseForever/THIRD-PARTY-NOTICES.txt
 notices/CodeBrix.Platform.VideoPlayer.ApacheLicenseForever/THIRD-PARTY-NOTICES.txt
+notices/CodeBrix.Platform.WebGpu.ApacheLicenseForever/THIRD-PARTY-NOTICES.txt

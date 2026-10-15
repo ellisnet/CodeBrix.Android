@@ -98,6 +98,10 @@
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.TerminalView" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.TextLayout" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.VideoPlayer" />
+    <!-- WebGpu: CodeBrix.Android.WebGpu.ApacheLicenseForever. Its package dependencies beyond the framework and
+         SkiaSharp.Views are CodeBrix.WebGpu.Skia.MitLicenseForever (not a CodeBrix.Platform-repository id; it brings
+         CodeBrix.WebGpu.Native and the wgpu engine's android-arm64 / android-x64 natives) and SkiaSharp. -->
+    <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.WebGpu" Description="The WebGpu add-in for CodeBrix.Android applications: the WebGpuRenderView element of the CodeBrix.Platform WebGpu add-in on Android, with the same public API and namespace - a XAML view that hands your code a WebGPU frame (command encoder and texture) on its own Vulkan device, under a continuous, on-demand or manual frame driver, with a SkiaSharp overlay and the CodeBrix.WebGpu sharing contracts and native-module hand-off. Frames reach the screen through the SkiaSharp.Views canvas (Readback, the default) or, with the experimental direct GPU rendering opt-in, through a SurfaceView with no read-back (DirectSurface)." />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.WebView" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.Graphics2DSK" />
     <CodeBrixAndroidAddIn Include="CodeBrix.Android.UI.Graphics3DGL" />

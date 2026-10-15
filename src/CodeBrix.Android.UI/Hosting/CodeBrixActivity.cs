@@ -2,6 +2,7 @@ using System;
 using CodeBrix.Android.Android;
 using CodeBrix.Android.UI.Input;
 using CodeBrix.Android.UI.Platform.Insets;
+using CodeBrix.Android.UI.Portable;
 using CodeBrix.Android.UI.Portable.Input;
 using CodeBrix.Android.UI.Portable.Layout;
 using Microsoft.Extensions.Logging;
@@ -10,6 +11,8 @@ using ABundle = global::Android.OS.Bundle;
 using AConfigChanges = global::Android.Content.PM.ConfigChanges;
 using AConfiguration = global::Android.Content.Res.Configuration;
 using AEdgeToEdge = global::AndroidX.Activity.EdgeToEdge;
+using AIntent = global::Android.Content.Intent;
+using AActivityFlags = global::Android.Content.ActivityFlags;
 using AKeyEvent = global::Android.Views.KeyEvent;
 using AMotionEvent = global::Android.Views.MotionEvent;
 using AppCompatActivity = global::AndroidX.AppCompat.App.AppCompatActivity;
@@ -22,9 +25,17 @@ namespace CodeBrix.Android.UI.Hosting;
 /// The app's launcher activity derives from it:
 /// <code>
 /// [Activity(MainLauncher = true, Theme = "@style/Theme.Material3.DayNight.NoActionBar",
+///           LaunchMode = LaunchMode.SingleTask,
 ///           ConfigurationChanges = CodeBrixActivity.HandledConfigurationChanges)]
 /// public class MainActivity : CodeBrixActivity { }
 /// </code>
+/// The app has ONE XAML window, shown by one activity, so the main activity must be single-task
+/// (<c>LaunchMode = LaunchMode.SingleTask</c>): a repeated launch (the launcher icon after <c>am start -n</c>, a deep
+/// link, a notification tap) then reaches the running activity as an intent, which
+/// <see cref="CodeBrixApplication.OnLaunchIntent"/> receives. An activity that is not single-task still never shows a
+/// second, blank window: a second instance created while the first one shows the window logs one warning, forwards its
+/// intent to <see cref="CodeBrixApplication.OnLaunchIntent"/>, brings the running activity to the front and finishes
+/// (its <c>IsFinishing</c> is true when <c>base.OnCreate</c> returns).
 /// Resizing, docking, orientation, density and theme changes are handled without
 /// re-creating the activity (declare <see cref="HandledConfigurationChanges"/>); content is
 /// laid out edge to edge; the first activity starts the XAML application
@@ -84,6 +95,25 @@ public class CodeBrixActivity : AppCompatActivity
 
         ApplySoftInputAdjust();
 
+        if (Application is not CodeBrixApplication application)
+        {
+            throw new InvalidOperationException(
+                "The Android Application class of a CodeBrix app must derive from CodeBrix.Android.UI.Hosting.CodeBrixApplication.");
+        }
+
+        // One XAML window, one activity: a second instance stacked by a repeated launch (main activity not
+        // single-task) hands its intent to the running one and goes away instead of showing a blank window.
+        var existingWindow = NativeWindowFactoryAndroidExtension.Instance.MainWindow;
+        var host = existingWindow?.Activity;
+        var action = ActivityInstancePolicy.Decide(
+            existingWindow != null,
+            ActivityInstancePolicy.IsHostedByAnotherLiveActivity(host != null, host == this, host?.IsDestroyed == true, host?.IsFinishing == true));
+        if (action == ActivityCreateAction.ForwardToRunningInstance)
+        {
+            ForwardToRunningInstance(host);
+            return;
+        }
+
         RootLayout = new CodeBrixRootLayout(this);
         RootLayout.ViewAttachedToWindow += OnRootLayoutAttachedToWindow;
         RootLayout.SizeChanged += OnRootLayoutSizeChanged;
@@ -94,22 +124,68 @@ public class CodeBrixActivity : AppCompatActivity
         ActivityRegistry.OnCreated(this);
         InputHook ??= new ActivityInputRouter(this);
 
-        if (Application is not CodeBrixApplication application)
+        if (action == ActivityCreateAction.ShowExistingWindow)
         {
-            throw new InvalidOperationException(
-                "The Android Application class of a CodeBrix app must derive from CodeBrix.Android.UI.Hosting.CodeBrixApplication.");
-        }
-
-        var existingWindow = NativeWindowFactoryAndroidExtension.Instance.MainWindow;
-        if (existingWindow != null)
-        {
-            // The XAML application is already running (this activity was re-created): show its window here.
+            // The XAML application is already running and no other live activity shows its window (this activity
+            // was re-created, or the one that showed it is finishing): show the window here.
             existingWindow.AttachActivity(this);
         }
         else
         {
             application.EnsureXamlApplicationStarted(this);
         }
+    }
+
+    /// <summary>
+    /// A repeated launch reached this (single-task) activity: the intent becomes the activity's
+    /// <c>Intent</c> and is surfaced through <see cref="CodeBrixApplication.OnLaunchIntent"/>.
+    /// An override must call the base method.
+    /// </summary>
+    /// <param name="intent">The new intent.</param>
+    protected override void OnNewIntent(AIntent intent)
+    {
+        base.OnNewIntent(intent);
+        if (intent == null || !ActivityInstancePolicy.SurfacesAsLaunch(intent.GetBooleanExtra(ActivityInstancePolicy.BringToFrontExtra, false)))
+        {
+            return;
+        }
+
+        ReceiveLaunchIntent(intent);
+    }
+
+    /// <summary>Takes a launch intent as this activity's intent and surfaces it to the application.</summary>
+    internal void ReceiveLaunchIntent(AIntent intent)
+    {
+        Intent = intent;
+        (Application as CodeBrixApplication)?.DeliverLaunchIntent(intent);
+    }
+
+    /// <summary>
+    /// The host safety for a main activity that is not single-task: this second instance gives its intent to the
+    /// activity that shows the XAML window, brings that activity's task and the activity to the front, and finishes.
+    /// </summary>
+    private void ForwardToRunningInstance(CodeBrixActivity running)
+    {
+        if (_log.IsEnabled(LogLevel.Warning))
+        {
+            _log.LogWarning(
+                "A second {Activity} was created while the running one shows the XAML window: the main activity must be declared single-task ([Activity(LaunchMode = LaunchMode.SingleTask)]). The launch is forwarded to the running activity and this instance finishes.",
+                GetType().Name);
+        }
+
+        if (Intent is { } launch)
+        {
+            running.ReceiveLaunchIntent(launch);
+        }
+
+        // Finish first, so the reorder below finds the running instance, not this one. NEW_TASK brings the task of
+        // the running activity forward (this instance may live in another task); REORDER_TO_FRONT moves the running
+        // instance to the top of it instead of creating a third one. Neither needs a permission.
+        Finish();
+        var bringToFront = new AIntent(this, running.Class);
+        bringToFront.AddFlags(AActivityFlags.NewTask | AActivityFlags.ReorderToFront);
+        bringToFront.PutExtra(ActivityInstancePolicy.BringToFrontExtra, true);
+        StartActivity(bringToFront);
     }
 
     /// <inheritdoc />
@@ -152,7 +228,7 @@ public class CodeBrixActivity : AppCompatActivity
     protected override void OnDestroy()
     {
         var wrapper = WindowWrapper;
-        if (wrapper != null && IsFinishing)
+        if (wrapper != null && IsFinishing && wrapper.Activity == this)
         {
             wrapper.OnNativeClosed();
         }
@@ -294,6 +370,15 @@ public class CodeBrixActivity : AppCompatActivity
         if (_insetsListener is { HasInsets: true } listener)
         {
             wrapper.OnWindowInsets(listener.SafeAreaPx, listener.KeyboardPx);
+        }
+    }
+
+    /// <summary>Called by the window wrapper when the window moves on to another activity (this one is finishing).</summary>
+    internal void ReleaseWindow(AndroidNativeWindowWrapper wrapper)
+    {
+        if (WindowWrapper == wrapper)
+        {
+            WindowWrapper = null;
         }
     }
 

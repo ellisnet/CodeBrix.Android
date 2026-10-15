@@ -6,7 +6,10 @@
       to the Android assembly name, the by-name load, IAssetLocation, what the Core does NOT carry - the VideoPlayer element
       and its public companions, which the Android add-in re-provides -, the rules and the source resolver the port reuses),
       and the Core's source resolver over an IAssetLocation whose root is the Android asset-copy folder;
-    - Portable/: the ms-appx path rule of the Android add-in (Portable/PackagedAssetPaths, linked).
+    - Portable/: the ms-appx path rule of the Android add-in (Portable/PackagedAssetPaths, linked);
+    - Surface/: the picture's paint before any frame (Internal/VideoSurfaceElement, linked - it names no Android type),
+      painted onto a raster canvas that already holds what is behind the player, and the reference-counted read-back
+      buffers the render driver presents through (Internal/VideoFrameReadback, linked; the Platform suite's tests, ported).
     Decode, the picture, the sound and the render paths run on the emulator (the VideoPlayer UIReqs group, the
     AndroidVideoPlayer fences) and on the two real devices (the sample gate).
 
@@ -21,23 +24,35 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\CodeBrix.Android.UI\CodeBrix.Android.UI.csproj" />
+    <!-- Their net10.0 flavors give the re-shipped Core a managed dispatcher pump and the inert composition platform, so
+         the Surface/ test can make a XAML element type host-free (started by reflection: their host-free entry points
+         are internal to the CodeBrix.Android.UI test names). -->
+    <ProjectReference Include="..\..\src\CodeBrix.Android.UI.Composition\CodeBrix.Android.UI.Composition.csproj" />
+    <ProjectReference Include="..\..\src\CodeBrix.Android.UI.Dispatching\CodeBrix.Android.UI.Dispatching.csproj" />
     <ProjectReference Include="$(CodeBrixAndroidRepoRoot)build/intake/CodeBrix.Android.Intake.proj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\Shared\CoreMetadata.cs" Link="Shared\CoreMetadata.cs" />
     <Compile Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.VideoPlayer/Portable/*.cs" Link="Linked\Portable\%(Filename)%(Extension)" />
+    <Compile Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.VideoPlayer/Internal/VideoSurfaceElement.cs" Link="Linked\Internal\VideoSurfaceElement.cs" />
+    <Compile Include="$(CodeBrixAndroidRepoRoot)src/AddIns/CodeBrix.Android.UI.VideoPlayer/Internal/VideoFrameReadback.cs" Link="Linked\Internal\VideoFrameReadback.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <AssemblyMetadata Include="CodeBrix.Android.Tests.CoreLib" Value="$(CodeBrixPlatformIntakeLibDir)" />
     <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.VideoPlayer.Core.dll" />
     <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Composition.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Dispatching.Core.dll" />
     <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Foundation.Core.dll" />
     <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Core.dll" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The surface test paints on a raster canvas (Skia's Linux library; test-only). -->
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>

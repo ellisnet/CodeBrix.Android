@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Android.App;
+using Android.Content.PM;
 using Android.OS;
 using Android.Util;
 using Android.Widget;
@@ -13,7 +14,7 @@ namespace SimpleDebugApp;
 /// and a thrown-and-caught exception. Set breakpoints in the On*Clicked methods here and
 /// in <see cref="Calculator"/>.
 /// </summary>
-[Activity(Label = "@string/app_name", MainLauncher = true, Exported = true, Name = "com.codebrix.simpledebugapp_net11.MainActivity")]
+[Activity(Label = "@string/app_name", MainLauncher = true, Exported = true, LaunchMode = LaunchMode.SingleTask, Name = "com.codebrix.simpledebugapp_net11.MainActivity")]
 public class MainActivity : Activity
 {
 	private const string Tag = "SimpleDebugApp";
