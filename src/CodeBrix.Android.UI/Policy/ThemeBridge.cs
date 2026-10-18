@@ -21,8 +21,12 @@ namespace CodeBrix.Android.UI.Policy;
 /// <summary>
 /// The theme bridge (plan 2.11, D-P14, D-O4): Material 3 colour roles - the baseline Material palette, or the
 /// wallpaper's dynamic palette (API 31+) when dynamic colour is on - are written into the curated Fluent keys
-/// (<see cref="MaterialRoleMap"/>) of the framework's Light and Dark theme dictionaries, so an app that sets no
-/// key looks Material; keys an app sets are its own brushes and always win. The app's RequestedTheme reaches
+/// (<see cref="MaterialRoleMap"/>) of the framework's Light and Dark theme dictionaries when the application opts
+/// in (<see cref="CodeBrixApplication.UseMaterialPalette"/>; the default is the framework's Fluent colours), so an
+/// opted-in app that sets no key looks Material; keys an app sets are its own brushes and always win. The posted
+/// installation (<see cref="PresentationPolicy"/>) runs before the first activity creates the XAML Application, whose
+/// resources are where the roles go, so <see cref="CodeBrixApplication"/> completes it right after Application.Start
+/// (<see cref="OnXamlApplicationStarted"/>). The app's RequestedTheme reaches
 /// the native layer as the AppCompat night mode (Material dialogs and widget defaults follow it) without the
 /// activity being recreated (CodeBrixActivity handles uiMode changes). Everything the bridge writes is recorded
 /// and put back when the palette is switched to <c>Fluent</c>.
@@ -34,14 +38,15 @@ internal static class ThemeBridge
     private static readonly Dictionary<string, int> _lightRoles = new(StringComparer.Ordinal);
     private static readonly Dictionary<string, int> _darkRoles = new(StringComparer.Ordinal);
     private static ConfigurationCallbacks _callbacks;
-    private static bool _materialPalette = true;
+    private static bool _materialPalette;
     private static bool _dynamicColor = true;
     private static bool _themeHooked;
     private static bool _reresolving;
 
     /// <summary>
-    /// True (default) to write the Material roles into the curated Fluent keys; false puts the framework's
-    /// Fluent colours back (the UIReqs harness runs the copied, Fluent-specified scenarios so).
+    /// True to write the Material roles into the curated Fluent keys; false (the default: an application opts in
+    /// through <see cref="CodeBrixApplication.UseMaterialPalette"/>) keeps or puts back the framework's Fluent
+    /// colours (the UIReqs harness runs the copied, Fluent-specified scenarios so, and switches per scenario).
     /// </summary>
     internal static bool MaterialPalette
     {
@@ -93,13 +98,26 @@ internal static class ThemeBridge
     {
         if (_callbacks == null && global::Android.App.Application.Context is { } context)
         {
-            _callbacks = new ConfigurationCallbacks();
+            _callbacks = new ConfigurationCallbacks(context.Resources?.Configuration);
             context.RegisterComponentCallbacks(_callbacks);
         }
 
         HookRequestedTheme();
         Apply();
         ApplyNightMode();
+    }
+
+    /// <summary>
+    /// Completes the installation once the XAML Application exists (UI thread; called by
+    /// <see cref="CodeBrixApplication"/> right after Application.Start): hooks RequestedTheme and sets the night mode
+    /// now that there is an application to read them from, then switches the Material palette on when the
+    /// application opted in. Idempotent; a Fluent application changes nothing visible.
+    /// </summary>
+    /// <param name="materialPalette">The application's <see cref="CodeBrixApplication.UseMaterialPalette"/>.</param>
+    internal static void OnXamlApplicationStarted(bool materialPalette)
+    {
+        EnsureInstalled();
+        MaterialPalette = materialPalette;
     }
 
     /// <summary>
@@ -414,15 +432,32 @@ internal static class ThemeBridge
 
     private sealed class ConfigurationCallbacks : global::Java.Lang.Object, AComponentCallbacks
     {
-        private AUiMode _lastNight = (AUiMode)(-1);
+        private int? _lastNight;
+
+        /// <summary>Starts from the night bits of the configuration the bridge was installed under.</summary>
+        /// <param name="current">The application's configuration at installation (null when unknown).</param>
+        public ConfigurationCallbacks(AConfiguration current)
+        {
+            if (current != null)
+            {
+                _lastNight = (int)(current.UiMode & AUiMode.NightMask);
+            }
+        }
 
         public void OnConfigurationChanged(AConfiguration newConfig)
         {
-            // A day/night flip (or a wallpaper change that re-derived the dynamic palette) re-reads the roles.
-            var night = newConfig.UiMode & AUiMode.NightMask;
-            if (night != _lastNight)
+            // A day/night flip re-reads the roles the bridge wrote; any other change (a rotation above all) leaves the
+            // palette alone - it never switches a Fluent-coloured app to the Material roles (ThemeBridgeRefresh).
+            if (newConfig == null)
             {
-                _lastNight = night;
+                return;
+            }
+
+            var night = (int)(newConfig.UiMode & AUiMode.NightMask);
+            var reapply = ThemeBridgeRefresh.ShouldReapply(_lastNight, night, _ownBrushes.Count > 0);
+            _lastNight = night;
+            if (reapply)
+            {
                 Apply();
             }
         }

@@ -228,6 +228,29 @@ internal sealed class AndroidNativeWebView : ICleanableNativeWebView
     public Task<string> InvokeScriptAsync(string script, string[] arguments, CancellationToken token) =>
         ExecuteScriptAsync(WebViewScripts.Invocation(script, arguments), token);
 
+    /// <summary>
+    /// Delivers a host message to the page as CoreWebView2.PostWebMessageAsString does: every 'message' listener of
+    /// window.chrome.webview (and its onmessage) gets an event whose data is <paramref name="message"/>. A page without
+    /// the channel (the document-start script did not run) drops it, with a Debug log line.
+    /// </summary>
+    /// <param name="message">The message.</param>
+    /// <remarks>
+    /// The pinned CodeBrix.Platform build's CoreWebView2.PostWebMessageAsString is a Core stub that reaches no native web
+    /// view (its INativeWebView has no message member); this is the Android half that Core's call is wired to once the
+    /// seam exists.
+    /// </remarks>
+    internal void PostWebMessageAsString(string message) => Deliver(WebViewScripts.StringMessageDelivery(message));
+
+    /// <summary>
+    /// Delivers a host message to the page as CoreWebView2.PostWebMessageAsJson does: the listeners' event.data is the
+    /// parsed JSON value. See <see cref="PostWebMessageAsString"/>.
+    /// </summary>
+    /// <param name="json">The message as JSON text.</param>
+    /// <exception cref="ArgumentException"><paramref name="json"/> is not valid JSON.</exception>
+    internal void PostWebMessageAsJson(string json) => Deliver(WebViewScripts.JsonMessageDelivery(json));
+
+    private void Deliver(string script) => Run(view => view.EvaluateJavascript(script, new MessageDeliveryCallback()));
+
     /// <inheritdoc />
     public void SetScrollingEnabled(bool isScrollingEnabled)
     {

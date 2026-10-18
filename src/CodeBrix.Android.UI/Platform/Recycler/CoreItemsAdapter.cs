@@ -144,7 +144,7 @@ internal sealed class CoreItemsAdapter : ARecyclerView.Adapter, ICollectionChang
         item.Host.AdoptElementView();
         if (RecyclerTrace.IsEnabled)
         {
-            RecyclerTrace.Write($"attach pos={item.BindingAdapterPosition} element={item.Element.GetType().Name} live={item.Element.XamlRoot != null} panelLive={panel.XamlRoot != null} panelChildren={panel.Children.Count} handler={(item.Element as Microsoft.UI.Xaml.UIElement)?.GetType().Name}");
+            RecyclerTrace.Write($"attach pos={item.BindingAdapterPosition} element={item.Element.GetType().Name} live={item.Element.XamlRoot != null} panelLive={panel.XamlRoot != null} panelChildren={panel.Children.Count} handler={(item.Element as Microsoft.UI.Xaml.UIElement)?.GetType().Name} holders={CreatedHolders} viewsCreated={Handlers.ElementHandler.PlatformViewsCreated} retainedReconnects={Handlers.ElementHandler.RetainedReconnects}");
         }
 
         _owner.OnElementAttached(item.Element, item.BindingAdapterPosition);
@@ -183,6 +183,15 @@ internal sealed class CoreItemsAdapter : ARecyclerView.Adapter, ICollectionChang
         if (holder is CoreItemViewHolder item)
         {
             _owner.Panel?.SetHost(item.Element, null);
+
+            // The row will not be shown again: the native views its retained handlers kept go now (before Core clears
+            // the container, while its subtree still holds every element that keeps one).
+            var released = Handlers.RetainedHandlers.ReleaseSubtree(item.Element);
+            if (RecyclerTrace.IsEnabled)
+            {
+                RecyclerTrace.Write($"discard viewType={item.ViewType} releasedRetainedHandlers={released} viewsCreated={Handlers.ElementHandler.PlatformViewsCreated} retainedReconnects={Handlers.ElementHandler.RetainedReconnects} retainedReleases={Handlers.ElementHandler.RetainedReleases}");
+            }
+
             _owner.DiscardElement(item.Element, item.ViewType);
         }
     }

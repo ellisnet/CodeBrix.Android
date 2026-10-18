@@ -32,7 +32,8 @@ namespace CodeBrix.Android.UI.Hosting;
 /// The app has ONE XAML window, shown by one activity, so the main activity must be single-task
 /// (<c>LaunchMode = LaunchMode.SingleTask</c>): a repeated launch (the launcher icon after <c>am start -n</c>, a deep
 /// link, a notification tap) then reaches the running activity as an intent, which
-/// <see cref="CodeBrixApplication.OnLaunchIntent"/> receives. An activity that is not single-task still never shows a
+/// <see cref="CodeBrixApplication.OnLaunchIntent"/> receives - also when the launch had to create a new activity
+/// because Back had finished the previous one while the application lived. An activity that is not single-task still never shows a
 /// second, blank window: a second instance created while the first one shows the window logs one warning, forwards its
 /// intent to <see cref="CodeBrixApplication.OnLaunchIntent"/>, brings the running activity to the front and finishes
 /// (its <c>IsFinishing</c> is true when <c>base.OnCreate</c> returns).
@@ -127,8 +128,16 @@ public class CodeBrixActivity : AppCompatActivity
         if (action == ActivityCreateAction.ShowExistingWindow)
         {
             // The XAML application is already running and no other live activity shows its window (this activity
-            // was re-created, or the one that showed it is finishing): show the window here.
+            // was re-created, or the one that showed it is finishing): show the window here. An activity that a
+            // LAUNCH created (no saved state: Back had finished the previous one, or the app had closed its window)
+            // then hands that launch to the application, as OnNewIntent does for a living activity - after the
+            // window is shown here, so the app's handler finds its window.
             existingWindow.AttachActivity(this);
+            if (Intent is { } launch
+                && ActivityInstancePolicy.SurfacesCreateAsLaunch(action, savedInstanceState != null, launch.GetBooleanExtra(ActivityInstancePolicy.BringToFrontExtra, false)))
+            {
+                application.DeliverLaunchIntent(launch);
+            }
         }
         else
         {
@@ -227,12 +236,11 @@ public class CodeBrixActivity : AppCompatActivity
     /// <inheritdoc />
     protected override void OnDestroy()
     {
+        // The window is never closed here (WindowLifecyclePolicy): backing out of the app finishes this activity (seen on
+        // API 36 and 37) while the process and the XAML app live on, and the window stays open for the next activity,
+        // as on API 33, where Back only moves the task to the back; an app's own Window.Close was already closed by
+        // Core (Closed raised once) before it finished this activity.
         var wrapper = WindowWrapper;
-        if (wrapper != null && IsFinishing && wrapper.Activity == this)
-        {
-            wrapper.OnNativeClosed();
-        }
-
         wrapper?.DetachActivity(this);
         WindowWrapper = null;
         if (_insetsListener != null)

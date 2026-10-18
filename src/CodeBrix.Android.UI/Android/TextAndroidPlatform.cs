@@ -90,10 +90,18 @@ internal sealed class TextAndroidPlatform : ITextPlatform
     /// <inheritdoc />
     public ITextBoxPlatform CreateTextBoxPlatform(TextBox textBox) => new TextBoxAndroidPlatform(textBox);
 
+    /// <summary>
+    /// The flags of every paint native text is measured and drawn with (this measure and the TextBlock handler's text
+    /// view): SubpixelText + LinearText keep the fractional, unhinted glyph advances the Skia heads measure ("Print" in
+    /// Open Sans 12 is 26.79 px, not the per-glyph rounded 26; SubpixelText alone still measured 26 on the device), so a
+    /// layout that rounds the width up gets the same size on every head.
+    /// </summary>
+    internal const APaintFlags NativeTextPaintFlags = APaintFlags.AntiAlias | APaintFlags.SubpixelText | APaintFlags.LinearText;
+
     /// <summary>Builds the paint a TextBlock is measured (and drawn) with.</summary>
     internal ATextPaint CreatePaint(TextBlock textBlock, double density)
     {
-        var paint = new ATextPaint(APaintFlags.AntiAlias)
+        var paint = new ATextPaint(NativeTextPaintFlags)
         {
             TextSize = TextMeasureMath.DipToPx(textBlock.FontSize, density),
             LetterSpacing = TextMeasureMath.CharacterSpacingToEm(textBlock.CharacterSpacing),

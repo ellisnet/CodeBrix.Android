@@ -5,6 +5,7 @@
 
 using System;
 using CodeBrix.Android.UI.Composition.Android;
+using CodeBrix.Platform.UI.Contracts;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -43,6 +44,13 @@ internal sealed class ImageHandler : ViewHandler<Image, AImageView>
         : base(Mapper)
     {
     }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// RetainedAcrossLeave: the image view is kept across a Leave and shown again on the next Enter of the same Image
+    /// (a recycled list row); DisconnectHandler drops the shown bitmap, the next Connect maps Source again.
+    /// </remarks>
+    public override ElementHandlerCapabilities Capabilities => ElementHandlerCapabilities.RetainedAcrossLeave;
 
     /// <summary>Maps Source (the bitmap once Core has loaded it).</summary>
     public static void MapSource(ImageHandler handler, Image element) => handler.UpdateBitmap();

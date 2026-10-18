@@ -137,8 +137,11 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     repeated there: read it from the main activity's Intent (for example
     before base.OnCreate, as the samples read their start page). A repeated
     launch can be the launcher's plain MAIN intent - look at the action,
-    data and extras. A MainActivity that overrides OnNewIntent must call the
-    base method.
+    data and extras. A launch that reaches the running app after Back
+    finished its activity (API 36 and later; see below) arrives there too,
+    once the window shows in the new activity; an activity Android
+    re-creates on its own does not repeat its intent. A MainActivity that
+    overrides OnNewIntent must call the base method.
     An activity that is not single-task still never shows a blank second
     window: when Android creates a second instance while the first shows the
     window, the host logs one warning naming this requirement, hands the
@@ -146,6 +149,12 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     to the front and finishes the second instance (its IsFinishing is true
     when base.OnCreate returns - code after base.OnCreate in an override
     should return early then).
+    Backing out of the app (Back on its first page) does not close the XAML
+    window: Window.Closed is raised only for the app's own Window.Close. A
+    later launch of the still-running app shows the same window with its
+    page and state, on every Android version. After the app's own
+    Window.Close, a later launch of the still-running process activates the
+    same window again (OnLaunched does not run again).
   * Content is laid out edge to edge; Window.Bounds is the whole Android
     window and XamlRoot / the window's visible bounds exclude the system bars
     and display cutout.
@@ -249,7 +258,10 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     otherwise; SecondaryCommands in the overflow menu) unless the AppContext
     switch CodeBrix.Android.UI.NativeCommandBar is false; PipsPager,
     PagerControl, BreadcrumbBar, a single-selection CalendarView and
-    CalendarDatePicker are native too. InfoBar, RatingControl, SplitButton and
+    CalendarDatePicker are native too (a native CalendarView with no
+    SelectedDate marks today, as the Material calendar always marks a day; a
+    native Slider is 48 dp tall - Material's minimum touch target - where the
+    Fluent Slider is 32 dp: both are accepted native differences). InfoBar, RatingControl, SplitButton and
     ToggleSplitButton are Material widgets drawn over their Fluent template
     (which keeps every event and part); InfoBadge, PersonPicture, ColorSpectrum
     and the DropDownButton (Material button with a chevron) are native;
@@ -260,10 +272,13 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     presenters, the rich-text family (RichTextBlock, RichEditBox, Paragraph, ...), Hub, SemanticZoom,
     ParallaxView, AnnotatedScrollBar, MapControl, the swap-chain panels and the
     legacy WebView are not implemented by the Platform on any head.
-  * Look and adaptivity: an app that sets no control keys looks Material 3
-    (tonal default Button, filled AccentButtonStyle, Material surface/text/
-    outline roles; dynamic colour where the device offers it); every Fluent key
-    an app defines wins. FontSize follows the user's font scale unless
+  * Look and adaptivity: by default an app shows the framework's Fluent
+    colours, the same look as on the desktop heads. An app that overrides
+    CodeBrixApplication.UseMaterialPalette => true looks Material 3 where it
+    sets no control keys (tonal default Button, filled AccentButtonStyle,
+    Material surface/text/outline roles; dynamic colour where the device
+    offers it); every Fluent key an app defines wins either way. FontSize
+    follows the user's font scale unless
     IsTextScaleFactorEnabled=false. An Auto NavigationView becomes a bottom bar
     / rail / drawer by window size class and switches live; a TriPaneView
     shows one / two / three panes the same way (see ADD-INS ON ANDROID).
@@ -283,7 +298,10 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     did not use it (typed characters, caret keys and Backspace stay in the box;
     Enter arrives as the keyboard's action and is raised as VirtualKey.Enter;
     Tab, Escape and accelerators still reach the page). The soft keyboard opens
-    when a text box is touched, not when a page first shows. The diagnostic projection viewer is off by
+    when a text box is touched, not when a page first shows, and goes when the
+    text box (TextBox, PasswordBox, NumberBox, AutoSuggestBox, an editable
+    ComboBox, a PagerControl number field, a ColorPicker channel field) that
+    has it leaves the page. The diagnostic projection viewer is off by
     default; override UseProjectionViewer => true only to inspect a page.
   * Accessibility / automation names: AutomationProperties.Name is the one to
     set. On Android it becomes the content description of the element's native
@@ -412,6 +430,33 @@ second registration throws) and cannot register native element handlers
                                    ON ANDROID) and fall back to their
                                    read-back path on their own:
         protected override bool UseDirectGpuRenderingMode => true;
+    RestrictToEmbeddedFonts        default false: the Android form of the
+                                   desktop heads' RestrictToEmbeddedFonts()
+                                   host-builder call - sets the ordinary flag
+                                   FeatureConfiguration.Font.
+                                   RestrictToEmbeddedFonts in OnCreate, before
+                                   any text is measured (not a latch: the app
+                                   may also set that flag directly, before the
+                                   first text is measured). The TextLayout
+                                   add-in's text engine then never looks in
+                                   /system/fonts for a glyph the app's fonts
+                                   lack (it shows the missing-glyph box).
+                                   Text drawn by Android's own text stack (the
+                                   native TextBlock / TextBox views) keeps
+                                   Android's per-glyph fallback - Android
+                                   offers no way to switch it off. A parity-
+                                   testing tool: Android's system fonts are
+                                   stable, apps do not normally need it:
+        protected override bool RestrictToEmbeddedFonts => true;
+    UseMaterialPalette             default false (Fluent colours, as on the
+                                   desktop heads): true writes the Material 3
+                                   colour roles - baseline, or the wallpaper's
+                                   dynamic palette where the device offers one
+                                   - into the Fluent theme keys the app does
+                                   not define, right after the App is created;
+                                   keys the app defines always win; a
+                                   day/night flip re-derives the roles:
+        protected override bool UseMaterialPalette => true;
   App constructor (as on the desktop heads):
     FeatureConfiguration.Font.DefaultTextFontFamily = the app's default font
     file (see Fonts above).
@@ -629,11 +674,14 @@ What differs on Android:
     the folder's files are Content items of the head, so they are the app's
     assets; relative links between the pages work). Messages from the page
     to the app: the page calls window.chrome.webview.postMessage(text) and
-    the app receives WebView2.WebMessageReceived. Messages from the app to
-    the page: use ExecuteScriptAsync (it runs script in the page and returns
-    its result); PostWebMessageAsString / PostWebMessageAsJson do not reach
-    the page today (there is no chrome.webview.addEventListener on the page
-    side).
+    the app receives WebView2.WebMessageReceived. Every page also gets
+    WebView2's receiving side: window.chrome.webview.addEventListener(
+    'message', e => ...), removeEventListener and onmessage (e.data is the
+    message). Messages from the app to the page: use ExecuteScriptAsync (it
+    runs script in the page and returns its result). CoreWebView2's
+    PostWebMessageAsString / PostWebMessageAsJson do not reach the page with
+    the CodeBrix.Platform build this package ships (that build implements them
+    on no head); call a page function through ExecuteScriptAsync instead.
   * TextLayout: the text engine is the add-in's Core; on Android it draws with
     SkiaSharp typefaces the Android assembly loads from the app's assets by the
     font rule above (a family name is the app's DefaultTextFontFamily file).

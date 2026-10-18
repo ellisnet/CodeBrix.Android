@@ -87,7 +87,11 @@ internal sealed class TextBlockHandler : ViewHandler<TextBlock, ATextView>
     }
 
     /// <inheritdoc />
-    public override ElementHandlerCapabilities Capabilities => ElementHandlerCapabilities.MeasuresNatively;
+    /// <remarks>
+    /// RetainedAcrossLeave: the text view (the most common view of a list row) is kept across a Leave and shown again
+    /// on the next Enter of the same TextBlock (a recycled row); ConnectHandler re-hooks what DisconnectHandler unhooks.
+    /// </remarks>
+    public override ElementHandlerCapabilities Capabilities => ElementHandlerCapabilities.MeasuresNatively | ElementHandlerCapabilities.RetainedAcrossLeave;
 
     /// <summary>Maps Text (and the Inlines: formatted runs become a spannable).</summary>
     public static void MapText(TextBlockHandler handler, TextBlock element) => handler.UpdateText(element);
@@ -410,8 +414,19 @@ internal sealed class TextBlockHandler : ViewHandler<TextBlock, ATextView>
         view.SetIncludeFontPadding(false);
         view.FallbackLineSpacing = false;
         view.SetPadding(0, 0, 0, 0);
-        view.LayoutChange += OnTextViewLayoutChange;
+
+        // Fractional glyph advances, as the Skia heads measure them and as the text measure's own paint does
+        // (TextAndroidPlatform.NativeTextPaintFlags): measure and draw agree, and widths match the desktop heads.
+        view.PaintFlags |= TextAndroidPlatform.NativeTextPaintFlags;
         return view;
+    }
+
+    /// <inheritdoc />
+    protected override void ConnectHandler(ATextView platformView)
+    {
+        // At the first connect and again when a retained view is shown again (DisconnectHandler unhooks it).
+        base.ConnectHandler(platformView);
+        platformView.LayoutChange += OnTextViewLayoutChange;
     }
 
     /// <summary>
@@ -444,6 +459,9 @@ internal sealed class TextBlockHandler : ViewHandler<TextBlock, ATextView>
     /// <inheritdoc />
     protected override void DisconnectHandler(ATextView platformView)
     {
+        // SetLinks(false) also restores a plain view (no link movement method), so a retained view shown again for
+        // other text starts as a fresh one would; the next MapText makes the links clickable again if there are any.
+        SetLinks(false);
         _linkBridge.Detach();
         platformView.Touch -= OnLinkTouch;
         platformView.LayoutChange -= OnTextViewLayoutChange;

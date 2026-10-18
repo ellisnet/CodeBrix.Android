@@ -444,6 +444,9 @@ internal sealed class ComboBoxHandler : ViewHandler<ComboBox, ComboBoxView>
     /// <inheritdoc />
     protected override void DisconnectHandler(ComboBoxView platformView)
     {
+        // An editable box removed while its editor has the soft keyboard (a page navigating away) takes the keyboard
+        // with it.
+        SoftKeyboard.HideIfEditorFocusedWithin(platformView);
         _bridge.Detach();
         WatchItems(null);
         platformView.Editor.ItemClick -= OnItemClick;

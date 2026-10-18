@@ -265,6 +265,8 @@ internal sealed class NumberBoxHandler : ViewHandler<NumberBox, TextBoxView>
     /// <inheritdoc />
     protected override void DisconnectHandler(TextBoxView platformView)
     {
+        // A box removed while its editor has the soft keyboard (a page navigating away) takes the keyboard with it.
+        SoftKeyboard.HideIfEditorFocusedWithin(platformView);
         _bridge.Detach();
         platformView.Editor.EditorAction -= OnEditorAction;
         platformView.Editor.FocusChange -= OnFocusChange;

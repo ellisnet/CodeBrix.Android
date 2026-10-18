@@ -5,6 +5,7 @@
 
 using System;
 using System.Threading.Tasks;
+using CodeBrix.Android.UI.WebView.Portable;
 using ABitmap = global::Android.Graphics.Bitmap;
 using AIValueCallback = global::Android.Webkit.IValueCallback;
 using AIWebResourceRequest = global::Android.Webkit.IWebResourceRequest;
@@ -121,4 +122,21 @@ internal sealed class ScriptResultCallback : AJavaObject, AIValueCallback
 
     /// <inheritdoc />
     public void OnReceiveValue(AJavaObject value) => _done.TrySetResult(value?.ToString() ?? "null");
+}
+
+/// <summary>
+/// The result of a host-to-page message delivery (WebViewScripts.StringMessageDelivery / JsonMessageDelivery): a page
+/// without the message channel drops the message, which is logged at Debug level (WebView2 drops a message the same
+/// way when the page has no listener).
+/// </summary>
+internal sealed class MessageDeliveryCallback : AJavaObject, AIValueCallback
+{
+    /// <inheritdoc />
+    public void OnReceiveValue(AJavaObject value)
+    {
+        if (value?.ToString() == WebViewScripts.NoChannelResult)
+        {
+            global::Android.Util.Log.Debug("CodeBrix.WebView", "A web message posted to the page was dropped: the page has no message channel (it was posted before the document-start script ran, or the system WebView has no document-start scripts).");
+        }
+    }
 }

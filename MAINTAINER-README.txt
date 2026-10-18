@@ -269,6 +269,25 @@ handler (parent first) and its native view:
                    the factory; BrushWatcher (re-pointed brush colours repaint).
                    Mapper keys are DependencyProperty instances; mappers read
                    the EFFECTIVE value from the element.
+                   RETAINED HANDLERS (Core hook H16, ElementHandlerCapabilities.
+                   RetainedAcrossLeave): a handler that declares it gets a
+                   retained Disconnect on Leave (DisconnectHandler runs - the
+                   view leaves its parent and stops listening - but the handler
+                   keeps its element and view); Core connects the same handler
+                   on the next Enter and Connect re-runs ConnectHandler and every
+                   mapper on the kept view. Nothing is mapped or invoked while it
+                   is detached (no listener or brush watcher is taken out of the
+                   tree). ReleaseRetained drops the kept view;
+                   RetainedHandlers.ReleaseSubtree releases a whole subtree and
+                   tells Core (UIElement.ReleaseRetainedHandler) - CoreItemsAdapter
+                   calls it for every row the recycled-view pool discards.
+                   Opted in: TextBlockHandler, ImageHandler, ButtonHandler (the
+                   views every list row has). A handler that opts in must
+                   re-hook in ConnectHandler everything its DisconnectHandler
+                   unhooks (the view is NOT created again). Counters:
+                   ElementHandler.PlatformViewsCreated / RetainedReconnects /
+                   RetainedReleases, printed by RecyclerTrace on attach and
+                   discard.
   Handlers/Views/  (Android) ViewHandler<TElement,TView> + ViewMappers (the
                    UIElement/FrameworkElement mapper: Visibility, Opacity,
                    RenderTransform(+Origin) as the view's animation matrix,
@@ -758,7 +777,15 @@ ContentDialog with XAML content: full screen in Compact (ContentDialogPolicy).
 Theme: ThemeBridge writes Material 3 roles (baseline or dynamic) into the curated
 Fluent keys (MaterialRoleMap) as brushes of its own per theme dictionary and
 re-resolves ThemeResources (Application.OnRequestedThemeChanged); app keys always
-win; AppCompat night mode follows an explicit Application.RequestedTheme.
+win; AppCompat night mode follows an explicit Application.RequestedTheme. The
+palette is OPT-IN (CodeBrixApplication.UseMaterialPalette, default false = Fluent):
+the posted PresentationPolicy.Install runs before the first activity creates the
+XAML Application, so its ThemeBridge.EnsureInstalled finds no resources and writes
+nothing; CodeBrixApplication.EnsureXamlApplicationStarted completes it right after
+Application.Start (ThemeBridge.OnXamlApplicationStarted: hook RequestedTheme, night
+mode, then MaterialPalette = the override). Until 2026-10-18 the default was
+"Material" on paper and Fluent in fact, for that reason. Fence:
+tests/CodeBrix.Android.UI.Tests/Policy/MaterialPaletteOptInTests (source).
 ThemeKeyMap = the re-keyed corpus keys with their path (and which are honored);
 ThemeKeyAppliers complete the CheckBox/Slider/TextControl families on the AP3a
 handlers: CheckBoxHandler.ApplyColors, SliderHandler.MapColors and TextBoxHandler's
@@ -959,8 +986,8 @@ initializer (Android/AndroidPlatformBootstrap) registers its contracts and handl
     SkiaSharp.Views canvas-host factory and is shown by that add-in's SkiaCanvasElementHandler (registered in the
     bootstrap); the GPU path is the Graphics3DGL add-in's SkiaGpuContext (EGL / OpenGL ES); the sound is
     CodeBrix.Audio's shared output on CodeBrix.Audio.Android (the bootstrap initialises it). One CodeBrix.Audio.Core
-    line: CodeBrix.VideoPlayback 1.0.280.1149 and CodeBrix.Audio.Android 1.0.271.1201 both depend on
-    CodeBrix.Audio.Core.MitLicenseForever 1.0.271.1165 (never the desktop CodeBrix.Audio package's own assemblies).
+    line: CodeBrix.VideoPlayback 1.0.290.1224 and CodeBrix.Audio.Android 1.0.283.1398 both depend on
+    CodeBrix.Audio.Core.MitLicenseForever 1.0.283.1382 (never the desktop CodeBrix.Audio package's own assemblies).
     Fences: the copied VideoPlayer group (informational for frames) and AndroidVideoPlayer.
     Since pin 1.0.287.1311 the port carries two Platform fixes: the surface draws NOTHING before the first picture
     (never Clear(Transparent); host fence tests/..VideoPlayer.Tests/Surface/VideoSurfaceElementTests, which paints the
@@ -1682,7 +1709,13 @@ SINGLE-TASK MAIN ACTIVITY (design note)
      CodeBrixApplication.DeliverLaunchIntent (one Information log line) ->
      the app's protected virtual OnLaunchIntent(Intent). The host's own
      bring-to-front intent (extra ActivityInstancePolicy.BringToFrontExtra)
-     is not surfaced.
+     is not surfaced. A launch that creates a NEW activity while the
+     application lives (Back had finished the previous one, or the app had
+     closed its window) is surfaced the same way from OnCreate, after
+     AttachActivity shows the window (ActivityInstancePolicy.
+     SurfacesCreateAsLaunch: ShowExistingWindow, no saved instance state,
+     not the marker) - so API 33 (OnNewIntent) and API 36+ (new activity)
+     agree. Android's own re-creation (saved state) is not a launch.
   3. Host safety for an app that forgot layer 1: CodeBrixActivity.OnCreate
      asks ActivityInstancePolicy (Portable/, pure, host-tested) right after
      base.OnCreate, before it builds anything. Window exists and another
@@ -1699,8 +1732,18 @@ SINGLE-TASK MAIN ACTIVITY (design note)
   Fixed along the way (WP9): a finishing activity that lost the window kept
   its WindowWrapper, so its stop could hide and its destroy CLOSE the window
   the new activity showed. AndroidNativeWindowWrapper.AttachActivity now
-  makes the previous activity let go (ReleaseWindow), and OnDestroy closes
-  the window only when it is still the host.
+  makes the previous activity let go (ReleaseWindow).
+  THE WINDOW ACROSS ACTIVITIES (Portable/WindowLifecyclePolicy): OnDestroy never
+  closes the window. Back on the root page finishes the activity on API 36/37
+  (API 33 only moves the task back) while the process lives; the window stays
+  open (Closed is NOT raised - apps release resources in Closed) and the next
+  activity's AttachActivity shows it again: ShowOnActivity moves the root
+  host's native tree into the new content layer (AndroidXamlRootHost.
+  AttachRootView) and requests a Core layout tick - without that the new
+  activity stays blank, since nothing else runs a tick at the same size.
+  An app's own Window.Close is closed by Core alone (Closed raised once; Core
+  then calls CloseCore, which only marks the window and finishes the
+  activity); a later launch re-activates that window (Window.Activate).
   Fences: tests/CodeBrix.Android.UI.Tests/Hosting/ActivityInstancePolicyTests
   (the decision table) and LaunchIntentHookTests (the Android-only source:
   hook, OnCreate order, forward-then-finish, handover, and every

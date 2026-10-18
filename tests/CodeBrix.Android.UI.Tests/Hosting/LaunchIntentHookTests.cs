@@ -61,6 +61,23 @@ public sealed class LaunchIntentHookTests
     }
 
     [Fact]
+    public void on_create_hands_the_launch_that_created_a_new_activity_to_the_application_after_showing_the_window()
+    {
+        //Arrange
+        var source = Source("src", "CodeBrix.Android.UI", "Hosting", "CodeBrixActivity.cs");
+        var onCreate = Between(source, "protected override void OnCreate(ABundle savedInstanceState)", "protected override void OnNewIntent");
+        var attach = onCreate.IndexOf("existingWindow.AttachActivity(this);", StringComparison.Ordinal);
+        var surface = onCreate.IndexOf("ActivityInstancePolicy.SurfacesCreateAsLaunch(action, savedInstanceState != null, launch.GetBooleanExtra(ActivityInstancePolicy.BringToFrontExtra, false))", StringComparison.Ordinal);
+        var deliver = onCreate.IndexOf("application.DeliverLaunchIntent(launch);", StringComparison.Ordinal);
+
+        //Assert - the window is shown first, then the launch is surfaced by the policy's rule (same as OnNewIntent)
+        attach.Should().BeGreaterThan(-1);
+        surface.Should().BeGreaterThan(attach);
+        deliver.Should().BeGreaterThan(surface);
+        deliver.Should().BeLessThan(onCreate.IndexOf("EnsureXamlApplicationStarted(this)", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void the_second_instance_warns_forwards_its_intent_finishes_and_reorders_the_running_activity_to_the_front()
     {
         //Arrange
@@ -92,7 +109,7 @@ public sealed class LaunchIntentHookTests
         var attach = Between(wrapper, "internal void AttachActivity(CodeBrixActivity activity)", "internal void DetachActivity");
 
         //Assert
-        activity.Should().Contain("if (wrapper != null && IsFinishing && wrapper.Activity == this)");
+        activity.Should().Contain("wrapper?.DetachActivity(this);");
         attach.Should().Contain("previous.ReleaseWindow(this);");
         attach.IndexOf("previous.ReleaseWindow(this);", StringComparison.Ordinal)
             .Should().BeLessThan(attach.IndexOf("Activity = activity;", StringComparison.Ordinal));

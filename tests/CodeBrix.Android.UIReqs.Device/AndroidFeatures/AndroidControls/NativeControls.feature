@@ -139,3 +139,12 @@ Scenario: An AutoSuggestBox reports what a real keyboard types and submits the q
 	Then the AutoSuggestBox "search" reported the user text "cat"
 	When the soft keyboard's action key is used on "search"
 	Then the AutoSuggestBox "search" submitted "cat"
+
+# AP7-M: a native text field removed from the tree while it has the soft keyboard (a page navigating away) takes the
+# keyboard with it - the handler hides it on disconnect, not the harness's after-scenario hook.
+Scenario: An AutoSuggestBox removed while it has the soft keyboard takes the keyboard with it
+	Given the application shows an AutoSuggestBox named "search" that records its events
+	When a real finger taps "search"
+	Then the soft keyboard is showing
+	When the content is replaced by an empty panel
+	Then the soft keyboard is not showing

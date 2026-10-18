@@ -122,9 +122,13 @@ internal sealed class ButtonHandler : ViewGroupHandler<ButtonBase, ButtonHostVie
     public override AView AccessibilityView => (AView)_button ?? NativeView;
 
     /// <inheritdoc />
+    /// <remarks>
+    /// RetainedAcrossLeave in both modes: the host view and its Material button are kept across a Leave and shown again
+    /// on the next Enter of the same button (a recycled list row); ConnectHandler re-hooks the kept Material button.
+    /// </remarks>
     public override ElementHandlerCapabilities Capabilities => _contentMode
-        ? ElementHandlerCapabilities.OwnsVisuals | ElementHandlerCapabilities.MeasuresNatively | ElementHandlerCapabilities.HostsContent | ElementHandlerCapabilities.OwnsChildren
-        : ElementHandlerCapabilities.OwnsVisuals | ElementHandlerCapabilities.MeasuresNatively;
+        ? ElementHandlerCapabilities.OwnsVisuals | ElementHandlerCapabilities.MeasuresNatively | ElementHandlerCapabilities.HostsContent | ElementHandlerCapabilities.OwnsChildren | ElementHandlerCapabilities.RetainedAcrossLeave
+        : ElementHandlerCapabilities.OwnsVisuals | ElementHandlerCapabilities.MeasuresNatively | ElementHandlerCapabilities.RetainedAcrossLeave;
 
     /// <summary>
     /// Creates the handler of a Button-family element, or the templated fallback when the element does
@@ -292,6 +296,14 @@ internal sealed class ButtonHandler : ViewGroupHandler<ButtonBase, ButtonHostVie
         base.ConnectHandler(platformView);
         platformView.Touch += OnNativeTouch;
         platformView.Click += OnNativeClick;
+        if (_button != null)
+        {
+            // A retained view shown again: its Material button was unhooked by DisconnectHandler (ApplyMode hooks only a
+            // button it creates).
+            _button.Touch += OnNativeTouch;
+            _button.Click += OnNativeClick;
+        }
+
         ApplyMode();
     }
 

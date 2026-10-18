@@ -164,6 +164,9 @@ internal sealed class PagerControlHandler : ViewHandler<PagerControl, PagerContr
     /// <inheritdoc />
     protected override void DisconnectHandler(PagerControlView platformView)
     {
+        // A pager removed while its number field has the soft keyboard (a page navigating away) takes the keyboard
+        // with it.
+        SoftKeyboard.HideIfEditorFocusedWithin(platformView);
         platformView.First.Click -= OnFirst;
         platformView.Previous.Click -= OnPrevious;
         platformView.Next.Click -= OnNext;

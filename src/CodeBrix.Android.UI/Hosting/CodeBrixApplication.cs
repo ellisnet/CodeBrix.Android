@@ -74,6 +74,37 @@ public abstract class CodeBrixApplication : AApplication
     /// </remarks>
     protected virtual bool UseDirectGpuRenderingMode => false;
 
+    /// <summary>
+    /// When true, font resolution is confined to the fonts the application ships (its ms-appx fonts, the CodeBrix font
+    /// packages it references, its FeatureConfiguration.Font.FallbackFontFamilies and the framework's symbols font):
+    /// the device's /system/fonts are not consulted for glyphs the application's fonts lack - such a character shows the
+    /// font's missing-glyph box. A parity-testing tool: Android's system fonts are stable, apps do not normally need it.
+    /// </summary>
+    /// <remarks>
+    /// The Android equivalent of the desktop heads' <c>RestrictToEmbeddedFonts()</c> host-builder call, read once in
+    /// <see cref="OnCreate"/> before any text is measured. It sets the ordinary flag
+    /// <c>FeatureConfiguration.Font.RestrictToEmbeddedFonts</c> (not a latch: the app may also set that flag directly,
+    /// before the first text is measured; resolved fonts are cached). It governs the TextLayout add-in's text engine,
+    /// whose per-glyph fallback otherwise walks /system/fonts. Text that Android's own text stack draws (the native
+    /// views of TextBlock, TextBox and the other controls) keeps Android's per-glyph fallback: a typeface loaded from the
+    /// app's font file always carries the system fallback chain, and Android's public API offers no way to remove it.
+    /// Default false.
+    /// </remarks>
+    protected virtual bool RestrictToEmbeddedFonts => false;
+
+    /// <summary>
+    /// When true, the Material 3 colour roles - the baseline Material palette, or the wallpaper's dynamic palette where
+    /// the device offers one - are written into the framework's Fluent theme keys that the application does not define
+    /// itself (tonal default Button, filled AccentButtonStyle, Material surface, text and outline colours), so an app
+    /// that sets no control keys looks Material 3. Every Fluent key the application defines always wins. Default false:
+    /// the app shows the framework's Fluent colours, the same look as on the desktop heads.
+    /// </summary>
+    /// <remarks>
+    /// Read once, right after the XAML Application is created (its resources are where the roles go); a day/night flip
+    /// re-derives the roles, and an explicit <c>Application.RequestedTheme</c> sets the AppCompat night mode either way.
+    /// </remarks>
+    protected virtual bool UseMaterialPalette => false;
+
     private SoftInputAdjust? _softInputAdjust;
 
     /// <summary>
@@ -132,6 +163,12 @@ public abstract class CodeBrixApplication : AApplication
             _log.LogInformation("Direct GPU rendering is enabled for this application (EXPERIMENTAL).");
         }
 
+        // Before any text is measured: the font sources read the flag when they resolve a font.
+        if (EmbeddedFontsOptIn.Apply(RestrictToEmbeddedFonts) && _log.IsEnabled(LogLevel.Information))
+        {
+            _log.LogInformation("Font resolution is restricted to the application's embedded fonts.");
+        }
+
         global::CodeBrix.Android.UI.Android.AndroidPlatformBootstrap.EnsureRegistered();
         RegisterActivityLifecycleCallbacks(new ApplicationLifecycleTracker());
 
@@ -144,10 +181,13 @@ public abstract class CodeBrixApplication : AApplication
     /// <summary>
     /// Called on the main thread when a launch reaches the RUNNING application: the launcher icon tapped after the app
     /// was started another way, a deep link, a notification tap, an <c>am start</c> - any intent Android delivers to
-    /// the single-task main activity (its OnNewIntent), and the intent of a second activity instance the host
-    /// redirected to the running one. The intent that started the app is not repeated here: it is the main activity's
-    /// <c>Intent</c> when the XAML application starts. The intent may be the launcher's plain MAIN intent; look at its
-    /// action, data and extras. The default does nothing.
+    /// the single-task main activity (its OnNewIntent), the intent of a second activity instance the host
+    /// redirected to the running one, and the intent of a new main activity a launch created because the previous
+    /// one was gone while the application lived (Back on the root page finishes it on API 36 and later; the app's own
+    /// Window.Close finishes it too) - delivered once the window shows in that activity. The intent that started the
+    /// app is not repeated here: it is the main activity's <c>Intent</c> when the XAML application starts; nor is the
+    /// intent of an activity Android re-created on its own (with a saved state). The intent may be the launcher's
+    /// plain MAIN intent; look at its action, data and extras. The default does nothing.
     /// </summary>
     /// <param name="intent">The launch intent (also the main activity's <c>Intent</c> from now on).</param>
     protected virtual void OnLaunchIntent(AIntent intent)
@@ -202,6 +242,14 @@ public abstract class CodeBrixApplication : AApplication
                 _log.LogInformation("XAML application {App} created.", app?.GetType().FullName);
             }
         });
+
+        // The theme bridge's posted installation ran before the application existed: complete it now, and write the
+        // Material roles when the app opted in (UseMaterialPalette).
+        Policy.ThemeBridge.OnXamlApplicationStarted(UseMaterialPalette);
+        if (UseMaterialPalette && _log.IsEnabled(LogLevel.Information))
+        {
+            _log.LogInformation("Material palette opted in (UseMaterialPalette): the Material 3 roles colour the framework's Fluent keys the app does not define.");
+        }
 
         if (UseProjectionViewer)
         {

@@ -230,6 +230,8 @@ internal sealed class AutoSuggestBoxHandler : ViewHandler<AutoSuggestBox, ComboB
     /// <inheritdoc />
     protected override void DisconnectHandler(ComboBoxView platformView)
     {
+        // A box removed while its editor has the soft keyboard (a page navigating away) takes the keyboard with it.
+        SoftKeyboard.HideIfEditorFocusedWithin(platformView);
         _bridge.Detach();
         if (Element != null && _keyDown != null)
         {

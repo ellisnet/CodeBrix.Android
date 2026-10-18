@@ -6,6 +6,7 @@ using System;
 using CodeBrix.Android.UI.Portable;
 using CodeBrix.Android.UI.Portable.Input;
 using CodeBrix.Android.UI.Portable.Layout;
+using CodeBrix.Platform.UI.Hosting;
 using CodeBrix.Platform.UI.Xaml.Core;
 using CodeBrix.Platform.UI.Xaml.Controls;
 using Microsoft.Extensions.Logging;
@@ -36,6 +37,10 @@ internal sealed class AndroidNativeWindowWrapper : NativeWindowWrapperBase //was
     private readonly ILogger _log = HostLog.For("CodeBrix.Android.UI.Hosting.NativeWindow");
     private bool _contentViewAttachedToWindow;
     private bool _themeSubscribed;
+    private FrameworkElement _themeSource;
+    private bool? _appliedLightBars;
+    private CodeBrixActivity _appliedBarsActivity;
+    private bool _closedByApp;
     private string _title = string.Empty;
     private Rect _previousTrueVisibleBounds;
     private SafeAreaPadding _safeAreaPx;
@@ -99,10 +104,24 @@ internal sealed class AndroidNativeWindowWrapper : NativeWindowWrapperBase //was
             activity.Title = _title;
         }
 
-        if (WasShown)
+        switch (WindowLifecyclePolicy.OnActivityAttached(WasShown, _closedByApp))
         {
-            // The window was shown by a previous activity: show it again on this one.
-            ShowOnActivity();
+            case AttachedActivityWindowAction.ShowAgain:
+                // The window was shown by a previous activity: show it again on this one.
+                ShowOnActivity();
+                break;
+
+            case AttachedActivityWindowAction.Reactivate:
+                // The app closed the window and a new launch reached the living process: Core kept the closed window's
+                // content and lets a single-window platform show it again.
+                _closedByApp = false;
+                if (_log.IsEnabled(LogLevel.Information))
+                {
+                    _log.LogInformation("The window the app closed is activated again on the new {Activity}.", activity.GetType().Name);
+                }
+
+                Window?.Activate();
+                break;
         }
     }
 
@@ -147,7 +166,6 @@ internal sealed class AndroidNativeWindowWrapper : NativeWindowWrapperBase //was
 
     internal void OnNativeActivated(CoreWindowActivationState state) => ActivationState = state;
 
-    internal void OnNativeClosed() => RaiseClosing();
 
     internal void RaiseNativeSizeChanged()
     {
@@ -219,6 +237,10 @@ internal sealed class AndroidNativeWindowWrapper : NativeWindowWrapperBase //was
     /// <inheritdoc />
     protected override void CloseCore()
     {
+        // Only Core calls this, from its own close of the window (the app's Window.Close): Core has already raised
+        // Closed, hidden the window and made it re-showable (single-window platform). The activity finishes; its
+        // destroy raises nothing more (Closed is raised once), and a later launch activates the window again.
+        _closedByApp = true;
         var activity = Activity;
         if (activity != null && !activity.IsFinishing)
         {
@@ -255,6 +277,17 @@ internal sealed class AndroidNativeWindowWrapper : NativeWindowWrapperBase //was
         activity.ContentViewAttachedToWindow -= OnContentViewAttachedToWindow;
         activity.ContentViewAttachedToWindow += OnContentViewAttachedToWindow;
         activity.EnsureContentView();
+
+        // A window shown again on a new activity (the user backed out and launched the app again, same size): the
+        // root host moves the window's native tree into this activity's content layer now, and a Core layout tick is
+        // requested - nothing else would run one, so the new activity would stay blank.
+        if (XamlRoot is { } xamlRoot && XamlRootMap.GetHostForRoot(xamlRoot) is AndroidXamlRootHost host)
+        {
+            host.AttachRootView();
+            Window?.RootElement?.InvalidateMeasure();
+            host.InvalidateRender();
+        }
+
         RaiseNativeSizeChanged();
         ApplySystemOverlaysTheming();
     }
@@ -338,16 +371,82 @@ internal sealed class AndroidNativeWindowWrapper : NativeWindowWrapperBase //was
 
     private void ApplySystemOverlaysTheming()
     {
-        // In the edge-to-edge experience the status bar foreground follows the app theme.
+        // In the edge-to-edge experience the system bars' foreground follows the theme the window's content shows: the
+        // ActualTheme of the content's top element (SystemBarsAppearance.FindThemeSource: an app that switches theme on
+        // its root element or on its page's root never changes Application.RequestedTheme), the application's theme
+        // while there is no content yet.
+        TrackThemeSource();
         if (MUX.Application.Current is { } application
             && Activity is { IsDestroyed: false } activity
             && activity.Window?.DecorView is { } decorView)
         {
+            var themeSource = _themeSource;
+            var lightBars = SystemBarsAppearance.UseLightBars(
+                themeSource != null,
+                themeSource?.ActualTheme ?? ElementTheme.Default,
+                application.RequestedTheme);
+            if (_appliedLightBars == lightBars && ReferenceEquals(_appliedBarsActivity, activity))
+            {
+                return;
+            }
+
+            _appliedLightBars = lightBars;
+            _appliedBarsActivity = activity;
             var insetsController = AWindowCompat.GetInsetsController(activity.Window, decorView);
 
             // "appearance light" refers to status bar set to light theme == dark foreground
-            insetsController.AppearanceLightStatusBars = application.RequestedTheme == ApplicationTheme.Light;
-            insetsController.AppearanceLightNavigationBars = application.RequestedTheme == ApplicationTheme.Light;
+            insetsController.AppearanceLightStatusBars = lightBars;
+            insetsController.AppearanceLightNavigationBars = lightBars;
+        }
+    }
+
+    /// <summary>
+    /// Follows the theme source (the top element of the window's content, <see cref="SystemBarsAppearance.FindThemeSource"/>):
+    /// re-applies the system bars' appearance when its ActualTheme changes, and moves to a new source when the content
+    /// changes (a replaced window content or a navigated page: checked after every layout pass and when the source unloads).
+    /// </summary>
+    private void TrackThemeSource()
+    {
+        var source = SystemBarsAppearance.FindThemeSource(Window?.Content);
+        if (ReferenceEquals(source, _themeSource))
+        {
+            return;
+        }
+
+        if (_themeSource is { } previous)
+        {
+            previous.ActualThemeChanged -= OnThemeSourceActualThemeChanged;
+            previous.Unloaded -= OnThemeSourceUnloaded;
+            previous.LayoutUpdated -= OnThemeSourceLayoutUpdated;
+        }
+
+        _themeSource = source;
+        if (source != null)
+        {
+            source.ActualThemeChanged += OnThemeSourceActualThemeChanged;
+            source.Unloaded += OnThemeSourceUnloaded;
+            source.LayoutUpdated += OnThemeSourceLayoutUpdated;
+        }
+    }
+
+    private void OnThemeSourceActualThemeChanged(FrameworkElement sender, object args) => ApplySystemOverlaysTheming();
+
+    // A page navigated in, or content set after the window was shown: the top element changed.
+    private void OnThemeSourceLayoutUpdated(object sender, object e)
+    {
+        if (!ReferenceEquals(SystemBarsAppearance.FindThemeSource(Window?.Content), _themeSource))
+        {
+            ApplySystemOverlaysTheming();
+        }
+    }
+
+    // When the window's content is replaced, the old content unloads while the window is taking the new one (Core
+    // stores the new content after the old one left the tree): re-apply once the replacement is in place.
+    private void OnThemeSourceUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DispatcherQueue: { } queue })
+        {
+            queue.TryEnqueue(ApplySystemOverlaysTheming);
         }
     }
 

@@ -67,29 +67,29 @@
     <PackageVersion Include="CodeBrix.ServiceLocator.MsplLicenseForever" Version="1.0.251.1433" />
     <PackageVersion Include="CodeBrix.Platform.Fonts.Fluent.ApacheLicenseForever" Version="1.0.248.1204" />
     <!-- The Svg add-in Core draws with CodeBrix.SkiaSvg (self-produced; the version the pinned Platform build declares). -->
-    <PackageVersion Include="CodeBrix.SkiaSvg.MitLicenseForever" Version="1.0.278.1152" />
+    <PackageVersion Include="CodeBrix.SkiaSvg.MitLicenseForever" Version="1.0.284.1048" />
     <!-- The AppSettings add-in's storage (self-produced; the version the pinned Platform build declares). It brings
          Microsoft.Data.Sqlite and SQLitePCLRaw (e_sqlite3, Android natives included) - the accepted SQLitePCLRaw exception. -->
     <PackageVersion Include="CodeBrix.Sqlite.ApacheLicenseForever" Version="1.0.275.125" />
     <!-- The Graphics3DGL add-in Core renders through this managed OpenGL binding (self-produced, not a CodeBrix.Platform
          repository package; the version the pinned Platform build declares). -->
-    <PackageVersion Include="CodeBrix.Platform.OpenGL.MitLicenseForever" Version="1.0.252.16" />
+    <PackageVersion Include="CodeBrix.Platform.OpenGL.MitLicenseForever" Version="1.0.290.833" />
     <!-- The WebGpu add-in (self-produced; the version the pinned Platform build's WebGpu package declares): the view's
          device and off-screen target, and through it CodeBrix.WebGpu.Native (the binding and the wgpu engine's natives,
          android-arm64 and android-x64 included). -->
     <PackageVersion Include="CodeBrix.WebGpu.Skia.MitLicenseForever" Version="1.0.291.34" />
     <!-- The TerminalView add-in Core (AP7-B): the VT engine (self-produced) and the terminal font, at the versions the
          pinned Platform build's TerminalView package declares. -->
-    <PackageVersion Include="CodeBrix.Terminal.MitLicenseForever" Version="1.0.275.130" />
+    <PackageVersion Include="CodeBrix.Terminal.MitLicenseForever" Version="1.0.284.1067" />
     <PackageVersion Include="CodeBrix.Platform.Fonts.RobotoMono.OflLicenseForever" Version="1.0.248.1223" />
     <!-- The PlotterView add-in Core (AP7-C): the chart engine (self-produced, not a CodeBrix.Platform repository package;
          the version the pinned Platform build's PlotterView package declares - D7 touch pan/pinch). -->
     <PackageVersion Include="CodeBrix.Plotter.MitLicenseForever" Version="1.0.278.1156" />
     <!-- The AudioPlayer and VideoPlayer add-ins (AP7-C): CodeBrix.Audio's Android backend (self-produced; it depends on
-         CodeBrix.Audio.Core.MitLicenseForever 1.0.271.1165, the shared managed audio library - the ONE Core line every audio
+         CodeBrix.Audio.Core.MitLicenseForever 1.0.283.1382, the shared managed audio library - the ONE Core line every audio
          package here resolves) and the video engine (self-produced; its only audio dependency is that same Core). -->
-    <PackageVersion Include="CodeBrix.Audio.Android.ApacheLicenseForever" Version="1.0.271.1201" />
-    <PackageVersion Include="CodeBrix.VideoPlayback.MitLicenseForever" Version="1.0.280.1149" />
+    <PackageVersion Include="CodeBrix.Audio.Android.ApacheLicenseForever" Version="1.0.283.1398" />
+    <PackageVersion Include="CodeBrix.VideoPlayback.MitLicenseForever" Version="1.0.290.1224" />
   </ItemGroup>
 
   <!--
@@ -101,7 +101,7 @@
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.12" />
     <PackageVersion Include="CodeBrix.Cryptography.MitLicenseForever" Version="1.0.275.117" />
-    <PackageVersion Include="CodeBrix.PdfRasterizer.MitLicenseForever" Version="1.0.271.1182" />
+    <PackageVersion Include="CodeBrix.PdfRasterizer.MitLicenseForever" Version="1.0.285.692" />
     <PackageVersion Include="CodeBrix.Platform.Fonts.OpenSans.ApacheLicenseForever" Version="1.0.248.1181" />
     <PackageVersion Include="CodeBrix.Platform.Fonts.Roboto.OflLicenseForever" Version="1.0.248.1219" />
     <!-- samples/WebGpuDemo: the OPTIONAL higher WebGPU layer the copied Models page draws with (glTF models, physically

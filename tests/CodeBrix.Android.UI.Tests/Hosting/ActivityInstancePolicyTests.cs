@@ -88,6 +88,34 @@ public sealed class ActivityInstancePolicyTests
         ActivityInstancePolicy.SurfacesAsLaunch(isBringToFrontIntent: true).Should().BeFalse();
     }
 
+    [Theory]
+    [InlineData(false, false, true)]
+    [InlineData(true, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(true, true, false)]
+    public void a_new_activity_a_launch_created_while_the_application_lives_surfaces_that_launch(
+        bool hasSavedInstanceState, bool bringToFront, bool expected)
+    {
+        //Act - re-created by Android (saved state) is not a launch, and the host's marker never is
+        var surfaced = ActivityInstancePolicy.SurfacesCreateAsLaunch(ActivityCreateAction.ShowExistingWindow, hasSavedInstanceState, bringToFront);
+
+        //Assert
+        surfaced.Should().Be(expected);
+    }
+
+    [Fact]
+    public void only_an_activity_that_shows_the_existing_window_surfaces_its_intent_from_on_create()
+    {
+        //Act - the first activity's intent is the app's start intent (the main activity's Intent); a forwarded
+        //      second instance hands its intent to the running activity instead
+        var first = ActivityInstancePolicy.SurfacesCreateAsLaunch(ActivityCreateAction.StartApplication, hasSavedInstanceState: false, isBringToFrontIntent: false);
+        var forwarded = ActivityInstancePolicy.SurfacesCreateAsLaunch(ActivityCreateAction.ForwardToRunningInstance, hasSavedInstanceState: false, isBringToFrontIntent: false);
+
+        //Assert
+        first.Should().BeFalse();
+        forwarded.Should().BeFalse();
+    }
+
     [Fact]
     public void the_bring_to_front_marker_is_namespaced_to_the_host()
     {

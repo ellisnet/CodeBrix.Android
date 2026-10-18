@@ -349,6 +349,16 @@ public sealed class NativeControlsSteps
         await TestTargetFixture.WaitForIdleAsync().ConfigureAwait(false);
     }
 
+    /// <summary>Replaces the window's test content by an empty panel (the shown elements leave the tree).</summary>
+    [When("the content is replaced by an empty panel")]
+    public async Task When_the_content_is_replaced_by_an_empty_panel()
+    {
+        Grid empty = null!;
+        await TestTargetFixture.RunOnUIThreadAsync(() => empty = new Grid()).ConfigureAwait(false);
+        await TestTargetFixture.SetContentAsync(empty).ConfigureAwait(false);
+        await TestTargetFixture.WaitForIdleAsync().ConfigureAwait(false);
+    }
+
     /// <summary>Asserts the query an AutoSuggestBox submitted.</summary>
     [Then("the AutoSuggestBox {string} submitted {string}")]
     public async Task Then_the_AutoSuggestBox_submitted(string name, string text)

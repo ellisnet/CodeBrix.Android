@@ -17,3 +17,11 @@ CBAND0005 | CodeBrix.Android | Warning | CbandDescriptors
 CBAND0006 | CodeBrix.Android | Warning | CbandDescriptors
 CBAND0007 | CodeBrix.Android | Warning | CbandDescriptors
 CBAND0008 | CodeBrix.Android | Warning | CbandDescriptors
+
+## Release 1.1
+
+### Changed Rules
+
+Rule ID | New Category | New Severity | Old Category | Old Severity | Notes
+--------|--------------|--------------|--------------|--------------|-------
+CBAND0001 | CodeBrix.Android | Info | CodeBrix.Android | Warning | CbandDescriptors: an app ControlTemplate is honoured (shown as written), not ignored; information, and reworded to say so

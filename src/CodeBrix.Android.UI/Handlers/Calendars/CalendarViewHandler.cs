@@ -182,6 +182,8 @@ internal sealed class CalendarViewHandler : ViewHandler<CalendarView, ACalendarV
 
     private void ShowSelection()
     {
+        // With no SelectedDate the native widget is left alone and marks the current day, as the Material calendar always
+        // marks one day: an accepted native difference (Jeremy 2026-10-17), not a pending item.
         if (Element is not CalendarView calendar || PlatformView is not { } view || calendar.SelectedDates.Count == 0)
         {
             return;

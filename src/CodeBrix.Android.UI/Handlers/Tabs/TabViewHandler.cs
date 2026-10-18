@@ -25,11 +25,14 @@ internal sealed class TabViewHandler : TabStripOverlayHandler<TabView>
     };
 
     private IObservableVector<object> _watchedItems;
+    private readonly TabItemWatcher _tabWatcher;
 
     /// <summary>Creates the handler.</summary>
     public TabViewHandler()
         : base(Mapper)
     {
+        // A renamed tab (or a "*" dirty marker in its header) and a tab that becomes (not) closable refresh the strip.
+        _tabWatcher = new TabItemWatcher(PostRefresh);
     }
 
     /// <summary>True when the native row can show a TabView (not re-templated by the application).</summary>
@@ -49,6 +52,7 @@ internal sealed class TabViewHandler : TabStripOverlayHandler<TabView>
     protected override IReadOnlyList<TabSpec> ReadTabs(TabView element)
     {
         var tabs = new List<TabSpec>();
+        var containers = new List<TabViewItem>();
         var items = element.TabItems;
         var count = element.TabItemsSource is System.Collections.IEnumerable source ? Count(source) : items?.Count ?? 0;
         for (var i = 0; i < count; i++)
@@ -56,8 +60,10 @@ internal sealed class TabViewHandler : TabStripOverlayHandler<TabView>
             var container = element.ContainerFromIndex(i) as TabViewItem ?? (i < (items?.Count ?? 0) ? items[i] as TabViewItem : null);
             var header = container?.Header ?? (i < (items?.Count ?? 0) ? items[i] : null);
             tabs.Add(new TabSpec(header?.ToString() ?? string.Empty, container?.IsClosable ?? false));
+            containers.Add(container);
         }
 
+        _tabWatcher.Sync(containers);
         return tabs;
     }
 
@@ -105,6 +111,8 @@ internal sealed class TabViewHandler : TabStripOverlayHandler<TabView>
             _watchedItems.VectorChanged -= OnItemsChanged;
             _watchedItems = null;
         }
+
+        _tabWatcher.Clear();
 
         base.DisconnectHandler(platformView);
     }

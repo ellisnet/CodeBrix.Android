@@ -71,4 +71,22 @@ internal static class ActivityInstancePolicy
     /// <param name="isBringToFrontIntent">The intent carries <see cref="BringToFrontExtra"/>.</param>
     /// <returns>True when the intent is surfaced through CodeBrixApplication.OnLaunchIntent.</returns>
     internal static bool SurfacesAsLaunch(bool isBringToFrontIntent) => !isBringToFrontIntent;
+
+    /// <summary>
+    /// Whether the intent of a NEW activity that shows the existing window is a launch the application hears about
+    /// (CodeBrixApplication.OnLaunchIntent). The application is alive and its previous activity is gone - Back on the
+    /// root page finished it (API 36 and later; API 33 only moves the task back), or the app closed its window - so
+    /// this activity was created by a launch: the launcher icon, a deep link, a notification tap, an <c>am start</c>.
+    /// That is the same launch that reaches a living activity through OnNewIntent, and it is surfaced by the same rule
+    /// (every intent except the host's bring-to-front intent), so an app hears about a relaunch on every API level. An
+    /// activity Android re-creates on its own (a configuration change the app did not declare, or an activity Android
+    /// reclaimed and restored) is not a launch: it comes with a saved instance state and carries the intent the
+    /// application already saw.
+    /// </summary>
+    /// <param name="action">What the activity does in OnCreate (<see cref="Decide"/>).</param>
+    /// <param name="hasSavedInstanceState">Android re-created the activity (OnCreate received a saved state).</param>
+    /// <param name="isBringToFrontIntent">The intent carries <see cref="BringToFrontExtra"/>.</param>
+    /// <returns>True when the activity's intent is surfaced through CodeBrixApplication.OnLaunchIntent.</returns>
+    internal static bool SurfacesCreateAsLaunch(ActivityCreateAction action, bool hasSavedInstanceState, bool isBringToFrontIntent) =>
+        action == ActivityCreateAction.ShowExistingWindow && !hasSavedInstanceState && SurfacesAsLaunch(isBringToFrontIntent);
 }

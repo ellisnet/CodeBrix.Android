@@ -208,6 +208,9 @@ internal sealed class ColorPickerHandler : ViewHandler<ColorPicker, ColorPickerV
     /// <inheritdoc />
     protected override void DisconnectHandler(ColorPickerView platformView)
     {
+        // A picker removed while one of its channel fields has the soft keyboard (a page navigating away) takes the
+        // keyboard with it.
+        SoftKeyboard.HideIfEditorFocusedWithin(platformView);
         platformView.Spectrum.Picked -= OnSpectrumPicked;
         platformView.ColorSlider.Slider.Change -= OnColorSliderChanged;
         platformView.AlphaSlider.Slider.Change -= OnAlphaSliderChanged;

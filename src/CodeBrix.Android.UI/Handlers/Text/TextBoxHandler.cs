@@ -772,7 +772,24 @@ internal class TextBoxHandler : ViewHandler<TextBox, TextBoxView>, INativeTextEd
     private void OnEditorAction(object sender, global::Android.Widget.TextView.EditorActionEventArgs e)
     {
         e.Handled = false;
-        if (e.ActionId == AImeAction.ImeNull || Element?.XamlRoot is not { } root)
+        var response = EditorActionPolicy.Decide(
+            e.ActionId == AImeAction.ImeNull,
+            e.Event is { KeyCode: AKeycode.Enter },
+            e.Event?.Action == AKeyEventActions.Down,
+            Element is TextBox { AcceptsReturn: true });
+        if (response == EditorActionResponse.Ignore)
+        {
+            return;
+        }
+
+        if (response == EditorActionResponse.ConsumeOnly)
+        {
+            // The key-up of a key-event Enter whose key-down was raised (API 33: TextView would move the focus on it).
+            e.Handled = true;
+            return;
+        }
+
+        if (Element?.XamlRoot is not { } root)
         {
             return;
         }
@@ -785,7 +802,11 @@ internal class TextBoxHandler : ViewHandler<TextBox, TextBoxView>, INativeTextEd
             using var up = new AKeyEvent(now, now, AKeyEventActions.Up, AKeycode.Enter, 0);
             var handled = keyboard.OnNativeKeyEvent(down);
             keyboard.OnNativeKeyEvent(up);
-            e.Handled = handled;
+            e.Handled = handled || response == EditorActionResponse.RaiseEnterAndConsume;
+        }
+        else if (response == EditorActionResponse.RaiseEnterAndConsume)
+        {
+            e.Handled = true;
         }
     }
 

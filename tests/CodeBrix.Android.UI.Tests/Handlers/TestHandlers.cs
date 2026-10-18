@@ -39,3 +39,34 @@ internal sealed class RecordingHandler : ElementHandler<UIElement, RecordingView
 internal sealed class RecordingView
 {
 }
+
+/// <summary>
+/// A <see cref="RecordingHandler"/>-style handler that declares RetainedAcrossLeave (the retained-disconnect mode):
+/// it records its lifecycle and how many platform views it created.
+/// </summary>
+internal sealed class RetainedRecordingHandler : ElementHandler<UIElement, RecordingView>
+{
+    internal RetainedRecordingHandler(IPropertyMapper mapper)
+        : base(mapper)
+    {
+    }
+
+    internal List<string> Log { get; } = new();
+
+    internal int CreatedViews { get; private set; }
+
+    public override ElementHandlerCapabilities Capabilities => ElementHandlerCapabilities.RetainedAcrossLeave;
+
+    protected override RecordingView CreatePlatformElement()
+    {
+        CreatedViews++;
+        Log.Add("create");
+        return new RecordingView();
+    }
+
+    protected override void ConnectHandler(RecordingView platformView) => Log.Add("connect-view");
+
+    protected override void DisconnectHandler(RecordingView platformView) => Log.Add("disconnect-view");
+
+    protected override void OnConnected() => Log.Add("connected");
+}

@@ -20,11 +20,14 @@ namespace CodeBrix.Android.UI.Platform.Recycler;
 /// The panel is a Core VirtualizingPanel (IVirtualizingPanel; FlipView sizes its containers from a
 /// VirtualizingPanel's available size) so that Core's Selector does not treat it as a
 /// non-virtualizing panel to fill with a container for EVERY item (Selector.ShouldItemsControlManageChildren).
-/// Core then talks to the panel's layouter for collection changes (AddItems/RemoveItems/Refresh), paging and
-/// the slow ScrollIntoView path: GetLayouter() returns Core's ItemsStackPanelLayout initialized on
-/// a detached panel that never loads, so those calls stay inert (the RecyclerView adapter follows the
-/// collection itself); <see cref="DrainLayouter"/> clears the change queue such calls leave behind. A Core
-/// seam for this (an items-host capability) is requested in the AP3b report.
+/// The list handlers are Core's ITEMS HOST (ElementHandlerCapabilities.OwnsItemsHost, RecyclerItemsControlHandler):
+/// Core generates no containers into this panel, reads the realised ones from the handler, takes the visible range
+/// from the RecyclerView and sends ScrollIntoView to the handler, so it does not drive the panel's layouter for them.
+/// A VirtualizingPanel still has to answer GetLayouter() (its PhysicalOrientation reads the layouter, and a few Core
+/// paths - the ComboBox drop-down, the ItemsRepeater's panel, which is not an items host - may still call it), so it
+/// returns Core's ItemsStackPanelLayout initialized on a detached panel that never loads: those calls stay inert (the
+/// RecyclerView adapter follows the collection itself), and <see cref="DrainLayouter"/> clears any change queue they
+/// leave behind.
 /// </remarks>
 internal sealed class RecyclerItemsPanel : VirtualizingPanel
 {
