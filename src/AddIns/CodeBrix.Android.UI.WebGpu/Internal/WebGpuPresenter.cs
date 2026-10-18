@@ -1,5 +1,5 @@
 // Ported from CodeBrix.Platform (Apache License 2.0; THIRD-PARTY-NOTICES.txt item 3): src/AddIns/Platform.UI.WebGpu/Internal/WebGpuPresenter.skia.cs
-// (branch main @ a26d07f74c1396007bd3e3480872456538e3876b; the working tree the pinned build 1.0.287.1311 was packed from).
+// (branch main working tree of 2026-10-17 - round 2, UNCOMMITTED at the time of the port, on top of 7a64364e606320e6322bc598f74ec352e99be9db; the commit hash can be added later).
 // Changes are marked ANDROID PORT: (1) the class summary names the Android presenters (the desktop direct presenters are not ported; Android's direct path is a SurfaceView, not an adopted device); (2) IsWaiting (the DirectSurface path waiting for its window).
 
 #nullable enable
@@ -64,7 +64,20 @@ internal abstract class WebGpuPresenter : IDisposable
 
 	/// <summary>Shows the frame <see cref="EndPass"/> submitted.</summary>
 	/// <param name="host">The engine's owner, which presents to the surface.</param>
-	internal abstract void Show(IWebGpuRenderEngineHost host);
+	/// <param name="allowDeferred">True when another frame is sure to follow (the Continuous driver, not paused): a path
+	/// that reads frames back may then finish this frame's read-back during the NEXT frame and present the previous
+	/// frame now (one frame of latency). False: the frame is presented before this returns. The direct paths ignore
+	/// it (they present GPU-resident frames at once).</param>
+	internal abstract void Show(IWebGpuRenderEngineHost host, bool allowDeferred);
+
+	/// <summary>
+	/// Completes and presents a frame <see cref="Show"/> left pending (allowDeferred), if there is one - when continuous
+	/// ticking stops, so that no frame sits unpresented. Nothing on the paths that never defer.
+	/// </summary>
+	/// <param name="host">The engine's owner, which presents to the surface.</param>
+	internal virtual void FlushPendingFrame(IWebGpuRenderEngineHost host)
+	{
+	}
 
 	/// <summary>
 	/// Errors the device reported since the last call that mean its state can no longer be trusted, joined into one

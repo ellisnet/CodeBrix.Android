@@ -1,5 +1,5 @@
 // Ported from CodeBrix.Platform (Apache License 2.0; THIRD-PARTY-NOTICES.txt item 3): src/AddIns/Platform.UI.WebGpu.Tests/RecordingEngineHost.cs
-// (branch main @ a26d07f74c1396007bd3e3480872456538e3876b; the working tree the pinned build 1.0.287.1311 was packed from).
+// (branch main working tree of 2026-10-17 - round 2, UNCOMMITTED at the time of the port, on top of 7a64364e606320e6322bc598f74ec352e99be9db; the commit hash can be added later).
 // Changes are marked ANDROID PORT: (1) the namespace of this test assembly; (2) no direct-frame source (the host interface has no PresentDirect on Android): PresentSurfaceFrame (the DirectSurface path) is counted instead.
 
 #nullable enable
@@ -48,6 +48,10 @@ internal sealed class RecordingEngineHost : IWebGpuRenderEngineHost
 	/// <summary>The reason of the last DeviceLost, or null.</summary>
 	internal string? LastLostReason { get; private set; }
 
+	/// <summary>True to record every Readback present as "Present" in <see cref="Events"/> too (off by default, so the
+	/// lifecycle sequences other tests assert stay as they are).</summary>
+	internal bool RecordPresents { get; set; }
+
 	/// <summary>Runs when DeviceReady is raised (the test's "renderer").</summary>
 	internal System.Action? OnReady { get; set; }
 
@@ -80,6 +84,10 @@ internal sealed class RecordingEngineHost : IWebGpuRenderEngineHost
 
 		previous?.Dispose();
 		Interlocked.Increment(ref _presented);
+		if (RecordPresents)
+		{
+			Record("Present");
+		}
 	}
 
 	// ANDROID PORT (2): no PresentDirect / DirectSource (the desktop direct paths are not ported).

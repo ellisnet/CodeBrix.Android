@@ -788,6 +788,18 @@ What differs on Android:
       - RenderPath is Readback by default: each finished frame is read back
         once and drawn by a native Skia view (the SkiaSharp.Views add-in's
         canvas), so the view clips, overlaps and moves like any other element.
+        Under the Continuous driver the copy is double-buffered: a frame's
+        read-back is begun when it ends and completed when the NEXT frame
+        ends, so the copy overlaps the next frame's recording and the picture
+        on screen is ONE FRAME BEHIND the newest frame. OnDemand, Manual and
+        native-module frames (and every frame ended through the public
+        EndFrame) are read back and presented before EndFrame returns - one
+        picture per frame, none left waiting. The frame in flight is presented
+        when continuous ticking stops: FrameDriver leaves Continuous, IsPaused
+        becomes true, or the view is unloaded. A frame still in flight when the
+        view resizes or loses its device is dropped (it is never shown after a
+        newer picture). The DirectSurface path (below) is unchanged: it
+        presents every frame inside its own EndFrame on every driver.
       - Readback costs one GPU-to-processor copy of the whole texture per
         frame, which grows with the view's pixel size: on some phone GPUs a
         full-screen view at a high-density display's resolution renders only a

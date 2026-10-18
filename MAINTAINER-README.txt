@@ -975,7 +975,17 @@ initializer (Android/AndroidPlatformBootstrap) registers its contracts and handl
     the Platform keeps it in its Skia assembly; the Android assembly re-provides it: Public/ (WebGpuRenderView,
     IWebGpuRenderer, WebGpuFrame, WebGpuDeviceInfo, the device-ready / render / overlay args, WebGpuRenderViewHandoff -
     the same 40-byte layout) and Internal/ (WebGpuRenderEngine - the frame protocol and device lifetime -, the
-    Readback presenter, the paint surface, the hand-off block), ported with provenance headers. ANDROID PORT changes:
+    Readback presenter, the paint surface, the hand-off block), ported with provenance headers. The Readback
+    presenter, the engine and the view carry the Platform's asynchronous read-back verbatim (WebGpuSkiaTarget.
+    BeginReadPixels / EndReadPixels): under the Continuous driver, unpaused (WebGpuRenderEngine.MayDeferPresent - it
+    lives in the add-in assembly, as the Platform keeps it in its Skia assembly, never in the Core), a frame's copy is
+    begun at its EndFrame and completed + presented at the next frame's (one frame of latency, two buffers in steady
+    state, a 2 s wait cap); OnDemand / Manual / module frames and the public EndFrame present synchronously; the view
+    flushes (engine.FlushPendingFrame, TryEnter on the frame gate) when FrameDriver leaves Continuous, when IsPaused
+    becomes true and in LeaveTree before the detach; resize, teardown, device loss and a newer synchronous frame cancel
+    the pending ticket. Internal/WebGpuSurfacePresenter (DirectSurface) takes the Show(host, allowDeferred) signature
+    and ignores the flag. The element is not hosted by the host tests, so the Platform's view-level fences of those
+    flush points are engine-level tests there (WebGpuRenderEngineGpuTests, ANDROID PORT (3)). ANDROID PORT changes:
     the desktop direct paths (adopting a head's Vulkan / Metal device: INativeGpuDeviceProvider, the direct presenters)
     are not ported - Android's direct path is DirectSurface (below); the error scope helper is ported for it; the
     WebGpu.Native Adapter type is written qualified (the
@@ -1002,10 +1012,11 @@ initializer (Android/AndroidPlatformBootstrap) registers its contracts and handl
     runs in an error scope (a failed command buffer must never be submitted). Failure -> FailureReason -> the engine's
     FallBackToReadback (one line, DeviceLost) and the view drops the SurfaceView (WantsWindowSurface). The surface is
     behind Internal/IWebGpuWindowSurface so the host tests run the whole path on the laptop's Vulkan device with a fake
-    surface (DirectSurfaceGpuTests). Measured on the sample (Fifo, target 60): Pixel 4 XL 59-61 fps on every page
-    (Readback ~4), HP 56-60 (Readback 42-60). Readback speed is the CodeBrix.WebGpu.Skia ReadPixels call:
-    on Adreno 640 it reads ~50 MB/s (FIXLIST_webgpu_addin_found_along_the_way_2026-10-14.txt) - a full-screen view on
-    the Pixel 4 XL runs at ~4 frames/s while the HP laptop's Intel Xe runs ~55. Fences: tests/CodeBrix.Android.UI.
+    surface (DirectSurfaceGpuTests). Measured on the sample (Fifo, target 60): Pixel 4 XL 59-61 fps on every page,
+    HP 56-60. Readback (Continuous, target 60), on the WebGpu.Skia build with the faster read-back copy and the
+    double-buffered presenter: Pixel 4 XL 34-36 fps on the full-screen Triangle (1328x2275; ~4 fps with the old
+    synchronous ReadPixels at ~50 MB/s on Adreno 640), 42-43 Models, ~35 Renderer class, 41-42 Controls; HP 56-61 on
+    every page (the 60 target). Fences: tests/CodeBrix.Android.UI.
     WebGpu.Tests (host-free: the Core contract; the add-in's Internal/ and the non-element Public/ files linked in, with
     the Platform suite's engine, surface and hand-off tests ported and run on the host's real Vulkan device - GPU tests
     skip with the engine's reason without an adapter) and the AndroidWebGpu UIReqs group.

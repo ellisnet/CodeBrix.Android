@@ -77,7 +77,7 @@
     <!-- The WebGpu add-in (self-produced; the version the pinned Platform build's WebGpu package declares): the view's
          device and off-screen target, and through it CodeBrix.WebGpu.Native (the binding and the wgpu engine's natives,
          android-arm64 and android-x64 included). -->
-    <PackageVersion Include="CodeBrix.WebGpu.Skia.MitLicenseForever" Version="1.0.287.390" />
+    <PackageVersion Include="CodeBrix.WebGpu.Skia.MitLicenseForever" Version="1.0.291.34" />
     <!-- The TerminalView add-in Core (AP7-B): the VT engine (self-produced) and the terminal font, at the versions the
          pinned Platform build's TerminalView package declares. -->
     <PackageVersion Include="CodeBrix.Terminal.MitLicenseForever" Version="1.0.275.130" />
@@ -107,8 +107,8 @@
     <!-- samples/WebGpuDemo: the OPTIONAL higher WebGPU layer the copied Models page draws with (glTF models, physically
          based shading, image-based lighting, a skybox) and the glTF library it is built on, at the versions the
          CodeBrix.Platform WebGpuDemo pins. Never a dependency of the WebGpu add-in. -->
-    <PackageVersion Include="CodeBrix.WebGpu.Graphics.MitLicenseForever" Version="1.0.287.390" />
-    <PackageVersion Include="CodeBrix.Graphics3D.Gltf2.MitLicenseForever" Version="1.0.261.293" />
+    <PackageVersion Include="CodeBrix.WebGpu.Graphics.MitLicenseForever" Version="1.0.291.34" />
+    <PackageVersion Include="CodeBrix.Graphics3D.Gltf2.MitLicenseForever" Version="1.0.290.996" />
   </ItemGroup>
 
   <!-- Build tooling -->

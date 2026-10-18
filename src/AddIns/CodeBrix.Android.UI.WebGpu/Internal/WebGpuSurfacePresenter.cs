@@ -146,7 +146,9 @@ internal sealed class WebGpuSurfacePresenter : WebGpuPresenter
 	/// during the frame, or the surface asked to be reconfigured (the next frame does it).
 	/// </summary>
 	/// <param name="host">The engine's owner.</param>
-	internal override unsafe void Show(IWebGpuRenderEngineHost host)
+	/// <param name="allowDeferred">Ignored: the frame is drawn onto the window surface and presented at once, on every
+	/// driver (nothing is read back, so there is nothing to overlap with the next frame).</param>
+	internal override unsafe void Show(IWebGpuRenderEngineHost host, bool allowDeferred)
 	{
 		if (_surface is not { } surface || !_configured || _target is not { } target || _blit is not { } blit || _window() is null)
 		{

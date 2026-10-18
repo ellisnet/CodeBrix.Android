@@ -1,6 +1,6 @@
 // Ported from CodeBrix.Platform (Apache License 2.0; THIRD-PARTY-NOTICES.txt item 3): src/AddIns/Platform.UI.WebGpu/Internal/WebGpuReadbackPresenter.skia.cs
-// (branch main @ a26d07f74c1396007bd3e3480872456538e3876b; the working tree the pinned build 1.0.287.1311 was packed from).
-// Verbatim: the Readback render path (reference-counted read-back buffers, as the Platform's B2 fix left it).
+// (branch main working tree of 2026-10-17 - round 2, UNCOMMITTED at the time of the port, on top of 7a64364e606320e6322bc598f74ec352e99be9db; the commit hash can be added later).
+// Verbatim: the Readback render path (reference-counted read-back buffers, as the Platform's B2 fix left it; the asynchronous, double-buffered read-back under the Continuous driver of round 2).
 
 #nullable enable
 
@@ -13,7 +13,7 @@ namespace CodeBrix.Platform.UI.WebGpu.Internal;
 
 /// <summary>
 /// The Readback render path's GPU side: the view's OWN WebGPU device, an off-screen (headless) target the size of the
-/// element, and two alternating BGRA bitmaps each finished frame is read back into - one GPU-to-processor copy per
+/// element, and reference-counted BGRA buffers each finished frame is read back into - one GPU-to-processor copy per
 /// frame - and wrapped, with no further copy, as the SKImage the surface paints.
 /// </summary>
 /// <remarks>
@@ -28,6 +28,18 @@ namespace CodeBrix.Platform.UI.WebGpu.Internal;
 /// a buffer of an old size is freed once its last picture is gone.
 /// </para>
 /// <para>
+/// UNDER THE CONTINUOUS DRIVER the read-back is asynchronous and double-buffered (<see cref="Show"/> with
+/// allowDeferred): a frame's copy is only BEGUN when it ends (<c>BeginReadPixels</c>, which does not wait), and it is
+/// completed - and its picture presented - when the NEXT frame ends, just before that frame's own copy is begun. The
+/// GPU copy of frame N therefore overlaps the recording of frame N+1, the wait in <c>EndReadPixels</c> normally finds
+/// the map complete, and the Readback path runs one frame behind. A frame that is not followed by another must never
+/// sit unpresented, so every other frame (OnDemand, Manual, a native module's, any frame ended through the public
+/// <c>EndFrame</c>) is read back and presented synchronously inside its own <c>EndFrame</c>, and the view flushes the
+/// pending frame (<see cref="FlushPendingFrame"/>) when continuous ticking stops. A pending read-back is cancelled -
+/// never presented - when its frame can no longer be the newest picture: a newer synchronous frame, a new size (a new
+/// target: the frame is gone with its texture), teardown and device loss.
+/// </para>
+/// <para>
 /// Every method runs on the thread that holds the view's frame (one at a time, never concurrently). Disposal order is
 /// the WebGpu.Skia rule: targets before their device.
 /// </para>
@@ -36,6 +48,13 @@ internal sealed class WebGpuReadbackPresenter : WebGpuPresenter
 {
 	private static readonly WebGpuSkiaTargetOptions TargetOptions = new() { Format = Format };
 
+	/// <summary>
+	/// The longest wait for a deferred frame's read-back to complete (the engine's own bounded wait, the same as its
+	/// detach wait). In steady state the map is complete long before; a GPU that does not finish a frame's copy in
+	/// this time loses that frame (nothing presented, the target's LastError says why), as a failed read-back always did.
+	/// </summary>
+	internal static readonly TimeSpan DeferredReadbackWait = TimeSpan.FromSeconds(2);
+
 	// Skia calls this when a picture is destroyed (any thread): the picture's reference on its buffer goes.
 	private static readonly SKImageRasterReleaseDelegate ReleasePicture = (_, context) => ((ReadbackBuffer)context!).Release();
 
@@ -43,6 +62,7 @@ internal sealed class WebGpuReadbackPresenter : WebGpuPresenter
 	// because it is only walked on the frame's thread.
 	private readonly System.Collections.Generic.List<ReadbackBuffer> _buffers = new(4);
 	private WebGpuSkiaTarget? _target;
+	private WebGpuSkiaReadback _pending;   // the deferred frame's read-back on _target, or default
 	private bool _disposed;
 
 	/// <summary>Creates the presenter over an AVAILABLE device, which it then owns.</summary>
@@ -78,6 +98,8 @@ internal sealed class WebGpuReadbackPresenter : WebGpuPresenter
 			return true;
 		}
 
+		// A frame still being read back on the old target is gone with that target's texture: cancelled, not shown.
+		CancelPendingFrame();
 		_target?.Dispose();
 		_target = null;
 
@@ -96,13 +118,94 @@ internal sealed class WebGpuReadbackPresenter : WebGpuPresenter
 	/// <inheritdoc/>
 	internal override void EndPass(CommandEncoder encoder) => _target!.EndWebGpuPass();
 
-	/// <summary>Reads the finished frame back once and presents the picture (nothing when the read failed).</summary>
+	/// <summary>
+	/// Synchronous (allowDeferred false): reads the finished frame back and presents its picture before returning
+	/// (nothing when the read failed); a deferred frame still pending is older than this one and is cancelled.
+	/// Deferred: completes and presents the PREVIOUS frame's read-back, then begins this frame's and leaves it pending.
+	/// </summary>
 	/// <param name="host">The engine's owner.</param>
-	internal override void Show(IWebGpuRenderEngineHost host)
+	/// <param name="allowDeferred">True under the Continuous driver (another frame is sure to follow).</param>
+	internal override void Show(IWebGpuRenderEngineHost host, bool allowDeferred)
 	{
-		if (ReadFrame() is { } picture)
+		if (!allowDeferred)
+		{
+			CancelPendingFrame();
+			if (ReadFrame() is { } picture)
+			{
+				host.Present(picture);
+			}
+
+			return;
+		}
+
+		CompletePendingFrame(host);
+		if (Target is { IsAvailable: true } target)
+		{
+			// Default (invalid) when the copy could not be issued (target.LastError): this frame is then lost, as a
+			// failed synchronous read-back loses it.
+			_pending = target.BeginReadPixels();
+		}
+	}
+
+	/// <summary>Completes and presents the deferred frame, if one is pending.</summary>
+	/// <param name="host">The engine's owner.</param>
+	internal override void FlushPendingFrame(IWebGpuRenderEngineHost host) => CompletePendingFrame(host);
+
+	/// <summary>True while a deferred frame's read-back is pending (tests).</summary>
+	internal bool HasPendingFrame => _pending.IsValid;
+
+	// Ends the pending read-back into a free buffer (a bounded wait, normally none) and presents the picture. A failure
+	// (timeout, map failed, device lost) presents nothing; the read-back is cancelled so its slot is free again.
+	private unsafe void CompletePendingFrame(IWebGpuRenderEngineHost host)
+	{
+		if (!_pending.IsValid)
+		{
+			return;
+		}
+
+		var pending = _pending;
+		_pending = default;
+		if (_target is not { } target || !ReferenceEquals(pending.Target, target))
+		{
+			return;
+		}
+
+		if (!target.IsAvailable)
+		{
+			target.CancelReadPixels(pending);
+			return;
+		}
+
+		var width = target.Width;
+		var height = target.Height;
+		var buffer = TakeFreeBuffer(width, height);
+		var pixels = new Span<byte>((void*)buffer.Pixels, buffer.RowBytes * height);
+		if (!target.EndReadPixels(pending, pixels, buffer.RowBytes, DeferredReadbackWait))
+		{
+			// A timeout leaves it pending; every other failure has already freed the slot (cancelling is then a no-op).
+			target.CancelReadPixels(pending);
+			return;
+		}
+
+		if (WrapPicture(buffer, width, height) is { } picture)
 		{
 			host.Present(picture);
+		}
+	}
+
+	// Frame thread. Drops the pending read-back (its slot is freed; nothing is presented).
+	private void CancelPendingFrame()
+	{
+		if (!_pending.IsValid)
+		{
+			return;
+		}
+
+		var pending = _pending;
+		_pending = default;
+		if (_target is { } target && ReferenceEquals(pending.Target, target))
+		{
+			target.CancelReadPixels(pending);
 		}
 	}
 
@@ -136,7 +239,13 @@ internal sealed class WebGpuReadbackPresenter : WebGpuPresenter
 			return null;
 		}
 
-		// The picture takes its own reference on the buffer; Skia's release callback gives it back.
+		return WrapPicture(buffer, width, height);
+	}
+
+	// A picture over the buffer's pixels (no copy). The picture takes its own reference on the buffer; Skia's release
+	// callback gives it back.
+	private static SKImage? WrapPicture(ReadbackBuffer buffer, int width, int height)
+	{
 		var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
 		buffer.AddRef();
 		using var pixmap = new SKPixmap(info, buffer.Pixels, buffer.RowBytes);
@@ -193,6 +302,7 @@ internal sealed class WebGpuReadbackPresenter : WebGpuPresenter
 		}
 
 		_disposed = true;
+		CancelPendingFrame();
 		_target?.Dispose();
 		_target = null;
 		Device.Dispose();

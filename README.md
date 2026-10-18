@@ -43,7 +43,7 @@ Each CodeBrix.Platform add-in has an Android package of its own, named after the
 * App and library assets addressed by `ms-appx:///` URIs, including the fonts of the CodeBrix font packages
 * The app's own fonts everywhere: a font family named by a page resolves to the app's default font file, never to a system font
 * Application logging to logcat through Microsoft.Extensions.Logging
-* WebGPU rendering in a XAML view (the WebGpu add-in's `WebGpuRenderView`): your code records WebGPU commands into each frame on the view's own Vulkan device, with a SkiaSharp overlay, and native modules can drive the view through the CodeBrix.WebGpu hand-off (frames are read back by default; with the experimental direct GPU rendering opt-in they are presented straight to a SurfaceView)
+* WebGPU rendering in a XAML view (the WebGpu add-in's `WebGpuRenderView`): your code records WebGPU commands into each frame on the view's own Vulkan device, with a SkiaSharp overlay, and native modules can drive the view through the CodeBrix.WebGpu hand-off (frames are read back by default - double-buffered under the Continuous driver, one frame behind; with the experimental direct GPU rendering opt-in they are presented straight to a SurfaceView)
 * Android 13 (API 33) and later
 
 ## Sample Code

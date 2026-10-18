@@ -52,7 +52,9 @@ FRAMES page=Triangle path=Readback driver=Continuous size=1872x788 adapter=Intel
 
 and the add-in itself logs `WebGPU device ready: <adapter> (Vulkan), render path Readback.` when a view gets its device.
 The Readback path copies each whole frame back from the GPU, so its frame rate falls as the view's pixel size grows;
-on some phone GPUs a full-screen view renders only a few frames a second.
+on some phone GPUs a full-screen view renders only a few frames a second. Under the Continuous driver (the demo's
+default) that copy overlaps the next frame and the picture on screen is one frame behind; the OnDemand and Manual
+drivers show each frame before it ends.
 
 ## Direct GPU rendering (EXPERIMENTAL)
 
