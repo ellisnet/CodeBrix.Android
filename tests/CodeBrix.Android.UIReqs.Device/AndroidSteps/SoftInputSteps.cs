@@ -485,18 +485,34 @@ public sealed class SoftInputSteps
         height.Should().Be(_contentHeightBefore, "the page content must keep its height");
     }
 
-    /// <summary>The element's bottom edge (Core's layout, on the screen) lies on the soft keyboard's top edge (1 px).</summary>
+    /// <summary>
+    /// The element's bottom edge (Core's layout, on the screen) lies on the soft keyboard's top edge (1 px). The keyboard
+    /// reports up before Core's re-layout for the withheld height has run (a terminal re-fitting 90 lines takes longer than
+    /// a text box), so the measurement is retried for up to 3 s before it is asserted.
+    /// </summary>
     [Then("the bottom edge of {string} is on the soft keyboard's top edge")]
     public async Task Then_bottom_on_keyboard(string name)
     {
-        var (bottom, keyboardTop, inset, keyboard) = await OnUIThreadAsync(() =>
+        (int bottom, int keyboardTop, double inset, double keyboard) measured = default;
+        for (var attempt = 0; attempt < 30; attempt++)
         {
-            var element = (FrameworkElement)ElementRegistry.Resolve(name);
-            var density = AppHost.Activity.Resources.DisplayMetrics.Density;
-            var corner = element.TransformToVisual(null).TransformPoint(new Point(0, element.ActualHeight));
-            var bottomPx = RootTopOnScreen() + (int)Math.Round(corner.Y * density);
-            return (bottomPx, KeyboardTopOnScreen(), Wrapper.KeyboardOcclusionInsetDips, Wrapper.KeyboardDips);
-        }).ConfigureAwait(false);
+            measured = await OnUIThreadAsync(() =>
+            {
+                var element = (FrameworkElement)ElementRegistry.Resolve(name);
+                var density = AppHost.Activity.Resources.DisplayMetrics.Density;
+                var corner = element.TransformToVisual(null).TransformPoint(new Point(0, element.ActualHeight));
+                var bottomPx = RootTopOnScreen() + (int)Math.Round(corner.Y * density);
+                return (bottomPx, KeyboardTopOnScreen(), Wrapper.KeyboardOcclusionInsetDips, Wrapper.KeyboardDips);
+            }).ConfigureAwait(false);
+            if (measured.keyboardTop > 0 && Math.Abs(measured.bottom - measured.keyboardTop) <= 1)
+            {
+                break;
+            }
+
+            await Task.Delay(100).ConfigureAwait(false);
+        }
+
+        var (bottom, keyboardTop, inset, keyboard) = measured;
         keyboardTop.Should().BeGreaterThan(0, "the soft keyboard must be up");
         inset.Should().Be(keyboard, "Core must withhold the keyboard's height ({0} DIPs) from the page", keyboard);
         Math.Abs(bottom - keyboardTop).Should().BeLessThanOrEqualTo(1, "the bottom of \"{0}\" ({1} px) must be on the keyboard's top edge ({2} px)", name, bottom, keyboardTop);

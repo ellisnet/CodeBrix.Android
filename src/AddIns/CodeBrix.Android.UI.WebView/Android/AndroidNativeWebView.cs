@@ -17,6 +17,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using AContext = global::Android.Content.Context;
 using AWebView = global::Android.Webkit.WebView;
+using WebViewScripts = CodeBrix.Android.UI.WebView.Portable.WebViewScripts;
 
 namespace CodeBrix.Android.UI.WebView.Android;
 

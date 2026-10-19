@@ -1050,7 +1050,7 @@ initializer (Android/AndroidPlatformBootstrap) registers its contracts and handl
     Intake and pin (WebGpu): the add-in needs a pinned Platform build that carries the WebGpu add-in package
     (CodeBrix.Platform.WebGpu.ApacheLicenseForever, a PackageDownload in build/intake/CodeBrix.Android.Intake.proj)
     and DirectGpuRenderingMode in UI.Core - 1.0.287.1311 was the first, packed from an unpublished Platform working
-    tree into a local feed, so before a release pack the pin moves to the PUBLISHED family version that carries the
+    tree into a local feed; the pin then moved to 1.0.291.1177, the first PUBLISHED family version that carries the
     add-in (PIN BUMP; never pack a release from a pin that is not on nuget.org). The intake takes the Core
     CodeBrix.Platform.UI.WebGpu.Core.dll + .xml (the Platform packs no .pdb for it) and the package's notices
     (gates/expected-files.txt); gate 2 holds because the Core references neither SkiaSharp nor CodeBrix.WebGpu (the

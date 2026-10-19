@@ -60,14 +60,14 @@
     versions the pinned CodeBrix.Platform build declares), and the Fluent symbols font.
   -->
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.13" />
     <PackageVersion Include="CodeBrix.ServiceLocator.MsplLicenseForever" Version="1.0.251.1433" />
     <PackageVersion Include="CodeBrix.Platform.Fonts.Fluent.ApacheLicenseForever" Version="1.0.248.1204" />
     <!-- The Svg add-in Core draws with CodeBrix.SkiaSvg (self-produced; the version the pinned Platform build declares). -->
-    <PackageVersion Include="CodeBrix.SkiaSvg.MitLicenseForever" Version="1.0.284.1048" />
+    <PackageVersion Include="CodeBrix.SkiaSvg.MitLicenseForever" Version="1.0.291.924" />
     <!-- The AppSettings add-in's storage (self-produced; the version the pinned Platform build declares). It brings
          Microsoft.Data.Sqlite and SQLitePCLRaw (e_sqlite3, Android natives included) - the accepted SQLitePCLRaw exception. -->
     <PackageVersion Include="CodeBrix.Sqlite.ApacheLicenseForever" Version="1.0.275.125" />

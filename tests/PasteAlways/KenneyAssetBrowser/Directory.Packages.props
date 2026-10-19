@@ -13,7 +13,7 @@
     <PackageVersion Include="CodeBrix.Compression.MitLicenseForever" Version="1.0.248.1109" />
     <!-- The Rendering library's real glTF loader and image decoders (AP7-M; self-produced CodeBrix packages, the versions
          the sample pins). -->
-    <PackageVersion Include="CodeBrix.Graphics3D.Gltf2.MitLicenseForever" Version="1.0.261.293" />
+    <PackageVersion Update="CodeBrix.Graphics3D.Gltf2.MitLicenseForever" Version="1.0.261.293" />
     <PackageVersion Include="CodeBrix.Imaging.ApacheLicenseForever" Version="1.0.248.1113" />
   </ItemGroup>
 
