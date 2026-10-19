@@ -1,11 +1,17 @@
 using System;
-using System.Text.Json;
 using CodeBrix.Android.UI.WebView.Portable;
 using SilverAssertions;
 using Xunit;
+using SharedWebViewScripts = CodeBrix.Platform.UI.Xaml.Controls.WebViewScripts;
 
 namespace CodeBrix.Android.UI.WebView.Tests.Portable;
 
+/// <summary>
+/// The Android web view's scripts, and the fence between them and the framework's shared host-to-page scripts (the pinned
+/// CodeBrix.Platform.UI.Core, referenced by this project): AndroidNativeWebView.PostWebMessage evaluates the framework's
+/// delivery scripts against the listener surface the Android document-start script installs, so the two must agree on
+/// the dispatch function and its behaviour. The delivery scripts' own escaping is the framework's test subject.
+/// </summary>
 public class WebViewScriptsTests
 {
     [Fact]
@@ -59,110 +65,38 @@ public class WebViewScriptsTests
         script.Should().Contain("data:d");
     }
 
-    [Theory]
-    [InlineData("plain")]
-    [InlineData("a \"quoted\" 'single' text")]
-    [InlineData("two\nlines\r\nand a tab\t")]
-    [InlineData("unicode: \u00e9 \u4e2d \U0001F600 \u2028 \u2029")]
-    [InlineData("</script><script>alert(1)</script>")]
-    [InlineData("back\\slash and ${template} and `tick`")]
-    public void A_string_message_reaches_the_page_only_as_a_JSON_string_literal(string message)
+    [Fact]
+    public void The_dispatch_function_is_the_one_the_frameworks_delivery_scripts_call()
     {
         //Arrange
         //Act
-        var script = WebViewScripts.StringMessageDelivery(message);
-        var literal = DispatchArgument(script);
+        var delivery = SharedWebViewScripts.StringMessageDelivery("x");
 
         //Assert
-        JsonSerializer.Deserialize<string>(literal).Should().Be(message);
-        literal.Should().NotContain("<");
-        literal.Should().NotContain(">");
-        literal.Should().NotContain("\n");
-        literal.Should().NotContain("\u2028");
-        literal.Should().NotContain("\u2029");
-        literal.Should().NotContain("`");
+        WebViewScripts.DispatchFunctionName.Should().Be(SharedWebViewScripts.DispatchFunctionName);
+        delivery.Should().Contain("return v." + WebViewScripts.DispatchFunctionName + "(");
+        delivery.Should().Contain("typeof v." + WebViewScripts.DispatchFunctionName + "!=='function'){return " + SharedWebViewScripts.NoChannelResult + ";}");
     }
 
     [Fact]
-    public void A_null_string_message_is_sent_as_an_empty_string()
+    public void The_listener_surface_is_the_frameworks_message_listener_script_verbatim()
     {
-        //Arrange
+        //Arrange: the framework's script is "(function(){<guard>var ls=[];<surface>})();"; the Android document-start
+        //script carries <surface> after it has created window.chrome.webview and its postMessage.
+        const string start = "var ls=[];";
+        const string end = "})();";
+        var shared = SharedWebViewScripts.MessageListenerScript;
+        var from = shared.IndexOf(start, StringComparison.Ordinal);
+        from.Should().BeGreaterThan(-1, "the framework's listener script keeps its listeners in 'ls'");
+        shared.Should().EndWith(end);
+
         //Act
-        var literal = DispatchArgument(WebViewScripts.StringMessageDelivery(null));
+        var surface = shared.Substring(from + start.Length, shared.Length - from - start.Length - end.Length);
 
         //Assert
-        literal.Should().Be("\"\"");
-    }
-
-    [Theory]
-    [InlineData("{\"a\":[1,2,{\"b\":\"</script>\"}]}")]
-    [InlineData("\"just a string\"")]
-    [InlineData("42")]
-    [InlineData("null")]
-    [InlineData("[\"line\\nbreak\", \"\u00e9\"]")]
-    public void A_JSON_message_is_parsed_by_the_page_never_evaluated(string json)
-    {
-        //Arrange
-        //Act
-        var script = WebViewScripts.JsonMessageDelivery(json);
-        var argument = DispatchArgument(script);
-
-        //Assert
-        argument.Should().StartWith("JSON.parse(");
-        argument.Should().EndWith(")");
-        var literal = argument.Substring("JSON.parse(".Length, argument.Length - "JSON.parse(".Length - 1);
-        JsonSerializer.Deserialize<string>(literal).Should().Be(json);
-        literal.Should().NotContain("<");
-    }
-
-    [Theory]
-    [InlineData("not json")]
-    [InlineData("{\"a\":")]
-    [InlineData("alert(1)")]
-    [InlineData("")]
-    public void An_invalid_JSON_message_is_refused(string json)
-    {
-        //Arrange
-        //Act
-        Action act = () => WebViewScripts.JsonMessageDelivery(json);
-
-        //Assert
-        act.Should().Throw<ArgumentException>();
-    }
-
-    [Fact]
-    public void A_null_JSON_message_is_refused()
-    {
-        //Arrange
-        //Act
-        Action act = () => WebViewScripts.JsonMessageDelivery(null);
-
-        //Assert
-        act.Should().Throw<ArgumentException>();
-    }
-
-    [Fact]
-    public void A_delivery_reports_a_page_without_the_channel()
-    {
-        //Arrange
-        //Act
-        var script = WebViewScripts.StringMessageDelivery("x");
-
-        //Assert
-        script.Should().Contain("typeof v." + WebViewScripts.DispatchFunctionName + "!=='function'){return " + WebViewScripts.NoChannelResult + ";}");
-        script.Should().StartWith("(function(){");
-        script.Should().EndWith("})()");
-    }
-
-    // The argument of the page-side dispatch call: "...v.__codebrixDispatchMessage(<argument>);})()".
-    private static string DispatchArgument(string script)
-    {
-        var call = "return v." + WebViewScripts.DispatchFunctionName + "(";
-        var start = script.LastIndexOf(call, StringComparison.Ordinal);
-        start.Should().BeGreaterThan(0);
-        start += call.Length;
-        const string tail = ");})()";
-        script.Should().EndWith(tail);
-        return script.Substring(start, script.Length - start - tail.Length);
+        surface.Should().StartWith("v.addEventListener=");
+        surface.Should().EndWith("return n;}});");
+        WebViewScripts.DocumentStartScript.Should().Contain("ls=[];" + surface,
+            "the Android document-start script installs the framework's listener surface verbatim (a change there is a change here)");
     }
 }

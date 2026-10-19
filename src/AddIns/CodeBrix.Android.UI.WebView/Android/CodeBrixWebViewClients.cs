@@ -125,16 +125,17 @@ internal sealed class ScriptResultCallback : AJavaObject, AIValueCallback
 }
 
 /// <summary>
-/// The result of a host-to-page message delivery (WebViewScripts.StringMessageDelivery / JsonMessageDelivery): a page
-/// without the message channel drops the message, which is logged at Debug level (WebView2 drops a message the same
-/// way when the page has no listener).
+/// The result of a host-to-page message delivery (the shared CodeBrix.Platform.UI.Xaml.Controls.WebViewScripts
+/// StringMessageDelivery / JsonMessageDelivery, evaluated by AndroidNativeWebView.PostWebMessage): a page without the
+/// message channel drops the message, which is logged at Debug level (WebView2 drops a message the same way when the page
+/// has no listener).
 /// </summary>
 internal sealed class MessageDeliveryCallback : AJavaObject, AIValueCallback
 {
     /// <inheritdoc />
     public void OnReceiveValue(AJavaObject value)
     {
-        if (value?.ToString() == WebViewScripts.NoChannelResult)
+        if (value?.ToString() == CodeBrix.Platform.UI.Xaml.Controls.WebViewScripts.NoChannelResult)
         {
             global::Android.Util.Log.Debug("CodeBrix.WebView", "A web message posted to the page was dropped: the page has no message channel (it was posted before the document-start script ran, or the system WebView has no document-start scripts).");
         }

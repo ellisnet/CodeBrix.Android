@@ -487,6 +487,13 @@ window wrapper, which sets Bounds/VisibleBounds (DIPs), raises SafeAreaChanged
 Showing/Hiding and brings the focused element into view);
 InputPaneAndroidExtension shows/hides the soft keyboard. The status bar is 24 dp
 at every density, so VisibleBounds.Top is 24 DIPs everywhere (63 px at 2.625).
+The strips behind the bars show the WINDOW background (a page that absorbs the
+insets pads them away, and a transparent page lets the window through): the
+window wrapper sets it, with the bars' icon appearance, to the theme source's
+ApplicationPageBackgroundThemeBrush (Portable/SystemBarsAppearance.StripArgb,
+resolved under the element theme scope of the content's top element - the Fluent
+value, or the Material surface the theme bridge wrote), so a dark page under a
+light application no longer sits on a light Material strip.
 
 INPUT (Input/, plan 2.15). Per window, one ICodeBrixCorePointerInputSource and
 one ICodeBrixKeyboardInputSource (ports of the upstream Skia head's sources;
@@ -861,7 +868,13 @@ initializer (Android/AndroidPlatformBootstrap) registers its contracts and handl
     cancel, ms-appx host-to-folder mapping to file:///android_asset/, NavigateToString,
     ExecuteScriptAsync, WebMessageReceived through an AndroidX WebMessageListener +
     document-start script, downloads with progress); the WebView lays out MATCH_PARENT
-    (WRAP_CONTENT gives a page a zero-height viewport).
+    (WRAP_CONTENT gives a page a zero-height viewport). App-to-page messages:
+    AndroidNativeWebView implements the Core seam INativeWebViewMessaging (CoreWebView2.
+    PostWebMessageAsString/AsJson type-test the native view for it) by evaluating the
+    framework's shared delivery scripts (CodeBrix.Platform.UI.Xaml.Controls.WebViewScripts
+    in UI.Core) against the listener surface the Android document-start script installs
+    (Portable/WebViewScripts carries that surface verbatim; WebViewScriptsTests fences the
+    two against the pinned UI.Core, which that test project references for it).
   MediaPlayer: IMediaPlayerExtension over Media3 ExoPlayer (main looper; a 100 ms
     position ticker that never writes Position back - Core writes Position during
     PositionChanged), IMediaPlayerPresenterExtension = a TextureView fitted by Stretch

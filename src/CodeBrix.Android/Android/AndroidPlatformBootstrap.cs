@@ -59,6 +59,7 @@ internal static class AndroidPlatformBootstrap
             ApiExtensibility.Register(typeof(IGraphicsImagingPlatform), _ => graphicsImaging);
 
             ApiExtensibility.Register(typeof(IAnalyticsInfoExtension), _ => new AnalyticsInfoAndroidExtension());
+            ApiExtensibility.Register(typeof(IAnalyticsVersionInfoExtension), _ => new AnalyticsVersionInfoAndroidExtension());
             ApiExtensibility.Register(typeof(IDeviceFamilyPlatform), _ => new DeviceFamilyAndroidPlatform());
             ApiExtensibility.Register(typeof(ISystemThemeHelperExtension), _ => SystemThemeHelperAndroidExtension.Create());
             ApiExtensibility.Register(typeof(IDisplayInformationExtension), _ => new DisplayInformationAndroidExtension());

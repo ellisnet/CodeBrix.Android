@@ -200,3 +200,28 @@ IOwnedGpuDeviceGate
 [CodeBrix.Platform.UI.WebGpu.Core] IWebGpuFrameTimer::Schedule
 [CodeBrix.Platform.UI.WebGpu.Core] IWebGpuFrameTimer::Cancel
 [CodeBrix.Platform.UI.WebGpu.Core] IWebGpuFrameTimer::Post
+
+# Pin 1.0.291.1177 (the published family after the 2026-10-17 round): the seams CodeBrix.Android implements from it.
+# - WebView app-to-page messages: CoreWebView2.PostWebMessageAsString/AsJson reach AndroidNativeWebView through this
+#   interface; the delivery scripts (and the listener surface the Android document-start script carries verbatim) are
+#   UI.Core's shared WebViewScripts.
+[CodeBrix.Platform.Core] INativeWebViewMessaging
+[CodeBrix.Platform.Core] INativeWebViewMessaging::PostWebMessage
+WebViewScripts
+WebViewScripts::StringMessageDelivery
+WebViewScripts::JsonMessageDelivery
+WebViewScripts::MessageListenerScript
+WebViewScripts::DispatchFunctionName
+WebViewScripts::NoChannelResult
+# - the OS version: AnalyticsVersionInfo.DeviceFamilyVersion asks the registered extension (CodeBrix.Android:
+#   AnalyticsVersionInfoAndroidExtension, which encodes the Android release with the framework's encoder).
+[CodeBrix.Platform.Core] IAnalyticsVersionInfoExtension
+[CodeBrix.Platform.Core] IAnalyticsVersionInfoExtension::GetDeviceFamilyVersion
+[CodeBrix.Platform.Core] VersionHelpers::ToDeviceFamilyVersion
+# - quiet resource probe + the strips behind the system bars: ThemeResources.TryFind and the window wrapper's strip colour
+#   read the top-level dictionaries without the per-miss warning of ResolveResourceStatic, the latter under the theme
+#   source's element theme scope.
+ResourceResolver::TryTopLevelRetrieval
+SpecializedResourceDictionary
+FrameworkElement::EnterThemeScope
+ResourceDictionary::PushThemeScope

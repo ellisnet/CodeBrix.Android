@@ -3,8 +3,11 @@
   <!--
     Host-free tests (net10.0) of the CodeBrix.Android WebView add-in: its portable parts
     (compiled in from source, Linked/) and the Core contract it implements, read from the pinned
-    Core assembly's metadata (the twin-loading names and grants). The Android views, handlers and
-    the pages are exercised on the emulator (the WebView UIReqs group).
+    Core assembly's metadata (the twin-loading names and grants), plus the fence between the
+    Android document-start script and the framework's shared host-to-page scripts (the pinned
+    CodeBrix.Platform.UI.Core is referenced for that one internal type; the grant to this assembly
+    name is the framework's). The Android views, handlers and the pages are exercised on the
+    emulator (the WebView UIReqs group).
 
     AssemblyName = the name CodeBrix.Platform.UI.Core grants InternalsVisibleTo to.
   -->
@@ -29,8 +32,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Read as metadata only (PEReader), never loaded. -->
+    <!-- Read as metadata only (PEReader) by the Core contract tests. -->
     <AssemblyMetadata Include="CodeBrix.Android.Tests.CoreLib" Value="$(CodeBrixPlatformIntakeLibDir)" />
+    <!-- The framework's shared WebViewScripts (host-to-page delivery), for the script-parity fence; its Core
+         dependencies ride along so the assembly loads host-free. -->
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Composition.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.UI.Dispatching.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Foundation.Core.dll" />
+    <Reference Include="$(CodeBrixPlatformIntakeLibDir)CodeBrix.Platform.Core.dll" />
   </ItemGroup>
 
   <ItemGroup>

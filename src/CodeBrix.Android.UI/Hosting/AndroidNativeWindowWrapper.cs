@@ -6,6 +6,7 @@ using System;
 using CodeBrix.Android.UI.Portable;
 using CodeBrix.Android.UI.Portable.Input;
 using CodeBrix.Android.UI.Portable.Layout;
+using CodeBrix.Platform.UI;
 using CodeBrix.Platform.UI.Hosting;
 using CodeBrix.Platform.UI.Xaml.Core;
 using CodeBrix.Platform.UI.Xaml.Controls;
@@ -15,6 +16,8 @@ using Windows.Foundation;
 using Windows.Graphics;
 using Windows.UI.Core;
 using Windows.UI.ViewManagement;
+using AColor = global::Android.Graphics.Color;
+using AColorDrawable = global::Android.Graphics.Drawables.ColorDrawable;
 using AViewTreeObserver = global::Android.Views.ViewTreeObserver;
 using AWindowCompat = global::AndroidX.Core.View.WindowCompat;
 using AWindowInsetsCompat = global::AndroidX.Core.View.WindowInsetsCompat;
@@ -39,6 +42,7 @@ internal sealed class AndroidNativeWindowWrapper : NativeWindowWrapperBase //was
     private bool _themeSubscribed;
     private FrameworkElement _themeSource;
     private bool? _appliedLightBars;
+    private int? _appliedStripArgb;
     private CodeBrixActivity _appliedBarsActivity;
     private bool _closedByApp;
     private string _title = string.Empty;
@@ -385,18 +389,44 @@ internal sealed class AndroidNativeWindowWrapper : NativeWindowWrapperBase //was
                 themeSource != null,
                 themeSource?.ActualTheme ?? ElementTheme.Default,
                 application.RequestedTheme);
-            if (_appliedLightBars == lightBars && ReferenceEquals(_appliedBarsActivity, activity))
+            var stripArgb = ResolveStripArgb(themeSource);
+            var sameActivity = ReferenceEquals(_appliedBarsActivity, activity);
+            if (!sameActivity || _appliedLightBars != lightBars)
             {
-                return;
+                _appliedLightBars = lightBars;
+                var insetsController = AWindowCompat.GetInsetsController(activity.Window, decorView);
+
+                // "appearance light" refers to status bar set to light theme == dark foreground
+                insetsController.AppearanceLightStatusBars = lightBars;
+                insetsController.AppearanceLightNavigationBars = lightBars;
             }
 
-            _appliedLightBars = lightBars;
-            _appliedBarsActivity = activity;
-            var insetsController = AWindowCompat.GetInsetsController(activity.Window, decorView);
+            // The strips behind the bars show the window's background (the decor view is laid out inside the bars):
+            // the page background of the content's theme, so a dark page under a light application has dark strips.
+            if (stripArgb is { } argb && (!sameActivity || _appliedStripArgb != argb) && activity.Window is { } window)
+            {
+                _appliedStripArgb = argb;
+                window.SetBackgroundDrawable(new AColorDrawable(new AColor(argb)));
+            }
 
-            // "appearance light" refers to status bar set to light theme == dark foreground
-            insetsController.AppearanceLightStatusBars = lightBars;
-            insetsController.AppearanceLightNavigationBars = lightBars;
+            _appliedBarsActivity = activity;
+        }
+    }
+
+    // ApplicationPageBackgroundThemeBrush under the theme source's theme (an element RequestedTheme opens a theme scope
+    // in Core; without one the application's theme is the active one), read quietly from the top-level dictionaries.
+    private static int? ResolveStripArgb(FrameworkElement themeSource)
+    {
+        try
+        {
+            using var scope = themeSource != null ? FrameworkElement.EnterThemeScope(themeSource) : default;
+            return ResourceResolver.TryTopLevelRetrieval(new SpecializedResourceDictionary.ResourceKey(SystemBarsAppearance.StripBrushKey), null, out var value)
+                ? SystemBarsAppearance.StripArgb(value)
+                : null;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            return null;
         }
     }
 

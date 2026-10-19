@@ -574,6 +574,36 @@ public sealed class WebViewSteps
 		int milliseconds) =>
 		await WaitForMessagesAsync(message, elementName, times, milliseconds).ConfigureAwait(false);
 
+	/// <summary>
+	/// Posts a message from the application to the page, as CoreWebView2.PostWebMessageAsString does.
+	/// </summary>
+	/// <param name="message">The text to post.</param>
+	/// <param name="elementName">The Gherkin name of the web view.</param>
+	/// <returns>A task that completes once the UI thread has posted it.</returns>
+	[When("the application posts the string message {string} to {string}")]
+	public async Task When_the_application_posts_the_string_message_to(string message, string elementName)
+	{
+		var browser = WebViewOf(elementName);
+		var text = GherkinValue.Unquote(message);
+		await TestTargetFixture.RunOnUIThreadAsync(() => browser.CoreWebView2.PostWebMessageAsString(text))
+			.ConfigureAwait(false);
+	}
+
+	/// <summary>
+	/// Posts a message from the application to the page, as CoreWebView2.PostWebMessageAsJson does.
+	/// </summary>
+	/// <param name="json">The JSON text to post.</param>
+	/// <param name="elementName">The Gherkin name of the web view.</param>
+	/// <returns>A task that completes once the UI thread has posted it.</returns>
+	[When("the application posts the JSON message {string} to {string}")]
+	public async Task When_the_application_posts_the_json_message_to(string json, string elementName)
+	{
+		var browser = WebViewOf(elementName);
+		var text = GherkinValue.Unquote(json);
+		await TestTargetFixture.RunOnUIThreadAsync(() => browser.CoreWebView2.PostWebMessageAsJson(text))
+			.ConfigureAwait(false);
+	}
+
 	// ------------------------------------------------------------- helpers
 
 	private async Task WaitForMessagesAsync(string message, string elementName, int times, int milliseconds)

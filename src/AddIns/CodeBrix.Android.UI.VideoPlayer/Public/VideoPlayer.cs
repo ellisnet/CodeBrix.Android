@@ -202,9 +202,14 @@ public sealed partial class VideoPlayer : Panel
 
 	/// <summary>Identifies the <see cref="AutoPlay"/> dependency property.</summary>
 	public static readonly DependencyProperty AutoPlayProperty = DependencyProperty.Register(
-		nameof(AutoPlay), typeof(bool), typeof(VideoPlayer), new PropertyMetadata(false));
+		nameof(AutoPlay), typeof(bool), typeof(VideoPlayer),
+		new PropertyMetadata(false, (o, e) => ((VideoPlayer)o).OnAutoPlayChanged((bool)e.NewValue)));
 
-	/// <summary>When true, playback starts as soon as a source is loaded. Defaults to false.</summary>
+	/// <summary>
+	/// When true, playback starts as soon as a source is loaded. Defaults to false. Setting it to true while a source is
+	/// already loaded and not playing starts playback then, so the order of AutoPlay and <see cref="Source"/> in XAML
+	/// does not matter.
+	/// </summary>
 	public bool AutoPlay
 	{
 		get => (bool)GetValue(AutoPlayProperty);
@@ -714,6 +719,16 @@ public sealed partial class VideoPlayer : Panel
 		_driver.PresentPausedFrame();
 
 		if (AutoPlay)
+		{
+			Play();
+		}
+	}
+
+	//AutoPlay set after the source was loaded: start it the way the load would have (Play is the same call LoadCore
+	//makes when AutoPlay is already true).
+	private void OnAutoPlayChanged(bool autoPlay)
+	{
+		if (autoPlay && _isSourceLoaded && !IsPlaying)
 		{
 			Play();
 		}

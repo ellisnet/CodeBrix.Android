@@ -11,8 +11,9 @@ Feature: A WebView and its page talking to each other
 	states the encoding as well, because an application has to know about it.
 
 	Every scenario starts the engine first and waits for a known picture, exactly as the page
-	scenarios do. Deliberately out of scope here: hover, display scale, host-to-page messages (the
-	engine on this head has none - a script is the route), and anything that would reach a network.
+	scenarios do. Host-to-page messages (PostWebMessageAsString / PostWebMessageAsJson) are in scope:
+	a page that listens hears them, with the text exactly as posted. Deliberately out of scope here:
+	hover, display scale, and anything that would reach a network.
 
 	Two scenarios here reload a page, and the second of them found a defect in the add-in and now
 	fences it: a page that had been handed over as TEXT came back as an empty document, because the
@@ -92,3 +93,14 @@ Scenario: What a person types reaches the text box inside the page
 	And the script "document.getElementById('box').focus()" runs in "browser"
 	When the text "abc" is typed
 	Then the script "document.getElementById('box').value" in "browser" returns the text "abc" within 5000 milliseconds
+
+Scenario: A page that listens hears the messages its host posts and answers each one
+	Given the application shows a WebView named "browser" 800 by 600
+	And the web engine of "browser" has started within 20000 milliseconds
+	And "browser" shows the page "Echo"
+	And the navigation of "browser" completes within 5000 milliseconds
+	And the web message "listening" reaches "browser" within 5000 milliseconds
+	When the application posts the string message 'he said "hi" </script> done' to "browser"
+	Then the web message 'string:he said "hi" </script> done' reaches "browser" within 5000 milliseconds
+	When the application posts the JSON message '{"n":1,"list":[true,null,"two"]}' to "browser"
+	Then the web message 'json:{"n":1,"list":[true,null,"two"]}' reaches "browser" within 5000 milliseconds

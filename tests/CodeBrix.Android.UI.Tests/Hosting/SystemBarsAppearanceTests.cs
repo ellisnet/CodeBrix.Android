@@ -4,6 +4,7 @@ using CodeBrix.Android.UI.Portable;
 using CodeBrix.Android.UI.Tests.HostFree;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using SilverAssertions;
 using Xunit;
 
@@ -12,7 +13,8 @@ namespace CodeBrix.Android.UI.Tests.Hosting;
 /// <summary>
 /// SystemBarsAppearance: the system bars' icon colour follows the theme the window's content shows (its ActualTheme),
 /// not only Application.RequestedTheme - an app that switches theme on its root element flips the bars - and falls back
-/// to the application's theme while the window has no content.
+/// to the application's theme while the window has no content. The strips behind the bars take the page background brush
+/// of that theme (StripArgb: a visible SolidColorBrush, else the window keeps its background).
 /// </summary>
 [Collection(HostFreeCoreCollection.Name)]
 public sealed class SystemBarsAppearanceTests
@@ -126,5 +128,44 @@ public sealed class SystemBarsAppearanceTests
 
         directory.Should().NotBeNull("the tests run inside the repository");
         return directory.FullName;
+    }
+
+    [Fact]
+    public void the_strip_takes_a_solid_page_background_with_its_opacity_folded_in()
+    {
+        //Arrange
+        var opaque = new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0x20, 0x20, 0x20));
+        var translucent = new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0xF3, 0xF3, 0xF3)) { Opacity = 0.5 };
+
+        //Act
+        var dark = SystemBarsAppearance.StripArgb(opaque);
+        var half = SystemBarsAppearance.StripArgb(translucent);
+
+        //Assert
+        dark.Should().Be(unchecked((int)0xFF202020));
+        half.Should().Be(unchecked((int)0x80F3F3F3));
+    }
+
+    [Fact]
+    public void the_strip_is_left_alone_without_a_visible_solid_brush()
+    {
+        //Arrange
+        var transparent = new SolidColorBrush(Windows.UI.Color.FromArgb(0, 0, 0, 0));
+        var faded = new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 1, 2, 3)) { Opacity = 0 };
+        var gradient = new LinearGradientBrush();
+
+        //Assert
+        SystemBarsAppearance.StripArgb(null).Should().BeNull();
+        SystemBarsAppearance.StripArgb("ApplicationPageBackgroundThemeBrush").Should().BeNull();
+        SystemBarsAppearance.StripArgb(transparent).Should().BeNull();
+        SystemBarsAppearance.StripArgb(faded).Should().BeNull();
+        SystemBarsAppearance.StripArgb(gradient).Should().BeNull();
+    }
+
+    [Fact]
+    public void the_strip_brush_is_the_page_background_of_the_theme()
+    {
+        //Assert
+        SystemBarsAppearance.StripBrushKey.Should().Be("ApplicationPageBackgroundThemeBrush");
     }
 }

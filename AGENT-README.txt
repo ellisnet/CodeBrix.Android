@@ -157,7 +157,11 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     same window again (OnLaunched does not run again).
   * Content is laid out edge to edge; Window.Bounds is the whole Android
     window and XamlRoot / the window's visible bounds exclude the system bars
-    and display cutout.
+    and display cutout. The strips behind the status and navigation bars (and
+    anything your page leaves transparent) show the page background of the
+    theme your page shows - ApplicationPageBackgroundThemeBrush under the
+    RequestedTheme of the page's top element, so a dark page in a light app
+    gets dark strips with light icons, as its own background would be.
   * The soft keyboard: CodeBrixApplication.SoftInputAdjust (the enum
     CodeBrix.Android.UI.Hosting.SoftInputAdjust) says how the window makes
     room for it: Pan (the default) pans the window so the focused text field
@@ -227,7 +231,12 @@ App.xaml.cs (OnLaunched, Window, Frame.Navigate) stays unchanged.
     so it follows a phone that is docked or undocked; DeviceFamily is read
     the same way, so it too names the form of the window at the moment you
     ask (read it again after a resize instead of caching it). Television,
-    car, watch and VR-headset devices report those forms. UISettings.
+    car, watch and VR-headset devices report those forms.
+    AnalyticsInfo.VersionInfo.DeviceFamilyVersion encodes the Android release
+    the WinUI way (major in the top 16 bits, then minor, then - in the third
+    component - the API level, revision 0): decode it with the usual shifts
+    and "Android 14, API level 34" is 14.0.34.0; a preview release without a
+    number reports "0". UISettings.
     AnimationsEnabled follows the system's "remove animations" setting.
   * CompositionTarget.Rendering is raised once per display frame (from the
     display's frame callbacks) for as long as anything subscribes to it -
@@ -674,14 +683,16 @@ What differs on Android:
     the folder's files are Content items of the head, so they are the app's
     assets; relative links between the pages work). Messages from the page
     to the app: the page calls window.chrome.webview.postMessage(text) and
-    the app receives WebView2.WebMessageReceived. Every page also gets
-    WebView2's receiving side: window.chrome.webview.addEventListener(
-    'message', e => ...), removeEventListener and onmessage (e.data is the
-    message). Messages from the app to the page: use ExecuteScriptAsync (it
-    runs script in the page and returns its result). CoreWebView2's
-    PostWebMessageAsString / PostWebMessageAsJson do not reach the page with
-    the CodeBrix.Platform build this package ships (that build implements them
-    on no head); call a page function through ExecuteScriptAsync instead.
+    the app receives WebView2.WebMessageReceived. Messages from the app to
+    the page: CoreWebView2.PostWebMessageAsString(text) and
+    PostWebMessageAsJson(json) reach the page's WebView2 listeners -
+    window.chrome.webview.addEventListener('message', e => ...),
+    removeEventListener and onmessage - with e.data the string, or the parsed
+    JSON value (invalid JSON throws ArgumentException, as WebView2 does). A
+    message posted before the page has registered a listener is dropped (as
+    on every head), so have the page post "ready" first and reply to it.
+    ExecuteScriptAsync remains the way to run script in the page and read its
+    result. The page API is the same as on the Linux desktop head.
   * TextLayout: the text engine is the add-in's Core; on Android it draws with
     SkiaSharp typefaces the Android assembly loads from the app's assets by the
     font rule above (a family name is the app's DefaultTextFontFamily file).
@@ -774,10 +785,9 @@ What differs on Android:
     use (once per installed build), with its folder for an SFZ or Decent
     Sampler preset whose samples sit beside it. SoundEffect reads an
     ms-appx:/// source by path before anything copies it out, so give it an
-    embedded:// resource, a file path or a stream instead. In XAML write
-    AutoPlay="True" BEFORE Source="..." on an AudioPlayer: written after it,
-    the source has already loaded with AutoPlay still false and nothing
-    plays (as observed on Android; the same order applies to VideoPlayer).
+    embedded:// resource, a file path or a stream instead. AutoPlay="True"
+    may be written before or after Source="..." (set after the load has
+    completed, it starts the loaded source then, as on the desktop heads).
   * VideoPlayer: the VideoPlayer element works as on the desktop heads (WebM
     and .cbv Mode 1 / Mode 2 clips, the transport and its bindings, Stretch,
     render paths, effects, layers, captions and chapters); the picture is
@@ -789,8 +799,8 @@ What differs on Android:
     Register() methods; dav1d ships android-arm64 and android-x64 natives).
     ms-appx:/// clips are the app's assets, copied out of the APK before they
     are opened. CodeBrix.VideoPlayback.Authoring (encoding) is not supported on
-    Android. In XAML write AutoPlay="True" before Source="..." (as observed on
-    Android: written after Source, the clip never starts).
+    Android. AutoPlay="True" may be written before or after Source="..." (set
+    after the clip has loaded, it starts the loaded clip then).
   * WebGpu: WebGpuRenderView is the CodeBrix.Platform WebGpu add-in's element
     with the SAME public API in the SAME namespace (CodeBrix.Platform.UI.WebGpu;
     in XAML xmlns:webGpu="using:CodeBrix.Platform.UI.WebGpu"), so pages and

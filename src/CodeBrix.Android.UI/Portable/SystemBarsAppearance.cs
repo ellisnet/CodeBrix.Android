@@ -1,16 +1,50 @@
+using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 
 namespace CodeBrix.Android.UI.Portable;
 
 /// <summary>
-/// The decisions behind the system bars' icon colour (status bar and navigation bar): the bars use dark icons
-/// ("appearance light") when the theme the window's content shows is Light. The ActualTheme of the content's top element
-/// wins, because an app that switches theme on an element (FrameworkElement.RequestedTheme) never changes
-/// Application.RequestedTheme; the application's theme is the fallback while the window has no content yet.
+/// The decisions behind the system bars (status bar and navigation bar): their icon colour, and the colour of the strips
+/// behind them. The bars use dark icons ("appearance light") when the theme the window's content shows is Light. The
+/// ActualTheme of the content's top element wins, because an app that switches theme on an element
+/// (FrameworkElement.RequestedTheme) never changes Application.RequestedTheme; the application's theme is the fallback
+/// while the window has no content yet. The strips (Android lays the decor view out inside the system bars, so they show
+/// the WINDOW's background, not the page's) take the page background brush of that same theme
+/// (ApplicationPageBackgroundThemeBrush, resolved under the theme source's theme - the Fluent value, or the Material
+/// surface the theme bridge wrote), so a page that is dark while the application is light has dark strips and the light
+/// icons stay readable.
 /// </summary>
 internal static class SystemBarsAppearance
 {
+    /// <summary>The key of the brush the strips behind the system bars show.</summary>
+    internal const string StripBrushKey = "ApplicationPageBackgroundThemeBrush";
+
+    /// <summary>
+    /// The ARGB colour the window background takes for a resolved page background brush: a SolidColorBrush's colour with
+    /// its Opacity folded into the alpha; null for anything else (no brush, a transparent one, a gradient or image brush -
+    /// the window keeps whatever background it has).
+    /// </summary>
+    /// <param name="resolvedBrush">The value the page background key resolved to.</param>
+    /// <returns>The ARGB colour, or null.</returns>
+    internal static int? StripArgb(object resolvedBrush)
+    {
+        if (resolvedBrush is not SolidColorBrush solid)
+        {
+            return null;
+        }
+
+        var color = solid.Color;
+        var alpha = (int)Math.Round(color.A * Math.Clamp(solid.Opacity, 0, 1));
+        if (alpha == 0)
+        {
+            return null;
+        }
+
+        return (alpha << 24) | (color.R << 16) | (color.G << 8) | color.B;
+    }
+
     /// <summary>
     /// The element whose ActualTheme the system bars follow: the window's content, descended through single-content hosts
     /// (a Frame or ContentControl to its content, a Page or UserControl to its content, a Border to its child) to the top

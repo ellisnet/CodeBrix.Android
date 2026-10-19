@@ -60,6 +60,13 @@ public static class HtmlPages
 	/// </summary>
 	public const string Typing = "Typing";
 
+	/// <summary>
+	/// The name of the page that listens: it posts "listening" as it loads, and answers every message its host
+	/// posts with "string:" + the text or "json:" + the value re-serialized, so a scenario can state that a
+	/// posted message arrived, and arrived as what it was posted as.
+	/// </summary>
+	public const string Echo = "Echo";
+
 	/// <summary>The title the <see cref="Title"/> page gives itself.</summary>
 	public const string TitleText = "Hello UIReqs";
 
@@ -122,6 +129,20 @@ public static class HtmlPages
 		<body><input id="box" type="text" value=""></body></html>
 		""";
 
+	private const string EchoDocument =
+		"""
+		<!DOCTYPE html><html><head><meta charset="utf-8"><title>Echo</title></head>
+		<body style="margin:0;background:#0000FF">
+		<script>
+		window.chrome.webview.addEventListener('message', function (e) {
+			window.chrome.webview.postMessage(typeof e.data === 'string' ? 'string:' + e.data : 'json:' + JSON.stringify(e.data));
+		});
+		window.addEventListener('load', function () {
+			window.chrome.webview.postMessage('listening');
+		});
+		</script></body></html>
+		""";
+
 	private static readonly Dictionary<string, string> Documents = new(StringComparer.OrdinalIgnoreCase)
 	{
 		[Warmup] = WarmupDocument,
@@ -129,6 +150,7 @@ public static class HtmlPages
 		[Halves] = HalvesDocument,
 		[Bar] = BarDocument,
 		[Button] = ButtonDocument,
+		[Echo] = EchoDocument,
 		[Title] = TitleDocument,
 		[Typing] = TypingDocument,
 	};

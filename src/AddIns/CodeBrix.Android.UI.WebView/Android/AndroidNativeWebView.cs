@@ -17,6 +17,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using AContext = global::Android.Content.Context;
 using AWebView = global::Android.Webkit.WebView;
+using SharedWebViewScripts = CodeBrix.Platform.UI.Xaml.Controls.WebViewScripts;
 using WebViewScripts = CodeBrix.Android.UI.WebView.Portable.WebViewScripts;
 
 namespace CodeBrix.Android.UI.WebView.Android;
@@ -27,10 +28,13 @@ namespace CodeBrix.Android.UI.WebView.Android;
 /// NavigationStarting, which may refuse it): the app's own (a URI, a page handed over as text, reload, back, forward)
 /// before the load is started, a page's own (a link, a script) from ShouldOverrideUrlLoading; a finished load reports
 /// the history state and NavigationCompleted; the document title, the page's messages to its host and downloads are
-/// raised on the CoreWebView2. The android.webkit.WebView is created when the host element's handler connects (it needs
-/// the activity); work asked for before that is queued.
+/// raised on the CoreWebView2. The host's messages to the page (CoreWebView2.PostWebMessageAsString / PostWebMessageAsJson)
+/// arrive through <see cref="INativeWebViewMessaging"/> and are delivered with the delivery scripts every script-injecting
+/// head shares (<see cref="SharedWebViewScripts"/>) to the listener surface the Android document-start script installs.
+/// The android.webkit.WebView is created when the host element's handler connects (it needs the activity); work asked for
+/// before that is queued.
 /// </summary>
-internal sealed class AndroidNativeWebView : ICleanableNativeWebView
+internal sealed class AndroidNativeWebView : ICleanableNativeWebView, INativeWebViewMessaging
 {
     private readonly CoreWebView2 _coreWebView;
     private readonly ContentPresenter _presenter;
@@ -230,27 +234,22 @@ internal sealed class AndroidNativeWebView : ICleanableNativeWebView
         ExecuteScriptAsync(WebViewScripts.Invocation(script, arguments), token);
 
     /// <summary>
-    /// Delivers a host message to the page as CoreWebView2.PostWebMessageAsString does: every 'message' listener of
-    /// window.chrome.webview (and its onmessage) gets an event whose data is <paramref name="message"/>. A page without
-    /// the channel (the document-start script did not run) drops it, with a Debug log line.
+    /// Delivers a host message to the page (CoreWebView2.PostWebMessageAsString / PostWebMessageAsJson): every 'message'
+    /// listener of window.chrome.webview (and its onmessage) gets an event whose data is the string, or the parsed JSON
+    /// value when <paramref name="isJson"/> is true. The message reaches the page only as a JSON string literal inside the
+    /// shared delivery script (never as script text); a page without the channel (the document-start script did not run)
+    /// drops it, with a Debug log line. A message posted before the android.webkit.WebView exists is queued like every
+    /// other call and delivered to whatever page is current once it does.
     /// </summary>
-    /// <param name="message">The message.</param>
-    /// <remarks>
-    /// The pinned CodeBrix.Platform build's CoreWebView2.PostWebMessageAsString is a Core stub that reaches no native web
-    /// view (its INativeWebView has no message member); this is the Android half that Core's call is wired to once the
-    /// seam exists.
-    /// </remarks>
-    internal void PostWebMessageAsString(string message) => Deliver(WebViewScripts.StringMessageDelivery(message));
-
-    /// <summary>
-    /// Delivers a host message to the page as CoreWebView2.PostWebMessageAsJson does: the listeners' event.data is the
-    /// parsed JSON value. See <see cref="PostWebMessageAsString"/>.
-    /// </summary>
-    /// <param name="json">The message as JSON text.</param>
-    /// <exception cref="ArgumentException"><paramref name="json"/> is not valid JSON.</exception>
-    internal void PostWebMessageAsJson(string json) => Deliver(WebViewScripts.JsonMessageDelivery(json));
-
-    private void Deliver(string script) => Run(view => view.EvaluateJavascript(script, new MessageDeliveryCallback()));
+    /// <param name="payload">The message: the string itself, or JSON text when <paramref name="isJson"/> is true.</param>
+    /// <param name="isJson">True for PostWebMessageAsJson, false for PostWebMessageAsString.</param>
+    /// <exception cref="ArgumentException"><paramref name="isJson"/> is true and <paramref name="payload"/> is not valid JSON
+    /// (Core checks it first; the shared script builder checks it again).</exception>
+    public void PostWebMessage(string payload, bool isJson)
+    {
+        var script = isJson ? SharedWebViewScripts.JsonMessageDelivery(payload) : SharedWebViewScripts.StringMessageDelivery(payload);
+        Run(view => view.EvaluateJavascript(script, new MessageDeliveryCallback()));
+    }
 
     /// <inheritdoc />
     public void SetScrollingEnabled(bool isScrollingEnabled)

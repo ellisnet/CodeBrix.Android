@@ -268,9 +268,14 @@ public sealed partial class MidiPlayer : FrameworkElement
 
 	/// <summary>Identifies the <see cref="AutoPlay"/> dependency property.</summary>
 	public static readonly DependencyProperty AutoPlayProperty = DependencyProperty.Register(
-		nameof(AutoPlay), typeof(bool), typeof(MidiPlayer), new PropertyMetadata(false));
+		nameof(AutoPlay), typeof(bool), typeof(MidiPlayer),
+		new PropertyMetadata(false, (o, e) => ((MidiPlayer)o).OnAutoPlayChanged((bool)e.NewValue)));
 
-	/// <summary>When true, playback starts as soon as a load completes. Defaults to false.</summary>
+	/// <summary>
+	/// When true, playback starts as soon as a load completes. Defaults to false. Setting it to true after a load has
+	/// completed, while not playing, starts playback then, so the order of AutoPlay, <see cref="Source"/> and
+	/// <see cref="Instrument"/> in XAML does not matter.
+	/// </summary>
 	public bool AutoPlay
 	{
 		get => (bool)GetValue(AutoPlayProperty);
@@ -965,6 +970,16 @@ public sealed partial class MidiPlayer : FrameworkElement
 		MediaOpened?.Invoke(this, EventArgs.Empty);
 
 		if (AutoPlay)
+		{
+			Play();
+		}
+	}
+
+	//AutoPlay set after a load completed: start it the way the load would have (Play is the same call BeginLoad makes
+	//when AutoPlay is already true). While a load is still running, BeginLoad reads AutoPlay when it completes.
+	private void OnAutoPlayChanged(bool autoPlay)
+	{
+		if (autoPlay && _isSourceLoaded && !IsPlaying)
 		{
 			Play();
 		}

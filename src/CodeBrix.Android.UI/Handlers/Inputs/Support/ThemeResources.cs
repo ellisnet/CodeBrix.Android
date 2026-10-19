@@ -45,8 +45,9 @@ internal static class ThemeResources
 
         try
         {
-            value = ResourceResolver.ResolveResourceStatic(key, typeof(object), null);
-            return value != null;
+            // The QUIET top-level lookup (application, assembly and system dictionaries, under the active theme):
+            // ResolveResourceStatic logs a warning for every key it does not find, and this probe asks for optional keys.
+            return ResourceResolver.TryTopLevelRetrieval(new SpecializedResourceDictionary.ResourceKey(key), null, out value) && value != null;
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
