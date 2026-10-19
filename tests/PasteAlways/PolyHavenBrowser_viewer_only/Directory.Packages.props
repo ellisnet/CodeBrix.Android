@@ -10,7 +10,7 @@
   <ItemGroup>
     <PackageVersion Include="CodeBrix.Imaging.ApacheLicenseForever" Version="1.0.248.1113" />
     <PackageVersion Update="CodeBrix.Graphics3D.Gltf2.MitLicenseForever" Version="1.0.261.293" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.13" />
   </ItemGroup>
 
 </Project>

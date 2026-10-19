@@ -1,5 +1,4 @@
 <Project>
-
   <!--
     Central package pins for CodeBrix.Android (NuGet Central Package Management).
     Every package version used by a project in this solution is set here and only
@@ -22,7 +21,6 @@
   <PropertyGroup Condition="'$(_CodeBrixAndroidStandaloneSample)' != 'true'">
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
-
   <!-- Material Components and AndroidX (the native widget layer) -->
   <ItemGroup>
     <PackageVersion Include="Xamarin.Google.Android.Material" Version="1.14.0.6" />
@@ -34,7 +32,6 @@
     <!-- The MediaPlayer add-in's playback engine (AndroidX Media3, Apache 2.0). -->
     <PackageVersion Include="Xamarin.AndroidX.Media3.ExoPlayer" Version="1.11.1" />
   </ItemGroup>
-
   <!--
     SkiaSharp (and its views) for the Skia-drawing add-ins, at the family's locked SkiaSharp /
     HarfBuzzSharp release pair. Bump them together, and only when the whole CodeBrix family
@@ -54,7 +51,6 @@
          (the PlotterView engine test, AP7-C). -->
     <PackageVersion Include="HarfBuzzSharp.NativeAssets.Linux" Version="14.2.1.301" />
   </ItemGroup>
-
   <!--
     The non-Platform-repo dependencies of the re-shipped Core assemblies (the same
     versions the pinned CodeBrix.Platform build declares), and the Fluent symbols font.
@@ -91,15 +87,14 @@
     <PackageVersion Include="CodeBrix.Audio.Android.ApacheLicenseForever" Version="1.0.283.1398" />
     <PackageVersion Include="CodeBrix.VideoPlayback.MitLicenseForever" Version="1.0.290.1224" />
   </ItemGroup>
-
   <!--
     Sample-app dependencies (samples/HelloPaste and the paste-always compile heads under
     tests/PasteAlways): the non-Platform packages the copied CodeBrix.Samples code uses, at
     the versions those samples pin. Never referenced by a src/ project.
   -->
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.13" />
     <PackageVersion Include="CodeBrix.Cryptography.MitLicenseForever" Version="1.0.275.117" />
     <PackageVersion Include="CodeBrix.PdfRasterizer.MitLicenseForever" Version="1.0.285.692" />
     <PackageVersion Include="CodeBrix.Platform.Fonts.OpenSans.ApacheLicenseForever" Version="1.0.248.1181" />
@@ -110,7 +105,6 @@
     <PackageVersion Include="CodeBrix.WebGpu.Graphics.MitLicenseForever" Version="1.0.291.34" />
     <PackageVersion Include="CodeBrix.Graphics3D.Gltf2.MitLicenseForever" Version="1.0.290.996" />
   </ItemGroup>
-
   <!-- Build tooling -->
   <ItemGroup>
     <PackageVersion Include="CodeBrix.AssemblyTools.MitLicenseForever" Version="1.0.252.4" />
@@ -120,16 +114,14 @@
          build. Bump it together with the SDK on the packing machine. -->
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
   </ItemGroup>
-
   <!-- Tests -->
   <ItemGroup>
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
-    <PackageVersion Include="xunit.v3" Version="4.0.1" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageVersion Include="xunit.v3" Version="4.0.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
     <PackageVersion Include="SilverAssertions.ApacheLicenseForever" Version="1.0.248.1071" />
     <!-- The UIReqs host runner (tests/CodeBrix.Android.UIReqs): the Gherkin runner the CodeBrix.Platform
          UIReqs suite uses, same version (named by the AP2 UIReqs-port brief; owner: Reqnroll). -->
     <PackageVersion Include="Reqnroll.xunit.v3" Version="3.3.4" />
   </ItemGroup>
-
 </Project>
